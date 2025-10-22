@@ -50,7 +50,7 @@ class Newsletter(Base):
     )
     date = Column(String, nullable=False)
     guid = Column(String, nullable=False, unique=True)
-    file_path = Column(String, nullable=False)
+    file_path = Column(String, nullable=True)  # Nullable until newsletter is generated
     status = Column(String, nullable=False, server_default="pending")
     generated_at = Column(String, nullable=True)
     retry_count = Column(Integer, nullable=False, server_default="0")
