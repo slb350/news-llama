@@ -10,7 +10,7 @@ Tests newsletter lifecycle management:
 """
 
 import pytest
-from datetime import date, datetime
+from datetime import date
 from sqlalchemy.orm import Session
 
 from src.web.services.newsletter_service import (
@@ -22,7 +22,6 @@ from src.web.services.newsletter_service import (
     mark_newsletter_failed,
     get_newsletter_count,
     NewsletterNotFoundError,
-    NewsletterValidationError,
     DuplicateNewsletterError,
 )
 from src.web.services.user_service import create_user

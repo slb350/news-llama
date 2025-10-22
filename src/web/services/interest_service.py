@@ -5,7 +5,6 @@ Provides interest management operations with fuzzy search and validation.
 Supports both predefined categories and custom user interests.
 """
 
-from typing import Optional
 from sqlalchemy.orm import Session
 from datetime import datetime
 

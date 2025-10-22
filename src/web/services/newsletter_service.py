@@ -7,7 +7,6 @@ pending → generating → completed/failed
 
 from typing import Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, extract
 from datetime import date, datetime
 import uuid
 
