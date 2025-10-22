@@ -2,6 +2,7 @@
 
 Phase 2: Frontend mockup with static data.
 """
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -155,7 +156,9 @@ async def calendar_month(request: Request, year: int, month: int):
         {
             "request": request,
             "user": MOCK_USERS[0],
-            "newsletters": MOCK_NEWSLETTERS if month == 10 else [],  # Only October has data
+            "newsletters": MOCK_NEWSLETTERS
+            if month == 10
+            else [],  # Only October has data
             "current_month": current_month,
             "year": year,
             "month": month,

@@ -4,6 +4,7 @@ Newsletter service for News Llama web application.
 Manages newsletter lifecycle:
 pending → generating → completed/failed
 """
+
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, extract
@@ -16,28 +17,30 @@ from src.web.models import Newsletter
 # Custom Exceptions
 class NewsletterServiceError(Exception):
     """Base exception for newsletter service errors."""
+
     pass
 
 
 class NewsletterNotFoundError(NewsletterServiceError):
     """Raised when newsletter is not found."""
+
     pass
 
 
 class NewsletterValidationError(NewsletterServiceError):
     """Raised when newsletter data validation fails."""
+
     pass
 
 
 class DuplicateNewsletterError(NewsletterServiceError):
     """Raised when attempting to create duplicate newsletter."""
+
     pass
 
 
 def create_pending_newsletter(
-    db: Session,
-    user_id: int,
-    newsletter_date: date
+    db: Session, user_id: int, newsletter_date: date
 ) -> Newsletter:
     """
     Create pending newsletter for user on given date.
@@ -58,10 +61,11 @@ def create_pending_newsletter(
     date_str = newsletter_date.strftime("%Y-%m-%d")
 
     # Check for existing newsletter
-    existing = db.query(Newsletter).filter(
-        Newsletter.user_id == user_id,
-        Newsletter.date == date_str
-    ).first()
+    existing = (
+        db.query(Newsletter)
+        .filter(Newsletter.user_id == user_id, Newsletter.date == date_str)
+        .first()
+    )
 
     if existing:
         raise DuplicateNewsletterError(
@@ -76,7 +80,7 @@ def create_pending_newsletter(
         file_path=None,
         status="pending",
         generated_at=None,
-        retry_count=0
+        retry_count=0,
     )
 
     db.add(newsletter)
@@ -87,10 +91,7 @@ def create_pending_newsletter(
 
 
 def get_newsletters_by_month(
-    db: Session,
-    user_id: int,
-    year: int,
-    month: int
+    db: Session, user_id: int, year: int, month: int
 ) -> list[Newsletter]:
     """
     Get all newsletters for user in given month.
@@ -110,18 +111,17 @@ def get_newsletters_by_month(
     # SQLite stores dates as TEXT "YYYY-MM-DD"
     month_prefix = f"{year}-{month:02d}"
 
-    newsletters = db.query(Newsletter).filter(
-        Newsletter.user_id == user_id,
-        Newsletter.date.like(f"{month_prefix}%")
-    ).order_by(Newsletter.date).all()
+    newsletters = (
+        db.query(Newsletter)
+        .filter(Newsletter.user_id == user_id, Newsletter.date.like(f"{month_prefix}%"))
+        .order_by(Newsletter.date)
+        .all()
+    )
 
     return newsletters
 
 
-def get_newsletter_by_guid(
-    db: Session,
-    guid: str
-) -> Newsletter:
+def get_newsletter_by_guid(db: Session, guid: str) -> Newsletter:
     """
     Get newsletter by GUID.
 
@@ -135,9 +135,7 @@ def get_newsletter_by_guid(
     Raises:
         NewsletterNotFoundError: If newsletter doesn't exist
     """
-    newsletter = db.query(Newsletter).filter(
-        Newsletter.guid == guid
-    ).first()
+    newsletter = db.query(Newsletter).filter(Newsletter.guid == guid).first()
 
     if not newsletter:
         raise NewsletterNotFoundError(f"Newsletter with GUID {guid} not found")
@@ -145,10 +143,7 @@ def get_newsletter_by_guid(
     return newsletter
 
 
-def mark_newsletter_generating(
-    db: Session,
-    newsletter_id: int
-) -> Newsletter:
+def mark_newsletter_generating(db: Session, newsletter_id: int) -> Newsletter:
     """
     Mark newsletter as generating.
 
@@ -164,9 +159,7 @@ def mark_newsletter_generating(
     Raises:
         NewsletterNotFoundError: If newsletter doesn't exist
     """
-    newsletter = db.query(Newsletter).filter(
-        Newsletter.id == newsletter_id
-    ).first()
+    newsletter = db.query(Newsletter).filter(Newsletter.id == newsletter_id).first()
 
     if not newsletter:
         raise NewsletterNotFoundError(f"Newsletter with ID {newsletter_id} not found")
@@ -180,9 +173,7 @@ def mark_newsletter_generating(
 
 
 def mark_newsletter_completed(
-    db: Session,
-    newsletter_id: int,
-    file_path: str
+    db: Session, newsletter_id: int, file_path: str
 ) -> Newsletter:
     """
     Mark newsletter as completed.
@@ -200,9 +191,7 @@ def mark_newsletter_completed(
     Raises:
         NewsletterNotFoundError: If newsletter doesn't exist
     """
-    newsletter = db.query(Newsletter).filter(
-        Newsletter.id == newsletter_id
-    ).first()
+    newsletter = db.query(Newsletter).filter(Newsletter.id == newsletter_id).first()
 
     if not newsletter:
         raise NewsletterNotFoundError(f"Newsletter with ID {newsletter_id} not found")
@@ -217,10 +206,7 @@ def mark_newsletter_completed(
     return newsletter
 
 
-def mark_newsletter_failed(
-    db: Session,
-    newsletter_id: int
-) -> Newsletter:
+def mark_newsletter_failed(db: Session, newsletter_id: int) -> Newsletter:
     """
     Mark newsletter as failed.
 
@@ -236,9 +222,7 @@ def mark_newsletter_failed(
     Raises:
         NewsletterNotFoundError: If newsletter doesn't exist
     """
-    newsletter = db.query(Newsletter).filter(
-        Newsletter.id == newsletter_id
-    ).first()
+    newsletter = db.query(Newsletter).filter(Newsletter.id == newsletter_id).first()
 
     if not newsletter:
         raise NewsletterNotFoundError(f"Newsletter with ID {newsletter_id} not found")
@@ -253,9 +237,7 @@ def mark_newsletter_failed(
 
 
 def get_newsletter_count(
-    db: Session,
-    user_id: int,
-    status: Optional[str] = None
+    db: Session, user_id: int, status: Optional[str] = None
 ) -> int:
     """
     Get count of newsletters for user.

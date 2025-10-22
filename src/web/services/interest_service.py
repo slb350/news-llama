@@ -4,6 +4,7 @@ Interest service for News Llama web application.
 Provides interest management operations with fuzzy search and validation.
 Supports both predefined categories and custom user interests.
 """
+
 from typing import Optional
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -14,21 +15,25 @@ from src.web.models import UserInterest
 # Custom Exceptions
 class InterestServiceError(Exception):
     """Base exception for interest service errors."""
+
     pass
 
 
 class InterestNotFoundError(InterestServiceError):
     """Raised when interest is not found."""
+
     pass
 
 
 class InterestValidationError(InterestServiceError):
     """Raised when interest data validation fails."""
+
     pass
 
 
 class DuplicateInterestError(InterestServiceError):
     """Raised when attempting to add duplicate interest."""
+
     pass
 
 
@@ -84,18 +89,14 @@ def search_interests(query: str) -> list[str]:
 
     query_lower = query.lower()
     matches = [
-        interest for interest in PREDEFINED_INTERESTS
-        if query_lower in interest.lower()
+        interest for interest in PREDEFINED_INTERESTS if query_lower in interest.lower()
     ]
 
     return sorted(matches)
 
 
 def add_user_interest(
-    db: Session,
-    user_id: int,
-    interest_name: str,
-    is_predefined: bool
+    db: Session, user_id: int, interest_name: str, is_predefined: bool
 ) -> UserInterest:
     """
     Add interest to user profile.
@@ -123,10 +124,14 @@ def add_user_interest(
         raise InterestValidationError("Interest name cannot exceed 200 characters")
 
     # Check for duplicates (case-insensitive)
-    existing = db.query(UserInterest).filter(
-        UserInterest.user_id == user_id,
-        UserInterest.interest_name.ilike(interest_name)
-    ).first()
+    existing = (
+        db.query(UserInterest)
+        .filter(
+            UserInterest.user_id == user_id,
+            UserInterest.interest_name.ilike(interest_name),
+        )
+        .first()
+    )
 
     if existing:
         raise DuplicateInterestError(f"User already has interest '{interest_name}'")
@@ -136,7 +141,7 @@ def add_user_interest(
         user_id=user_id,
         interest_name=interest_name,
         is_predefined=is_predefined,
-        added_at=datetime.now()
+        added_at=datetime.now(),
     )
 
     db.add(user_interest)
@@ -146,11 +151,7 @@ def add_user_interest(
     return user_interest
 
 
-def remove_user_interest(
-    db: Session,
-    user_id: int,
-    interest_name: str
-) -> bool:
+def remove_user_interest(db: Session, user_id: int, interest_name: str) -> bool:
     """
     Remove interest from user profile.
 
@@ -168,10 +169,14 @@ def remove_user_interest(
         InterestNotFoundError: If interest doesn't exist for user
     """
     # Find interest (case-insensitive)
-    interest = db.query(UserInterest).filter(
-        UserInterest.user_id == user_id,
-        UserInterest.interest_name.ilike(interest_name)
-    ).first()
+    interest = (
+        db.query(UserInterest)
+        .filter(
+            UserInterest.user_id == user_id,
+            UserInterest.interest_name.ilike(interest_name),
+        )
+        .first()
+    )
 
     if not interest:
         raise InterestNotFoundError(
@@ -184,10 +189,7 @@ def remove_user_interest(
     return True
 
 
-def get_user_interests(
-    db: Session,
-    user_id: int
-) -> list[UserInterest]:
+def get_user_interests(db: Session, user_id: int) -> list[UserInterest]:
     """
     Get all interests for a user.
 
@@ -200,6 +202,9 @@ def get_user_interests(
     Returns:
         List of UserInterest objects (empty list if none)
     """
-    return db.query(UserInterest).filter(
-        UserInterest.user_id == user_id
-    ).order_by(UserInterest.added_at).all()
+    return (
+        db.query(UserInterest)
+        .filter(UserInterest.user_id == user_id)
+        .order_by(UserInterest.added_at)
+        .all()
+    )

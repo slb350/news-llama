@@ -8,6 +8,7 @@ Tests newsletter lifecycle management:
 - mark_generating/completed/failed: Status transitions
 - get_newsletter_count: Statistics
 """
+
 import pytest
 from datetime import date, datetime
 from sqlalchemy.orm import Session

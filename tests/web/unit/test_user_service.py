@@ -8,6 +8,7 @@ Tests CRUD operations for user management:
 - update_user: Modify user details
 - delete_user: Remove user and cascade deletions
 """
+
 import pytest
 from sqlalchemy.orm import Session
 
@@ -67,7 +68,9 @@ class TestCreateUser:
     def test_create_user_too_long_name_fails(self, db: Session):
         """Should raise ValidationError for name exceeding 100 characters."""
         long_name = "A" * 101
-        with pytest.raises(UserValidationError, match="First name cannot exceed 100 characters"):
+        with pytest.raises(
+            UserValidationError, match="First name cannot exceed 100 characters"
+        ):
             create_user(db, first_name=long_name)
 
     def test_create_multiple_users(self, db: Session):
@@ -154,9 +157,7 @@ class TestUpdateUser:
         user = create_user(db, first_name="Charlie")
 
         updated = update_user(
-            db, user.id,
-            first_name="Charles",
-            avatar_path="charlie.png"
+            db, user.id, first_name="Charles", avatar_path="charlie.png"
         )
 
         assert updated.first_name == "Charles"
@@ -202,7 +203,9 @@ class TestDeleteUser:
         with pytest.raises(UserNotFoundError, match="User with ID 999 not found"):
             delete_user(db, user_id=999)
 
-    @pytest.mark.skip(reason="Requires interest_service - will test after Phase 3 completion")
+    @pytest.mark.skip(
+        reason="Requires interest_service - will test after Phase 3 completion"
+    )
     def test_delete_user_cascades_to_interests(self, db: Session):
         """Should cascade delete to user_interests table."""
         from src.web.services.interest_service import add_user_interest
@@ -217,7 +220,9 @@ class TestDeleteUser:
         # This test validates cascade behavior works
         assert get_all_users(db) == []
 
-    @pytest.mark.skip(reason="Requires newsletter_service - will test after Phase 3 completion")
+    @pytest.mark.skip(
+        reason="Requires newsletter_service - will test after Phase 3 completion"
+    )
     def test_delete_user_cascades_to_newsletters(self, db: Session):
         """Should cascade delete to newsletters table."""
         from src.web.services.newsletter_service import create_pending_newsletter

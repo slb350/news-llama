@@ -4,6 +4,7 @@ Database session management for News Llama web application.
 Provides SQLAlchemy engine, session factory, and FastAPI dependencies
 with SQLite-specific optimizations (WAL mode, foreign keys enforcement).
 """
+
 from typing import Generator
 from sqlalchemy import create_engine, event, Engine
 from sqlalchemy.orm import sessionmaker, Session
@@ -46,11 +47,7 @@ def set_sqlite_pragma(dbapi_conn, connection_record):
 
 
 # Session factory
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -105,11 +102,7 @@ def get_test_db() -> Generator[Session, None, None]:
     Base.metadata.create_all(bind=test_engine)
 
     # Create session
-    TestSessionLocal = sessionmaker(
-        autocommit=False,
-        autoflush=False,
-        bind=test_engine
-    )
+    TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
     db = TestSessionLocal()
     try:

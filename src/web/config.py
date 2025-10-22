@@ -3,6 +3,7 @@ Configuration for News Llama web application.
 
 Environment-based settings using Pydantic BaseSettings.
 """
+
 from pydantic_settings import BaseSettings
 from pathlib import Path
 

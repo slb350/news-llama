@@ -3,6 +3,7 @@ FastAPI dependencies for News Llama web application.
 
 Provides dependency injection for database sessions and user context.
 """
+
 from typing import Optional, Generator
 from fastapi import Cookie, HTTPException, status
 from sqlalchemy.orm import Session
@@ -12,8 +13,7 @@ from src.web.models import User
 
 
 def get_current_user(
-    user_id: Optional[str] = Cookie(None),
-    db: Session = None
+    user_id: Optional[str] = Cookie(None), db: Session = None
 ) -> Optional[User]:
     """
     Get current user from cookie.
@@ -47,10 +47,7 @@ def get_current_user(
     return user
 
 
-def require_user(
-    user_id: Optional[str] = Cookie(None),
-    db: Session = None
-) -> User:
+def require_user(user_id: Optional[str] = Cookie(None), db: Session = None) -> User:
     """
     Require authenticated user (raises 401 if not found).
 
@@ -76,11 +73,11 @@ def require_user(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No active user session. Please select a profile."
+            detail="No active user session. Please select a profile.",
         )
 
     return user
 
 
 # Re-export get_db for convenience
-__all__ = ['get_db', 'get_current_user', 'require_user']
+__all__ = ["get_db", "get_current_user", "require_user"]

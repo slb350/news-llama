@@ -4,6 +4,7 @@ User service for News Llama web application.
 Provides CRUD operations for user management with validation and error handling.
 Follows TDD approach with comprehensive test coverage.
 """
+
 from typing import Optional
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -14,23 +15,24 @@ from src.web.models import User
 # Custom Exceptions
 class UserServiceError(Exception):
     """Base exception for user service errors."""
+
     pass
 
 
 class UserNotFoundError(UserServiceError):
     """Raised when user is not found."""
+
     pass
 
 
 class UserValidationError(UserServiceError):
     """Raised when user data validation fails."""
+
     pass
 
 
 def create_user(
-    db: Session,
-    first_name: Optional[str],
-    avatar_path: Optional[str] = None
+    db: Session, first_name: Optional[str], avatar_path: Optional[str] = None
 ) -> User:
     """
     Create a new user.
@@ -60,9 +62,7 @@ def create_user(
 
     # Create user
     user = User(
-        first_name=first_name,
-        avatar_path=avatar_path,
-        created_at=datetime.now()
+        first_name=first_name, avatar_path=avatar_path, created_at=datetime.now()
     )
 
     db.add(user)
@@ -116,7 +116,7 @@ def update_user(
     db: Session,
     user_id: int,
     first_name: Optional[str] = None,
-    avatar_path: Optional[str] = None
+    avatar_path: Optional[str] = None,
 ) -> User:
     """
     Update user details.

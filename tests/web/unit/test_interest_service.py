@@ -9,6 +9,7 @@ Tests interest management operations:
 - get_user_interests: Get all interests for a user
 - get_predefined_interests: Get list of standard interests
 """
+
 import pytest
 from sqlalchemy.orm import Session
 
@@ -40,10 +41,23 @@ def user(db: Session):
 
 # Predefined interests that should be available
 EXPECTED_PREDEFINED_INTERESTS = [
-    "AI", "rust", "LocalLLM", "LocalLlama", "strix halo",
-    "startups", "technology", "programming", "machine learning",
-    "web development", "databases", "devops", "security",
-    "python", "javascript", "go", "systems programming"
+    "AI",
+    "rust",
+    "LocalLLM",
+    "LocalLlama",
+    "strix halo",
+    "startups",
+    "technology",
+    "programming",
+    "machine learning",
+    "web development",
+    "databases",
+    "devops",
+    "security",
+    "python",
+    "javascript",
+    "go",
+    "systems programming",
 ]
 
 
@@ -129,9 +143,7 @@ class TestAddUserInterest:
 
     def test_add_user_interest_predefined(self, db: Session, user):
         """Should add predefined interest to user."""
-        interest = add_user_interest(
-            db, user.id, "AI", is_predefined=True
-        )
+        interest = add_user_interest(db, user.id, "AI", is_predefined=True)
 
         assert interest.id is not None
         assert interest.user_id == user.id
@@ -162,7 +174,9 @@ class TestAddUserInterest:
         """Should raise DuplicateInterestError for duplicate."""
         add_user_interest(db, user.id, "AI", is_predefined=True)
 
-        with pytest.raises(DuplicateInterestError, match="User already has interest 'AI'"):
+        with pytest.raises(
+            DuplicateInterestError, match="User already has interest 'AI'"
+        ):
             add_user_interest(db, user.id, "AI", is_predefined=True)
 
     def test_add_user_interest_case_insensitive_duplicate(self, db: Session, user):
@@ -174,18 +188,24 @@ class TestAddUserInterest:
 
     def test_add_user_interest_empty_name_fails(self, db: Session, user):
         """Should raise ValidationError for empty name."""
-        with pytest.raises(InterestValidationError, match="Interest name cannot be empty"):
+        with pytest.raises(
+            InterestValidationError, match="Interest name cannot be empty"
+        ):
             add_user_interest(db, user.id, "", is_predefined=True)
 
     def test_add_user_interest_whitespace_only_fails(self, db: Session, user):
         """Should raise ValidationError for whitespace-only name."""
-        with pytest.raises(InterestValidationError, match="Interest name cannot be empty"):
+        with pytest.raises(
+            InterestValidationError, match="Interest name cannot be empty"
+        ):
             add_user_interest(db, user.id, "   ", is_predefined=True)
 
     def test_add_user_interest_too_long_fails(self, db: Session, user):
         """Should raise ValidationError for name exceeding 200 characters."""
         long_name = "A" * 201
-        with pytest.raises(InterestValidationError, match="Interest name cannot exceed 200 characters"):
+        with pytest.raises(
+            InterestValidationError, match="Interest name cannot exceed 200 characters"
+        ):
             add_user_interest(db, user.id, long_name, is_predefined=False)
 
     def test_add_user_interest_invalid_user_id(self, db: Session):
@@ -219,7 +239,9 @@ class TestRemoveUserInterest:
 
     def test_remove_user_interest_not_found(self, db: Session, user):
         """Should raise InterestNotFoundError for non-existent interest."""
-        with pytest.raises(InterestNotFoundError, match="Interest 'NonExistent' not found for user"):
+        with pytest.raises(
+            InterestNotFoundError, match="Interest 'NonExistent' not found for user"
+        ):
             remove_user_interest(db, user.id, "NonExistent")
 
     def test_remove_user_interest_leaves_others(self, db: Session, user):
@@ -297,9 +319,9 @@ class TestGetUserInterests:
         interests = get_user_interests(db, user.id)
         interest = interests[0]
 
-        assert hasattr(interest, 'id')
-        assert hasattr(interest, 'user_id')
-        assert hasattr(interest, 'interest_name')
-        assert hasattr(interest, 'is_predefined')
-        assert hasattr(interest, 'added_at')
+        assert hasattr(interest, "id")
+        assert hasattr(interest, "user_id")
+        assert hasattr(interest, "interest_name")
+        assert hasattr(interest, "is_predefined")
+        assert hasattr(interest, "added_at")
         assert interest.is_predefined is True
