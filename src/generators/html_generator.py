@@ -146,25 +146,17 @@ class HTMLGenerator:
 
         <!-- Header -->
         <header class="bg-white rounded-lg shadow-lg p-8 mb-8">
-            <div class="grid grid-cols-3 gap-4 items-center mb-6">
-                <!-- Logo (Left) -->
-                <div class="flex items-center">
-                    {% if has_logo %}
-                    <img src="logo.png" alt="News Llama" class="h-64 w-auto">
-                    {% endif %}
+            <!-- Logo and Title -->
+            <div class="text-center mb-6">
+                {% if has_logo %}
+                <div class="flex justify-center mb-6">
+                    <img src="/newsletters/logo.png" alt="" class="h-64 w-auto">
                 </div>
-
-                <!-- Title (Center) -->
-                <div class="text-center">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Daily News Digest</h1>
-                    <p class="text-xs text-gray-500 uppercase tracking-wide">AI-Powered Curation</p>
-                </div>
-
-                <!-- Timestamp (Right) -->
-                <div class="text-right">
-                    <div class="text-xs text-gray-500 font-medium uppercase tracking-wide">Generated</div>
-                    <div class="coral-accent font-semibold">{{ digest.date.strftime('%H:%M:%S') }}</div>
-                    <div class="text-xs text-gray-500">{{ digest.date.strftime('%Y-%m-%d') }}</div>
+                {% endif %}
+                <h1 class="text-5xl font-bold text-gray-900 mb-3">Daily News Digest</h1>
+                <p class="text-base text-gray-500 uppercase tracking-wide mb-3">AI-Powered Curation</p>
+                <div class="text-sm text-gray-400">
+                    Generated <span class="coral-accent font-semibold">{{ digest.date.strftime('%H:%M:%S') }}</span> on {{ digest.date.strftime('%Y-%m-%d') }}
                 </div>
             </div>
 

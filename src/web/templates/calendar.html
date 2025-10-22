@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Calendar - News Llama{% endblock %}
+
+{% block content %}
+<!-- Header Card -->
+<div class="card-static shadow-lg p-6 mb-6">
+    <div class="flex items-center justify-between">
+        <!-- User Info -->
+        <div class="flex items-center gap-4">
+            <div class="profile-avatar" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                {% if user.avatar_path %}
+                    <img src="/static/avatars/{{ user.avatar_path }}" alt="{{ user.first_name }}" class="w-full h-full object-cover rounded-full">
+                {% else %}
+                    {{ user.first_name[0] }}
+                {% endif %}
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">{{ user.first_name }}'s Newsletters</h2>
+                <p class="text-sm text-gray-500">Daily AI-Powered News Digest</p>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3">
+            <a href="/profile/settings"
+               hx-get="/profile/settings"
+               hx-trigger="click"
+               hx-target="body"
+               hx-swap="innerHTML"
+               hx-push-url="true"
+               class="btn-secondary">
+                ⚙️ Settings
+            </a>
+            <a href="/"
+               hx-get="/"
+               hx-trigger="click"
+               hx-target="body"
+               hx-swap="innerHTML"
+               hx-push-url="true"
+               class="btn-secondary">
+                👤 Switch Profile
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Calendar Card -->
+<div class="card-static shadow-lg p-6">
+    <!-- Month Navigation -->
+    <div class="flex items-center justify-between mb-6">
+        {% set prev_month = month - 1 if month > 1 else 12 %}
+        {% set prev_year = year if month > 1 else year - 1 %}
+        {% set next_month = month + 1 if month < 12 else 1 %}
+        {% set next_year = year if month < 12 else year + 1 %}
+
+        <button
+            class="btn-secondary px-4 py-2"
+            hx-get="/calendar/{{ prev_year }}/{{ prev_month }}"
+            hx-target="body"
+            hx-swap="innerHTML"
+            hx-push-url="true"
+        >
+            ← Previous
+        </button>
+
+        <h3 class="text-2xl font-bold text-gray-900">{{ current_month }}</h3>
+
+        <button
+            class="btn-secondary px-4 py-2"
+            hx-get="/calendar/{{ next_year }}/{{ next_month }}"
+            hx-target="body"
+            hx-swap="innerHTML"
+            hx-push-url="true"
+        >
+            Next →
+        </button>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div id="calendar-container">
+        <!-- Day Headers -->
+        <div class="calendar-grid mb-2">
+            <div class="text-center text-xs font-semibold text-gray-500 uppercase">Sun</div>
+            <div class="text-center text-xs font-semibold text-gray-500 uppercase">Mon</div>
+            <div class="text-center text-xs font-semibold text-gray-500 uppercase">Tue</div>
+            <div class="text-center text-xs font-semibold text-gray-500 uppercase">Wed</div>
+            <div class="text-center text-xs font-semibold text-gray-500 uppercase">Thu</div>
+            <div class="text-center text-xs font-semibold text-gray-500 uppercase">Fri</div>
+            <div class="text-center text-xs font-semibold text-gray-500 uppercase">Sat</div>
+        </div>
+
+        <!-- Calendar Days (Mockup with static data) -->
+        <div class="calendar-grid">
+            <!-- Empty days (padding for month start) -->
+            <div class="calendar-day opacity-30">
+                <span class="text-sm font-semibold">26</span>
+            </div>
+            <div class="calendar-day opacity-30">
+                <span class="text-sm font-semibold">27</span>
+            </div>
+            <div class="calendar-day opacity-30">
+                <span class="text-sm font-semibold">28</span>
+            </div>
+            <div class="calendar-day opacity-30">
+                <span class="text-sm font-semibold">29</span>
+            </div>
+            <div class="calendar-day opacity-30">
+                <span class="text-sm font-semibold">30</span>
+            </div>
+            <div class="calendar-day opacity-30">
+                <span class="text-sm font-semibold">31</span>
+            </div>
+
+            <!-- October days -->
+            {% set days_in_october = 31 %}
+            {% for day in range(1, days_in_october + 1) %}
+                {% set date_str = "2025-10-" ~ ("%02d"|format(day)) %}
+                {% set has_newsletter = newsletters|selectattr('date', 'equalto', date_str)|list|length > 0 %}
+                {% set newsletter = newsletters|selectattr('date', 'equalto', date_str)|first if has_newsletter else none %}
+                {% set is_today = day == 22 %}
+
+                {% if has_newsletter and newsletter.status == 'completed' %}
+                <div class="calendar-day has-newsletter
+                    {% if is_today %}today{% endif %}"
+                    onclick="openNewsletterModal('{{ newsletter.guid }}', '{{ newsletter.date }}')">
+                {% else %}
+                <div class="calendar-day
+                    {% if has_newsletter and newsletter.status == 'pending' %}pending{% endif %}
+                    {% if is_today %}today{% endif %}">
+                {% endif %}
+                    <span class="text-sm font-semibold">{{ day }}</span>
+                    {% if has_newsletter and newsletter.status == 'completed' %}
+                        <span class="text-xs mt-1">🦙</span>
+                    {% elif has_newsletter and newsletter.status == 'pending' %}
+                        <span class="text-xs mt-1">⏳</span>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <!-- Padding for rest of week -->
+            <div class="calendar-day opacity-30">
+                <span class="text-sm font-semibold">1</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="mt-6 pt-6 border-t border-gray-200">
+        <div class="flex gap-6 justify-center text-sm">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded bg-white border-2 border-coral-accent"></div>
+                <span class="text-gray-600">Today</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded coral-bg flex items-center justify-center text-xs">🦙</div>
+                <span class="text-gray-600">Newsletter Ready</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded border-2 border-dashed coral-border flex items-center justify-center text-xs">⏳</div>
+                <span class="text-gray-600">Generating</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Card -->
+<div class="card-static shadow-lg p-6 mt-6">
+    <div class="grid grid-cols-4 gap-4">
+        <div class="stats-box">
+            <div class="stats-number coral-accent">{{ newsletters|length }}</div>
+            <div class="stats-label">This Month</div>
+        </div>
+        <div class="stats-box">
+            <div class="stats-number">{{ newsletters|selectattr('status', 'equalto', 'completed')|list|length }}</div>
+            <div class="stats-label">Completed</div>
+        </div>
+        <div class="stats-box">
+            <div class="stats-number">{{ newsletters|selectattr('status', 'equalto', 'pending')|list|length }}</div>
+            <div class="stats-label">Pending</div>
+        </div>
+        <div class="stats-box">
+            <div class="stats-number">365</div>
+            <div class="stats-label">Days Retention</div>
+        </div>
+    </div>
+</div>
+
+<!-- Newsletter Modal -->
+<div id="newsletter-modal" class="newsletter-modal" style="display: none;">
+    <div class="newsletter-modal-content">
+        <div class="newsletter-modal-header">
+            <p class="text-sm text-gray-700 font-medium" id="modal-date"></p>
+            <button onclick="closeNewsletterModal()" class="newsletter-modal-close">
+                ✕ Close
+            </button>
+        </div>
+        <iframe id="newsletter-iframe" class="newsletter-modal-iframe"></iframe>
+    </div>
+</div>
+
+<script>
+    function openNewsletterModal(guid, date) {
+        const modal = document.getElementById('newsletter-modal');
+        const iframe = document.getElementById('newsletter-iframe');
+        const dateEl = document.getElementById('modal-date');
+
+        // Format date nicely
+        const dateObj = new Date(date);
+        const formattedDate = dateObj.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        dateEl.textContent = formattedDate;
+
+        // Add cache buster to ensure fresh content
+        const cacheBuster = '?v=' + new Date().getTime();
+        iframe.src = '/newsletter/' + guid + cacheBuster;
+
+        modal.style.display = 'flex';
+
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeNewsletterModal() {
+        const modal = document.getElementById('newsletter-modal');
+        const iframe = document.getElementById('newsletter-iframe');
+
+        modal.style.display = 'none';
+        iframe.src = '';
+
+        // Restore body scroll
+        document.body.style.overflow = '';
+    }
+
+    // Close on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeNewsletterModal();
+        }
+    });
+
+    // Close on background click
+    document.getElementById('newsletter-modal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeNewsletterModal();
+        }
+    });
+</script>
+{% endblock %}

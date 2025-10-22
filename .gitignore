@@ -5,6 +5,7 @@ output/
 outputs/
 logs/
 *.log
+.obsidian/
 
 # Environment and secrets
 .env

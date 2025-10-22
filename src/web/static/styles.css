@@ -1,0 +1,306 @@
+/* News Llama Web Application Styles
+ * Matches newsletter design: JetBrains Mono, coral accent, warm cream background
+ */
+
+/* Base Typography */
+body {
+    font-family: 'JetBrains Mono', monospace;
+    background: #F5F1EA; /* Warm cream background */
+}
+
+/* Color Classes */
+.coral-accent {
+    color: #E85D4A;
+}
+
+.coral-bg {
+    background-color: #E85D4A;
+}
+
+.coral-bg-light {
+    background-color: #FEE9E7;
+}
+
+.coral-border {
+    border-color: #E85D4A;
+}
+
+/* Card Styles */
+.card {
+    background: white;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.08);
+}
+
+.card-static {
+    background: white;
+    border-radius: 12px;
+}
+
+/* Profile Cards */
+.profile-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+}
+
+.profile-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    border-color: #E85D4A;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #FEE9E7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: bold;
+    color: #E85D4A;
+    margin: 0 auto 1rem;
+}
+
+/* Interest Tags */
+.interest-tag {
+    display: inline-block;
+    background-color: #E85D4A;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.interest-tag:hover {
+    background-color: #d14935;
+    transform: scale(1.05);
+}
+
+.interest-tag:active {
+    transform: scale(0.95);
+}
+
+.interest-tag.selected {
+    background-color: #d14935;
+    box-shadow: 0 0 0 3px #FEE9E7;
+}
+
+/* Calendar Styles */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 8px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    text-decoration: none;
+    color: inherit;
+}
+
+.calendar-day:hover {
+    background: #FEE9E7;
+    transform: scale(1.05);
+}
+
+.calendar-day.has-newsletter {
+    background: #E85D4A;
+    color: white;
+}
+
+.calendar-day.has-newsletter:hover {
+    background: #d14935;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.calendar-day.pending {
+    background: #FEE9E7;
+    border: 2px dashed #E85D4A;
+}
+
+.calendar-day.today {
+    border: 2px solid #E85D4A;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #E85D4A;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background-color: #d14935;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.btn-secondary {
+    background-color: white;
+    color: #E85D4A;
+    border: 2px solid #E85D4A;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-secondary:hover {
+    background-color: #FEE9E7;
+    transform: translateY(-2px);
+}
+
+/* Form Inputs */
+input[type="text"],
+input[type="search"] {
+    font-family: 'JetBrains Mono', monospace;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus {
+    outline: none;
+    border-color: #E85D4A;
+    box-shadow: 0 0 0 3px #FEE9E7;
+}
+
+/* Stats Box */
+.stats-box {
+    background: #f9fafb;
+    border-radius: 0.75rem;
+    padding: 1rem;
+}
+
+.stats-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #111827;
+}
+
+.stats-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* HTMX Loading States */
+.htmx-swapping {
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+}
+
+.htmx-settling {
+    opacity: 1;
+}
+
+/* Newsletter Modal */
+.newsletter-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 2rem;
+}
+
+.newsletter-modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 1200px;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+.newsletter-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    background: linear-gradient(to bottom, #F5F1EA 0%, white 100%);
+    border-bottom: 2px solid #E85D4A;
+}
+
+.newsletter-modal-close {
+    background: #E85D4A;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.newsletter-modal-close:hover {
+    background: #d14935;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.newsletter-modal-iframe {
+    flex: 1;
+    border: none;
+    border-radius: 0 0 12px 12px;
+}

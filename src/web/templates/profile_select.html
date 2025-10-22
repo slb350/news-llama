@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Select Profile - News Llama{% endblock %}
+
+{% block content %}
+<div class="card-static shadow-lg p-8">
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <div class="flex justify-center mb-3">
+            <img src="/static/logo.png" alt="News Llama" class="h-32 w-auto">
+        </div>
+        <p class="text-lg coral-accent font-semibold mb-2">No Drama, Just News Llama</p>
+        <p class="text-sm text-gray-500 uppercase tracking-wide">Select Your Profile</p>
+    </div>
+
+    <!-- Profile Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        {% for user in users %}
+        <div class="profile-card"
+             hx-get="/calendar?user_id={{ user.id }}"
+             hx-trigger="click"
+             hx-target="body"
+             hx-swap="innerHTML"
+             hx-push-url="true">
+            <div class="profile-avatar">
+                {% if user.avatar_path %}
+                    <img src="/static/avatars/{{ user.avatar_path }}" alt="{{ user.first_name }}" class="w-full h-full object-cover rounded-full">
+                {% else %}
+                    {{ user.first_name[0] }}
+                {% endif %}
+            </div>
+            <h3 class="text-center text-xl font-semibold text-gray-900">{{ user.first_name }}</h3>
+        </div>
+        {% endfor %}
+
+        <!-- New Profile Card -->
+        <div class="profile-card border-2 border-dashed border-gray-300"
+             hx-get="/profile/new"
+             hx-trigger="click"
+             hx-target="body"
+             hx-swap="innerHTML"
+             hx-push-url="true">
+            <div class="profile-avatar bg-gray-100">
+                <span class="text-5xl text-gray-400">+</span>
+            </div>
+            <h3 class="text-center text-xl font-semibold text-gray-500">New Profile</h3>
+        </div>
+    </div>
+
+    <!-- Footer Stats -->
+    <div class="grid grid-cols-3 gap-4 pt-6 border-t border-gray-200">
+        <div class="text-center">
+            <div class="stats-number">{{ users|length }}</div>
+            <div class="stats-label">Profiles</div>
+        </div>
+        <div class="text-center">
+            <div class="stats-number coral-accent">{{ users|length * 7 }}</div>
+            <div class="stats-label">Newsletters This Week</div>
+        </div>
+        <div class="text-center">
+            <div class="stats-number">100+</div>
+            <div class="stats-label">Categories Available</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
