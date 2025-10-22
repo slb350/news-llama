@@ -1,0 +1,36 @@
+# Core dependencies
+open-agent-sdk>=0.1.0
+python-dotenv>=1.0.0
+feedparser>=6.0.10
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+pydantic>=2.0.0
+PyYAML>=6.0
+jinja2>=3.1.0
+
+# Social media APIs
+tweepy>=4.14.0
+asyncpraw>=7.7.1
+
+# Web search
+googlesearch-python>=1.2.3
+ddgs>=1.0.0
+
+# Text processing
+nltk>=3.8.1
+textblob>=0.17.1
+newspaper3k>=0.2.8
+lxml_html_clean>=0.4.3
+
+# Utilities
+python-dateutil>=2.8.2
+schedule>=1.2.0
+rich>=13.0.0
+loguru>=0.7.0
+
+# Development
+pytest>=7.4.0
+pytest-cov>=4.1.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.5.0

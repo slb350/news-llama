@@ -1,0 +1,81 @@
+# News sources configuration
+sources:
+  rss:
+    - url: "https://feeds.bbci.co.uk/news/rss.xml"
+      name: "BBC News"
+      category: "general"
+    - url: "https://rss.cnn.com/rss/edition.rss"
+      name: "CNN"
+      category: "general"
+    - url: "https://techcrunch.com/feed/"
+      name: "TechCrunch"
+      category: "technology"
+  
+  twitter:
+    - username: "elonmusk"
+      category: "technology"
+    - username: "verge"
+      category: "technology"
+    - username: "bbcnews"
+      category: "general"
+  
+  reddit:
+    - subreddit: "technology"
+      category: "technology"
+      limit: 50
+    - subreddit: "worldnews"
+      category: "general"
+      limit: 50
+    - subreddit: "python"
+      category: "programming"
+      limit: 30
+  
+  hacker_news:
+    enabled: true
+    limit: 100
+    categories: ["top", "best", "new"]
+
+# Interest categories and keywords
+categories:
+  technology:
+    keywords: ["AI", "machine learning", "python", "programming", "startup", "tech"]
+    priority: high
+  programming:
+    keywords: ["code", "development", "software", "github", "open source"]
+    priority: high
+  general:
+    keywords: ["news", "world", "politics", "economy"]
+    priority: medium
+
+# LLM configuration
+llm:
+  model: "llama-3.1-8b-instruct"
+  temperature: 0.7
+  max_tokens: 500
+  api_url: "http://localhost:8000/v1"
+
+# Output configuration
+output:
+  formats: ["html", "rss", "json"]
+  directory: "output"
+  template_dir: "templates"
+  max_articles_per_category: 5
+  include_images: true
+
+# Processing settings
+processing:
+  duplicate_threshold: 0.8  # Similarity threshold for duplicate detection
+  min_article_length: 200   # Minimum characters to process
+  max_article_age: 24       # Maximum age in hours
+  sentiment_analysis: true
+
+# Scheduler settings
+scheduler:
+  enabled: true
+  frequency: "daily"  # hourly, daily, weekly
+  time: "09:00"       # Time of day to run
+
+# Logging
+logging:
+  level: "INFO"
+  file: "logs/news-llama.log"
