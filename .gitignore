@@ -1,5 +1,6 @@
 # Project-specific
 CLAUDE.md
+plan.md
 output/
 outputs/
 logs/
@@ -105,7 +106,10 @@ Temporary Items
 *.tmp
 
 # Database files
+data/
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 
