@@ -92,7 +92,10 @@ class NewsletterResponse(BaseModel):
 class NewsletterCreate(BaseModel):
     """Request schema for creating a newsletter."""
 
-    date: str = Field(..., description="Date in YYYY-MM-DD format")
+    date: str = Field(
+        default_factory=lambda: date.today().isoformat(),
+        description="Date in YYYY-MM-DD format (defaults to today)",
+    )
 
     @field_validator("date")
     @classmethod

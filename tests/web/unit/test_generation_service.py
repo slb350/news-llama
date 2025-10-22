@@ -10,9 +10,8 @@ Tests newsletter generation lifecycle:
 
 import pytest
 from datetime import date
-from pathlib import Path
 from sqlalchemy.orm import Session
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from src.web.services.generation_service import (
     queue_newsletter_generation,
@@ -75,7 +74,9 @@ class TestQueueNewsletterGeneration:
         assert newsletter.guid is not None
         assert len(newsletter.guid) > 0
 
-    def test_queue_newsletter_prevents_duplicates(self, db: Session, user_with_interests):
+    def test_queue_newsletter_prevents_duplicates(
+        self, db: Session, user_with_interests
+    ):
         """Should prevent duplicate newsletters for same user/date."""
         queue_newsletter_generation(db, user_with_interests.id, date(2025, 10, 22))
 

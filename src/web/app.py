@@ -4,17 +4,29 @@ Phase 3: Backend integration with database services.
 """
 
 from fastapi import FastAPI, Request, Depends, Response, HTTPException
-from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from pathlib import Path
+from datetime import date
 
 from src.web.database import get_db
 from src.web.dependencies import get_current_user
-from src.web.schemas import ProfileCreateRequest, ProfileUpdateRequest, InterestAdd
+from src.web.schemas import (
+    ProfileCreateRequest,
+    ProfileUpdateRequest,
+    InterestAdd,
+    NewsletterCreate,
+    NewsletterResponse,
+)
 from src.web.models import User
-from src.web.services import user_service, interest_service, newsletter_service
+from src.web.services import (
+    user_service,
+    interest_service,
+    newsletter_service,
+    generation_service,
+)
 
 # Initialize FastAPI app
 app = FastAPI(title="News Llama")
@@ -23,9 +35,8 @@ app = FastAPI(title="News Llama")
 static_path = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
-# Mount output directory for newsletters
+# Output path reference (for file serving via routes, not static mount)
 output_path = Path(__file__).parent.parent.parent / "output"
-app.mount("/newsletters", StaticFiles(directory=str(output_path)), name="newsletters")
 
 # Templates
 templates_path = Path(__file__).parent / "templates"
@@ -271,15 +282,76 @@ async def remove_interest_route(
         raise HTTPException(status_code=404, detail="Interest not found")
 
 
-@app.get("/newsletter/{guid}")
-async def view_newsletter(guid: str):
-    """View a newsletter by GUID."""
-    # In mockup, redirect to the static file
-    # In production, this would look up the file_path from database
-    newsletter_file = output_path / f"{guid}.html"
-    if newsletter_file.exists():
-        return FileResponse(newsletter_file)
-    return HTMLResponse("<h1>Newsletter not found</h1>", status_code=404)
+@app.post("/newsletters/generate", response_model=NewsletterResponse)
+async def generate_newsletter(
+    newsletter_data: NewsletterCreate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Generate newsletter for specified date."""
+    # Require user session
+    if not user:
+        return RedirectResponse(url="/", status_code=303)
+
+    try:
+        # Parse date from validated input
+        newsletter_date = date.fromisoformat(newsletter_data.date)
+
+        # Queue newsletter generation
+        newsletter = generation_service.queue_newsletter_generation(
+            db, user.id, newsletter_date
+        )
+
+        # Return newsletter response
+        return NewsletterResponse(
+            id=newsletter.id,
+            user_id=newsletter.user_id,
+            date=newsletter.date,
+            guid=newsletter.guid,
+            file_path=newsletter.file_path,
+            status=newsletter.status,
+            generated_at=newsletter.generated_at,
+            retry_count=newsletter.retry_count,
+        )
+
+    except generation_service.NewsletterAlreadyExistsError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    except generation_service.GenerationServiceError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/newsletters/{guid}")
+async def view_newsletter(guid: str, db: Session = Depends(get_db)):
+    """View a newsletter by GUID - database-backed retrieval."""
+    try:
+        # Look up newsletter in database
+        newsletter = newsletter_service.get_newsletter_by_guid(db, guid)
+
+        # If newsletter is completed and file exists, serve the file
+        if newsletter.status == "completed" and newsletter.file_path:
+            file_path = Path(newsletter.file_path)
+            if file_path.exists():
+                return FileResponse(file_path, media_type="text/html")
+            else:
+                # File missing despite completed status
+                raise HTTPException(
+                    status_code=500, detail="Newsletter file not found on disk"
+                )
+
+        # For pending/generating/failed, return status information
+        return JSONResponse(
+            content={
+                "guid": newsletter.guid,
+                "date": newsletter.date,
+                "status": newsletter.status,
+                "file_path": newsletter.file_path,
+                "generated_at": newsletter.generated_at,
+                "retry_count": newsletter.retry_count,
+            }
+        )
+
+    except newsletter_service.NewsletterNotFoundError:
+        raise HTTPException(status_code=404, detail="Newsletter not found")
 
 
 @app.get("/calendar/{year}/{month}", response_class=HTMLResponse)

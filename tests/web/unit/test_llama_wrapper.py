@@ -10,9 +10,8 @@ Tests integration between web app and main NewsLlama engine:
 import pytest
 from datetime import date
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import tempfile
-import shutil
 
 from src.web.services.llama_wrapper import (
     generate_newsletter_for_interests,
@@ -100,9 +99,7 @@ class TestGenerateNewsletterForInterests:
 
         # Mock file doesn't exist after generation
         with patch("src.web.services.llama_wrapper.Path.exists", return_value=False):
-            with pytest.raises(
-                NewsLlamaWrapperError, match="Output file.*not created"
-            ):
+            with pytest.raises(NewsLlamaWrapperError, match="Output file.*not created"):
                 generate_newsletter_for_interests(interests, output_date)
 
     @patch("src.web.services.llama_wrapper.NewsLlama")
@@ -125,9 +122,7 @@ class TestGenerateNewsletterForInterests:
         mock_ensure.assert_called_once()
 
     @patch("src.web.services.llama_wrapper.NewsLlama")
-    def test_generate_newsletter_uses_correct_date_format(
-        self, mock_news_llama_class
-    ):
+    def test_generate_newsletter_uses_correct_date_format(self, mock_news_llama_class):
         """Should format date correctly in output filename."""
         mock_instance = Mock()
         mock_news_llama_class.return_value = mock_instance

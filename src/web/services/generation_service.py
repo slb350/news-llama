@@ -11,6 +11,9 @@ import logging
 
 from src.web.services import user_service, interest_service, newsletter_service
 from src.web.models import Newsletter
+from src.web.services.llama_wrapper import (
+    generate_newsletter_for_interests as generate_news_digest,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -85,8 +88,10 @@ def process_newsletter_generation(db: Session, newsletter_id: int):
     try:
         newsletter = db.query(Newsletter).filter(Newsletter.id == newsletter_id).first()
         if not newsletter:
-            raise GenerationServiceError(f"Newsletter with ID {newsletter_id} not found")
-    except Exception as e:
+            raise GenerationServiceError(
+                f"Newsletter with ID {newsletter_id} not found"
+            )
+    except Exception:
         raise GenerationServiceError(f"Newsletter with ID {newsletter_id} not found")
 
     # Mark as generating
@@ -177,7 +182,3 @@ def handle_generation_error(db: Session, newsletter_id: int, error_message: str)
 
     # Mark as failed and increment retry count
     newsletter_service.mark_newsletter_failed(db, newsletter_id)
-
-
-# Import actual generation function from llama_wrapper
-from src.web.services.llama_wrapper import generate_newsletter_for_interests as generate_news_digest
