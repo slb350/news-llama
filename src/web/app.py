@@ -140,8 +140,10 @@ async def profile_create(
         )
 
     # Queue newsletter generation for today
+    newsletter_queued = False
     try:
         generation_service.queue_newsletter_generation(db, user.id, date.today())
+        newsletter_queued = True
     except generation_service.NewsletterAlreadyExistsError:
         # Newsletter already exists for today - this is fine, continue
         pass
@@ -150,8 +152,13 @@ async def profile_create(
         # Newsletter generation failures shouldn't prevent user onboarding
         pass
 
-    # Set user_id cookie and redirect
-    redirect = RedirectResponse(url="/calendar", status_code=303)
+    # Set user_id cookie and redirect with toast message
+    if newsletter_queued:
+        redirect_url = "/calendar?toast=Generating your first newsletter! This may take 10-15 minutes depending on your interests.&toast_type=info"
+    else:
+        redirect_url = "/calendar"
+
+    redirect = RedirectResponse(url=redirect_url, status_code=303)
     redirect.set_cookie(key="user_id", value=str(user.id))
     return redirect
 

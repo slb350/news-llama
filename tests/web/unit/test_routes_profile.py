@@ -131,9 +131,9 @@ class TestProfileCreatePost:
             follow_redirects=False,
         )
 
-        # Should redirect to calendar
+        # Should redirect to calendar (possibly with toast query params)
         assert response.status_code == 303  # See Other redirect
-        assert response.headers["location"] == "/calendar"
+        assert response.headers["location"].startswith("/calendar")
 
         # Should set user_id cookie
         assert "user_id" in response.cookies

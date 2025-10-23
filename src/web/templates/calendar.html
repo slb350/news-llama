@@ -127,13 +127,20 @@
                 {% else %}
                 <div class="calendar-day
                     {% if has_newsletter and newsletter.status == 'pending' %}pending{% endif %}
-                    {% if is_today %}today{% endif %}">
+                    {% if has_newsletter and newsletter.status == 'generating' %}generating{% endif %}
+                    {% if has_newsletter and newsletter.status == 'failed' %}failed{% endif %}
+                    {% if is_today %}today{% endif %}"
+                    {% if has_newsletter %}data-newsletter-guid="{{ newsletter.guid }}" data-newsletter-status="{{ newsletter.status }}"{% endif %}>
                 {% endif %}
                     <span class="text-sm font-semibold">{{ day }}</span>
                     {% if has_newsletter and newsletter.status == 'completed' %}
                         <span class="text-xs mt-1">🦙</span>
                     {% elif has_newsletter and newsletter.status == 'pending' %}
                         <span class="text-xs mt-1">⏳</span>
+                    {% elif has_newsletter and newsletter.status == 'generating' %}
+                        <span class="text-xs mt-1 generating-spinner">⚙️</span>
+                    {% elif has_newsletter and newsletter.status == 'failed' %}
+                        <span class="text-xs mt-1">❌</span>
                     {% endif %}
                 </div>
             {% endfor %}
@@ -147,18 +154,26 @@
 
     <!-- Legend -->
     <div class="mt-6 pt-6 border-t border-gray-200">
-        <div class="flex gap-6 justify-center text-sm">
+        <div class="flex gap-4 justify-center text-sm flex-wrap">
             <div class="flex items-center gap-2">
                 <div class="w-6 h-6 rounded bg-white border-2 border-coral-accent"></div>
                 <span class="text-gray-600">Today</span>
             </div>
             <div class="flex items-center gap-2">
                 <div class="w-6 h-6 rounded coral-bg flex items-center justify-center text-xs">🦙</div>
-                <span class="text-gray-600">Newsletter Ready</span>
+                <span class="text-gray-600">Ready</span>
             </div>
             <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded border-2 border-dashed coral-border flex items-center justify-center text-xs">⏳</div>
+                <div class="w-6 h-6 rounded border-2 border-dashed border-gray-400 flex items-center justify-center text-xs">⏳</div>
+                <span class="text-gray-600">Queued</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded border-2 border-dashed border-blue-400 flex items-center justify-center text-xs">⚙️</div>
                 <span class="text-gray-600">Generating</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded border-2 border-red-400 flex items-center justify-center text-xs">❌</div>
+                <span class="text-gray-600">Failed</span>
             </div>
         </div>
     </div>
@@ -248,6 +263,88 @@
     document.getElementById('newsletter-modal')?.addEventListener('click', function(e) {
         if (e.target === this) {
             closeNewsletterModal();
+        }
+    });
+
+    // Newsletter Status Polling
+    let pollingInterval = null;
+
+    function pollNewsletterStatus() {
+        // Find all calendar days with pending or generating newsletters
+        const activeDays = document.querySelectorAll('[data-newsletter-guid][data-newsletter-status]');
+
+        activeDays.forEach(async (dayEl) => {
+            const guid = dayEl.dataset.newsletterGuid;
+            const currentStatus = dayEl.dataset.newsletterStatus;
+
+            // Only poll for pending or generating newsletters
+            if (currentStatus === 'pending' || currentStatus === 'generating') {
+                try {
+                    const response = await fetch(`/newsletters/${guid}`);
+                    const data = await response.json();
+
+                    // Check if status changed
+                    if (data.status !== currentStatus) {
+                        console.log(`Newsletter ${guid} status changed: ${currentStatus} → ${data.status}`);
+
+                        // Update data attribute
+                        dayEl.dataset.newsletterStatus = data.status;
+
+                        // Update classes and icon
+                        updateNewsletterDayDisplay(dayEl, data.status);
+
+                        // Show toast for completed or failed
+                        if (data.status === 'completed') {
+                            NewsLlama.showToast('Newsletter ready! Click the date to view.', 'success');
+                        } else if (data.status === 'failed') {
+                            NewsLlama.showToast('Newsletter generation failed. Please try again.', 'error');
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Failed to poll newsletter ${guid}:`, error);
+                }
+            }
+        });
+    }
+
+    function updateNewsletterDayDisplay(dayEl, status) {
+        // Remove old status classes
+        dayEl.classList.remove('pending', 'generating', 'failed');
+
+        // Find the icon element
+        const iconEl = dayEl.querySelector('.text-xs');
+
+        if (status === 'completed') {
+            // Make clickable
+            dayEl.classList.add('has-newsletter');
+            const date = dayEl.closest('[data-newsletter-guid]')?.dataset.newsletterGuid;
+            dayEl.onclick = () => openNewsletterModal(dayEl.dataset.newsletterGuid, date);
+            if (iconEl) iconEl.textContent = '🦙';
+        } else if (status === 'generating') {
+            dayEl.classList.add('generating');
+            if (iconEl) {
+                iconEl.textContent = '⚙️';
+                iconEl.classList.add('generating-spinner');
+            }
+        } else if (status === 'failed') {
+            dayEl.classList.add('failed');
+            if (iconEl) iconEl.textContent = '❌';
+        } else if (status === 'pending') {
+            dayEl.classList.add('pending');
+            if (iconEl) iconEl.textContent = '⏳';
+        }
+    }
+
+    // Start polling when page loads (30-second intervals)
+    pollingInterval = setInterval(pollNewsletterStatus, 30000);
+
+    // Poll immediately on page load
+    pollNewsletterStatus();
+
+    // Stop polling when navigating away
+    window.addEventListener('beforeunload', () => {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
         }
     });
 </script>

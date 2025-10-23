@@ -15,5 +15,61 @@
     <div class="container mx-auto px-4 py-8 max-w-6xl">
         {% block content %}{% endblock %}
     </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        // Toast Notification System
+        window.NewsLlama = window.NewsLlama || {};
+
+        NewsLlama.showToast = function(message, type = 'info', duration = 5000) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = {
+                success: '✓',
+                error: '✕',
+                info: 'ℹ',
+                warning: '⚠'
+            };
+
+            toast.innerHTML = `
+                <span class="toast-icon">${icons[type] || icons.info}</span>
+                <div class="toast-content">
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="NewsLlama.closeToast(this)">×</button>
+            `;
+
+            container.appendChild(toast);
+
+            // Auto-dismiss after duration
+            if (duration > 0) {
+                setTimeout(() => {
+                    NewsLlama.closeToast(toast.querySelector('.toast-close'));
+                }, duration);
+            }
+        };
+
+        NewsLlama.closeToast = function(button) {
+            const toast = button.closest('.toast');
+            toast.classList.add('hiding');
+            setTimeout(() => toast.remove(), 300);
+        };
+
+        // Check for URL parameters to show toasts
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('toast')) {
+            const message = urlParams.get('toast');
+            const type = urlParams.get('toast_type') || 'info';
+            NewsLlama.showToast(message, type);
+
+            // Clean URL by removing toast params
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, '', newUrl);
+        }
+    </script>
 </body>
 </html>
