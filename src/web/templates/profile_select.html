@@ -63,4 +63,20 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Check for toast notification in URL query parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const toastMessage = urlParams.get('toast');
+    const toastType = urlParams.get('toast_type') || 'info';
+
+    if (toastMessage) {
+        // Show toast using global NewsLlama.showToast() from base.html
+        NewsLlama.showToast(toastMessage, toastType);
+
+        // Clean up URL (remove query params without page reload)
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+    }
+</script>
 {% endblock %}

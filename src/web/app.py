@@ -496,16 +496,21 @@ async def profile_settings_update(
 @app.delete("/profile/{user_id}")
 async def delete_profile(
     user_id: int,
+    response: Response,
     db: Session = Depends(get_db),
 ):
     """
     Delete user profile and all associated data.
 
     Cascades to user_interests and newsletters tables.
+    Clears session cookie to prevent stale session errors.
     """
     try:
-        # Delete the user (service handles cascade via foreign keys)
+        # Delete the user (service handles cascade via foreign keys + file cleanup)
         user_service.delete_user(db, user_id)
+
+        # Clear the session cookie to prevent "user not found" errors
+        response.delete_cookie("user_id")
 
         return {
             "status": "success",

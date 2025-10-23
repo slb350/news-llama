@@ -185,11 +185,12 @@
                         class="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors"
                         hx-delete="/profile/{{ user.id }}"
                         hx-confirm="Are you sure you want to delete this profile? This action cannot be undone and will delete all your newsletters."
-                        hx-target="body"
-                        hx-swap="none"
-                        onclick="handleDeleteProfile(event)"
+                        hx-indicator="#delete-spinner"
+                        hx-disabled-elt="this"
+                        data-delete-profile
                     >
-                        Delete Profile
+                        <span id="delete-spinner" class="htmx-indicator">Deleting...</span>
+                        <span class="htmx-not-indicator">Delete Profile</span>
                     </button>
                 </div>
             </div>
@@ -324,21 +325,27 @@
         }
     });
 
-    // Handle profile deletion and redirect
-    window.handleDeleteProfile = function(event) {
-        // HTMX will handle the confirmation dialog (hx-confirm)
-        // This handler processes the response after successful deletion
-        document.body.addEventListener('htmx:afterRequest', function handler(evt) {
-            if (evt.detail.target.hasAttribute('hx-delete') && evt.detail.successful) {
+    // Handle profile deletion responses (global listener, no memory leak)
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+        // Only handle delete profile requests
+        if (evt.detail.target.hasAttribute('data-delete-profile')) {
+            if (evt.detail.successful) {
                 // Successful deletion - redirect to profile selection
-                document.body.removeEventListener('htmx:afterRequest', handler);
                 window.location.href = '/?toast=Profile deleted successfully&toast_type=success';
-            } else if (evt.detail.target.hasAttribute('hx-delete') && !evt.detail.successful) {
-                // Failed deletion - show error
-                document.body.removeEventListener('htmx:afterRequest', handler);
-                alert('Failed to delete profile. Please try again.');
+            } else {
+                // Failed deletion - show actual error from server
+                let errorMessage = 'Failed to delete profile. Please try again.';
+                try {
+                    const response = JSON.parse(evt.detail.xhr.responseText);
+                    if (response.detail) {
+                        errorMessage = response.detail;
+                    }
+                } catch (e) {
+                    // Response wasn't JSON, use default message
+                }
+                alert(errorMessage);
             }
-        });
-    };
+        }
+    });
 </script>
 {% endblock %}
