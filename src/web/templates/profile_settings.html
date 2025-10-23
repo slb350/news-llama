@@ -122,7 +122,7 @@
                         aria-describedby="custom-interest-error"
                         aria-invalid="false"
                     >
-                    <button type="button" class="btn-secondary" onclick="addCustomInterest()">
+                    <button type="button" class="btn-secondary" id="add-custom-btn">
                         Add
                     </button>
                 </div>
@@ -140,7 +140,7 @@
                 <button
                     type="button"
                     class="interest-tag text-center {% if interest in user_interests %}selected{% endif %}"
-                    onclick="toggleInterest(this, '{{ interest }}')"
+                    data-interest="{{ interest }}"
                 >
                     {{ interest }}
                 </button>
@@ -183,7 +183,11 @@
                     <button
                         type="button"
                         class="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors"
-                        onclick="confirm('Are you sure you want to delete this profile? This cannot be undone.') && alert('Delete functionality coming in Phase 3')"
+                        hx-delete="/profile/{{ user.id }}"
+                        hx-confirm="Are you sure you want to delete this profile? This action cannot be undone and will delete all your newsletters."
+                        hx-target="body"
+                        hx-swap="none"
+                        onclick="handleDeleteProfile(event)"
                     >
                         Delete Profile
                     </button>
@@ -225,6 +229,19 @@
             const interest = interestTag.dataset.interest;
             interestManager.remove(interest);
         }
+    });
+
+    // Add event listeners for predefined interest grid (safe from XSS)
+    document.querySelectorAll('.interest-tag[data-interest]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const interest = this.dataset.interest;
+            interestManager.toggle(this, interest);
+        });
+    });
+
+    // Add custom interest button click handler (safe from XSS)
+    document.getElementById('add-custom-btn').addEventListener('click', function() {
+        interestManager.addCustom('custom-interest');
     });
 
     // Handle avatar file selection using shared module
@@ -306,5 +323,22 @@
             submitBtn.textContent = 'Save Changes';
         }
     });
+
+    // Handle profile deletion and redirect
+    window.handleDeleteProfile = function(event) {
+        // HTMX will handle the confirmation dialog (hx-confirm)
+        // This handler processes the response after successful deletion
+        document.body.addEventListener('htmx:afterRequest', function handler(evt) {
+            if (evt.detail.target.hasAttribute('hx-delete') && evt.detail.successful) {
+                // Successful deletion - redirect to profile selection
+                document.body.removeEventListener('htmx:afterRequest', handler);
+                window.location.href = '/?toast=Profile deleted successfully&toast_type=success';
+            } else if (evt.detail.target.hasAttribute('hx-delete') && !evt.detail.successful) {
+                // Failed deletion - show error
+                document.body.removeEventListener('htmx:afterRequest', handler);
+                alert('Failed to delete profile. Please try again.');
+            }
+        });
+    };
 </script>
 {% endblock %}

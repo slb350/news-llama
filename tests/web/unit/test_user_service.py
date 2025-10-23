@@ -203,35 +203,62 @@ class TestDeleteUser:
         with pytest.raises(UserNotFoundError, match="User with ID 999 not found"):
             delete_user(db, user_id=999)
 
-    @pytest.mark.skip(
-        reason="Requires interest_service - will test after Phase 3 completion"
-    )
     def test_delete_user_cascades_to_interests(self, db: Session):
         """Should cascade delete to user_interests table."""
-        from src.web.services.interest_service import add_user_interest
+        from src.web.services.interest_service import (
+            add_user_interest,
+            get_user_interests,
+        )
 
         user = create_user(db, first_name="Alice")
         add_user_interest(db, user.id, "AI", is_predefined=True)
         add_user_interest(db, user.id, "rust", is_predefined=True)
 
+        # Verify interests exist
+        interests = get_user_interests(db, user.id)
+        assert len(interests) == 2
+
         delete_user(db, user.id)
 
-        # Verify interests were deleted (would need interest service to check)
-        # This test validates cascade behavior works
-        assert get_all_users(db) == []
+        # Verify user was deleted
+        with pytest.raises(UserNotFoundError):
+            get_user(db, user.id)
 
-    @pytest.mark.skip(
-        reason="Requires newsletter_service - will test after Phase 3 completion"
-    )
+        # Verify interests were cascade deleted
+        # Query directly since user doesn't exist anymore
+        from src.web.models import UserInterest
+
+        remaining_interests = (
+            db.query(UserInterest).filter(UserInterest.user_id == user.id).all()
+        )
+        assert len(remaining_interests) == 0
+
     def test_delete_user_cascades_to_newsletters(self, db: Session):
         """Should cascade delete to newsletters table."""
-        from src.web.services.newsletter_service import create_pending_newsletter
+        from src.web.services.newsletter_service import (
+            create_pending_newsletter,
+            get_newsletter_count,
+        )
         from datetime import date
 
         user = create_user(db, first_name="Bob")
-        create_pending_newsletter(db, user.id, date.today())
+        _newsletter = create_pending_newsletter(db, user.id, date.today())
+
+        # Verify newsletter exists
+        assert get_newsletter_count(db, user.id) == 1
 
         delete_user(db, user.id)
 
-        # Verify newsletters were deleted
+        # Verify user was deleted
+        with pytest.raises(UserNotFoundError):
+            get_user(db, user.id)
+
+        # Verify newsletters were cascade deleted
+        # Query directly since user doesn't exist anymore
+        from src.web.models import Newsletter
+
+        remaining_newsletters = (
+            db.query(Newsletter).filter(Newsletter.user_id == user.id).all()
+        )
+        assert len(remaining_newsletters) == 0
         assert get_all_users(db) == []

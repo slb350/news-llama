@@ -114,11 +114,45 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
         },
     )
 
-    # Return generic user-friendly message (no technical details)
+    # Determine appropriate HTTP status code based on exception type
+    exception_name = exc.__class__.__name__
+
+    # 404 Not Found errors
+    if exception_name in (
+        "UserNotFoundError",
+        "InterestNotFoundError",
+        "NewsletterNotFoundError",
+    ):
+        status_code = status.HTTP_404_NOT_FOUND
+    # 409 Conflict errors (duplicates)
+    elif exception_name in ("DuplicateInterestError", "NewsletterAlreadyExistsError"):
+        status_code = status.HTTP_409_CONFLICT
+    # 400 Bad Request errors (validation)
+    elif exception_name in (
+        "UserValidationError",
+        "InterestValidationError",
+        "NewsletterValidationError",
+    ):
+        status_code = status.HTTP_400_BAD_REQUEST
+    # 503 Service Unavailable errors (generation failures)
+    elif exception_name in (
+        "MaxRetriesExceededError",
+        "GenerationServiceError",
+        "NewsletterGenerationError",
+    ):
+        status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    # 500 Internal Server Error for everything else
+    else:
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+    # Get friendly message for this exception
+    friendly_message = get_friendly_message(exc)
+
+    # Return user-friendly message (no technical details)
     return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        status_code=status_code,
         content={
-            "detail": ERROR_MESSAGES["server_error"],
+            "detail": friendly_message,
         },
     )
 
@@ -148,7 +182,7 @@ async def validation_exception_handler(
         },
     )
 
-    # Serialize errors properly (remove non-serializable objects from ctx)
+    # Serialize errors properly (remove non-serializable objects from ctx and input)
     errors = []
     for error in exc.errors():
         # Create clean error dict without non-serializable context
@@ -156,8 +190,23 @@ async def validation_exception_handler(
             "type": error.get("type"),
             "loc": error.get("loc"),
             "msg": error.get("msg"),
-            "input": error.get("input"),
         }
+
+        # Handle input field - don't include bytes
+        if "input" in error:
+            input_value = error["input"]
+            if isinstance(input_value, bytes):
+                # Don't include raw bytes, just note the size
+                clean_error["input"] = f"<bytes: {len(input_value)} bytes>"
+            elif isinstance(
+                input_value, (str, int, float, bool, list, dict, type(None))
+            ):
+                # Include simple serializable types
+                clean_error["input"] = input_value
+            else:
+                # Convert other types to string
+                clean_error["input"] = str(input_value)
+
         # Only include ctx if it contains serializable data
         if "ctx" in error:
             ctx = error["ctx"]

@@ -131,15 +131,18 @@ class TestProfileCreatePost:
             follow_redirects=False,
         )
 
-        # Should redirect to calendar (possibly with toast query params)
-        assert response.status_code == 303  # See Other redirect
-        assert response.headers["location"].startswith("/calendar")
+        # Should return JSON response with redirect URL
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+        assert data["redirect_url"].startswith("/calendar")
+        assert "user_id" in data
 
         # Should set user_id cookie
         assert "user_id" in response.cookies
 
         # Verify user was created
-        user_id = int(response.cookies["user_id"])
+        user_id = data["user_id"]
         from src.web.services.user_service import get_user
 
         user = get_user(db, user_id)
@@ -163,11 +166,13 @@ class TestProfileCreatePost:
             follow_redirects=False,
         )
 
-        assert response.status_code == 303
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
         assert "user_id" in response.cookies
 
         # Verify user was created
-        user_id = int(response.cookies["user_id"])
+        user_id = data["user_id"]
         from src.web.services.user_service import get_user
 
         user = get_user(db, user_id)
@@ -195,9 +200,11 @@ class TestProfileCreatePost:
             follow_redirects=False,
         )
 
-        assert response.status_code == 303
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
 
-        user_id = int(response.cookies["user_id"])
+        user_id = data["user_id"]
         from src.web.services.user_service import get_user
 
         user = get_user(db, user_id)
@@ -213,9 +220,11 @@ class TestProfileCreatePost:
             follow_redirects=False,
         )
 
-        assert response.status_code == 303
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
 
-        user_id = int(response.cookies["user_id"])
+        user_id = data["user_id"]
         from src.web.services.interest_service import get_user_interests
 
         interests = get_user_interests(db, user_id)
@@ -236,9 +245,11 @@ class TestProfileCreatePost:
             follow_redirects=False,
         )
 
-        assert response.status_code == 303
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
 
-        user_id = int(response.cookies["user_id"])
+        user_id = data["user_id"]
         from src.web.services.interest_service import get_user_interests
 
         interests = get_user_interests(db, user_id)
@@ -271,9 +282,11 @@ class TestProfileCreatePost:
             follow_redirects=False,
         )
 
-        assert response.status_code == 303
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
 
-        user_id = int(response.cookies["user_id"])
+        user_id = data["user_id"]
         from src.web.services.user_service import get_user
 
         user = get_user(db, user_id)
@@ -292,9 +305,11 @@ class TestProfileCreatePost:
             follow_redirects=False,
         )
 
-        assert response.status_code == 303
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
 
-        user_id = int(response.cookies["user_id"])
+        user_id = data["user_id"]
         from src.web.services.interest_service import get_user_interests
 
         interests = get_user_interests(db, user_id)
@@ -311,7 +326,10 @@ class TestProfileCreatePost:
             follow_redirects=False,
         )
 
-        assert response.status_code == 303
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+
         user_id_str = response.cookies["user_id"]
 
         # Should be convertible to int
@@ -341,8 +359,10 @@ class TestProfileCreatePost:
             follow_redirects=False,
         )
 
-        assert response.status_code == 303
-        user_id = int(response.cookies["user_id"])
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+        user_id = data["user_id"]
 
         # Verify generation was queued with correct arguments
         mock_queue.assert_called_once()
@@ -350,3 +370,148 @@ class TestProfileCreatePost:
         assert call_args[0] == db  # db session
         assert call_args[1] == user_id  # user_id argument
         assert call_args[2] == date.today()  # newsletter_date argument
+
+
+class TestProfileDelete:
+    """Tests for DELETE /profile/{user_id} - delete profile."""
+
+    def test_delete_profile_success(self, client: TestClient, db: Session):
+        """Should delete user and return success."""
+        # Create a user first
+        from src.web.services.user_service import create_user
+
+        user = create_user(db, first_name="ToDelete")
+        user_id = user.id
+
+        # Delete the user
+        response = client.delete(f"/profile/{user_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+        assert "deleted successfully" in data["message"].lower()
+
+        # Verify user was actually deleted
+        from src.web.services.user_service import get_user, UserNotFoundError
+
+        with pytest.raises(UserNotFoundError):
+            get_user(db, user_id)
+
+    def test_delete_profile_not_found(self, client: TestClient):
+        """Should return 404 for non-existent user."""
+        response = client.delete("/profile/99999")
+
+        assert response.status_code == 404
+        data = response.json()
+        assert (
+            "couldn't find" in data["detail"].lower()
+            or "not found" in data["detail"].lower()
+        )
+
+    def test_delete_profile_cascades_to_interests(
+        self, client: TestClient, db: Session
+    ):
+        """Should cascade delete to user_interests table."""
+        from src.web.services.user_service import create_user
+        from src.web.services.interest_service import (
+            add_user_interest,
+            get_user_interests,
+        )
+
+        # Create user with interests
+        user = create_user(db, first_name="CascadeTest")
+        user_id = user.id
+        add_user_interest(db, user_id, "AI", is_predefined=True)
+        add_user_interest(db, user_id, "rust", is_predefined=True)
+
+        # Verify interests exist
+        interests_before = get_user_interests(db, user_id)
+        assert len(interests_before) == 2
+
+        # Delete user
+        response = client.delete(f"/profile/{user_id}")
+        assert response.status_code == 200
+
+        # Verify interests were cascaded (should return empty list, not raise)
+        from src.web.services.user_service import get_user, UserNotFoundError
+
+        # User should not exist
+        with pytest.raises(UserNotFoundError):
+            get_user(db, user_id)
+
+        # Try to fetch interests for non-existent user - should handle gracefully
+        # (service may raise UserNotFoundError or return empty list)
+        try:
+            interests_after = get_user_interests(db, user_id)
+            assert len(interests_after) == 0
+        except UserNotFoundError:
+            # This is also acceptable behavior
+            pass
+
+    def test_delete_profile_cascades_to_newsletters(
+        self, client: TestClient, db: Session
+    ):
+        """Should cascade delete to newsletters table."""
+        from src.web.services.user_service import create_user
+        from src.web.services.newsletter_service import get_newsletters_by_month
+        from src.web.models import Newsletter
+        from datetime import datetime
+
+        # Create user with newsletters
+        user = create_user(db, first_name="NewsletterCascade")
+        user_id = user.id
+
+        # Create newsletters directly (bypassing service)
+        newsletter1 = Newsletter(
+            user_id=user_id,
+            date=date.today().isoformat(),
+            guid="test-guid-1",
+            file_path="/fake/path/1.html",
+            status="completed",
+            generated_at=datetime.now().isoformat(),
+        )
+        newsletter2 = Newsletter(
+            user_id=user_id,
+            date=date.today().isoformat(),
+            guid="test-guid-2",
+            file_path="/fake/path/2.html",
+            status="pending",
+        )
+        db.add(newsletter1)
+        db.add(newsletter2)
+        db.commit()
+
+        # Verify newsletters exist
+        today = date.today()
+        newsletters_before = get_newsletters_by_month(
+            db, user_id, today.year, today.month
+        )
+        assert len(newsletters_before) == 2
+
+        # Delete user
+        response = client.delete(f"/profile/{user_id}")
+        assert response.status_code == 200
+
+        # Verify newsletters were cascaded
+        from src.web.services.user_service import get_user, UserNotFoundError
+
+        # User should not exist
+        with pytest.raises(UserNotFoundError):
+            get_user(db, user_id)
+
+        # Try to fetch newsletters for non-existent user
+        try:
+            newsletters_after = get_newsletters_by_month(
+                db, user_id, today.year, today.month
+            )
+            assert len(newsletters_after) == 0
+        except UserNotFoundError:
+            # This is also acceptable behavior
+            pass
+
+    def test_delete_profile_invalid_user_id(self, client: TestClient):
+        """Should return 422 for invalid user_id format."""
+        response = client.delete("/profile/not-a-number")
+
+        # FastAPI path parameter validation should fail
+        assert response.status_code == 422

@@ -16,7 +16,7 @@ import magic
 import io
 from PIL import Image
 from fastapi import FastAPI, Request, Depends, Response, HTTPException, UploadFile, File
-from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import RequestValidationError
@@ -221,7 +221,7 @@ async def profile_create(
     response_data = {
         "status": "success",
         "redirect_url": redirect_url,
-        "user_id": user.id
+        "user_id": user.id,
     }
     response = JSONResponse(content=response_data)
     response.set_cookie(key="user_id", value=str(user.id))
@@ -243,32 +243,33 @@ async def upload_avatar(
     # Validate actual file content (magic bytes) to prevent spoofing
     try:
         mime_type = magic.from_buffer(contents, mime=True)
-        if not mime_type.startswith('image/'):
+        if not mime_type.startswith("image/"):
             raise HTTPException(
-                status_code=400,
-                detail=f"File must be an image (detected: {mime_type})"
+                status_code=400, detail=f"File must be an image (detected: {mime_type})"
             )
     except Exception as e:
         logger.error(f"Magic byte validation failed: {e}")
         raise HTTPException(
             status_code=400,
-            detail="Unable to validate file type. Please upload a valid image."
+            detail="Unable to validate file type. Please upload a valid image.",
         )
 
     # Validate file extension against whitelist
-    ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+    ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp"}
 
     if avatar.filename:
         file_extension = avatar.filename.rsplit(".", 1)[-1].lower()
         # Sanitize extension to prevent path traversal
-        file_extension = file_extension.replace('/', '').replace('\\', '').replace('..', '')
+        file_extension = (
+            file_extension.replace("/", "").replace("\\", "").replace("..", "")
+        )
     else:
         file_extension = "jpg"
 
     if file_extension not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid file type. Allowed: {', '.join(ALLOWED_EXTENSIONS)}"
+            detail=f"Invalid file type. Allowed: {', '.join(ALLOWED_EXTENSIONS)}",
         )
 
     if len(file_extension) > 10:  # Prevent absurdly long extensions
@@ -294,24 +295,24 @@ async def upload_avatar(
         image.thumbnail((512, 512), Image.Resampling.LANCZOS)
 
         # Convert to RGB if necessary (for PNG with transparency, etc.)
-        if image.mode in ('RGBA', 'LA', 'P'):
+        if image.mode in ("RGBA", "LA", "P"):
             # Create white background
-            background = Image.new('RGB', image.size, (255, 255, 255))
+            background = Image.new("RGB", image.size, (255, 255, 255))
             # Convert to RGBA if palette mode
-            if image.mode == 'P':
-                image = image.convert('RGBA')
+            if image.mode == "P":
+                image = image.convert("RGBA")
             # Paste with alpha channel as mask
-            if 'A' in image.mode:
+            if "A" in image.mode:
                 background.paste(image, mask=image.split()[-1])
             else:
                 background.paste(image)
             image = background
-        elif image.mode != 'RGB':
-            image = image.convert('RGB')
+        elif image.mode != "RGB":
+            image = image.convert("RGB")
 
         # Save compressed JPEG
         output = io.BytesIO()
-        image.save(output, format='JPEG', quality=85, optimize=True)
+        image.save(output, format="JPEG", quality=85, optimize=True)
         compressed_contents = output.getvalue()
 
         # Always save as .jpg regardless of original extension
@@ -329,7 +330,7 @@ async def upload_avatar(
         logger.error(f"Image processing failed: {e}")
         raise HTTPException(
             status_code=400,
-            detail="Failed to process image. Please upload a valid image file."
+            detail="Failed to process image. Please upload a valid image file.",
         )
 
     # Update user's avatar_path in database
@@ -412,10 +413,14 @@ async def profile_settings(
     newsletters_this_month = newsletter_service.get_newsletters_by_month(
         db, user.id, today.year, today.month
     )
-    this_month_completed = len([n for n in newsletters_this_month if n.status == "completed"])
+    this_month_completed = len(
+        [n for n in newsletters_this_month if n.status == "completed"]
+    )
 
-    all_newsletters = newsletter_service.get_all_newsletters(db, user.id)
-    total_completed = len([n for n in all_newsletters if n.status == "completed"])
+    # Get total completed newsletters (all time)
+    total_completed = newsletter_service.get_newsletter_count(
+        db, user.id, status="completed"
+    )
 
     stats = {
         "interests_count": len(user_interests),
@@ -488,6 +493,30 @@ async def profile_settings_update(
     return {"status": "success"}
 
 
+@app.delete("/profile/{user_id}")
+async def delete_profile(
+    user_id: int,
+    db: Session = Depends(get_db),
+):
+    """
+    Delete user profile and all associated data.
+
+    Cascades to user_interests and newsletters tables.
+    """
+    try:
+        # Delete the user (service handles cascade via foreign keys)
+        user_service.delete_user(db, user_id)
+
+        return {
+            "status": "success",
+            "message": "Profile deleted successfully",
+        }
+    except user_service.UserNotFoundError as e:
+        raise HTTPException(status_code=404, detail=get_friendly_message(e))
+    except user_service.UserServiceError as e:
+        raise HTTPException(status_code=500, detail=get_friendly_message(e))
+
+
 @app.post("/profile/settings/interests/add")
 async def add_interest_route(
     interest_data: InterestAdd,
@@ -554,11 +583,12 @@ async def generate_newsletter(
 
     # Apply rate limiting only for authenticated users
     from src.web.rate_limiter import newsletter_rate_limiter
+
     is_allowed, remaining = newsletter_rate_limiter.is_allowed(str(user.id))
     if not is_allowed:
         raise HTTPException(
             status_code=429,
-            detail=f"Rate limit exceeded. Please wait before making another request."
+            detail="Rate limit exceeded. Please wait before making another request.",
         )
 
     try:
