@@ -124,11 +124,17 @@
                 <div class="calendar-day has-newsletter
                     {% if is_today %}today{% endif %}"
                     onclick="openNewsletterModal('{{ newsletter.guid }}', '{{ newsletter.date }}')">
+                {% elif has_newsletter and newsletter.status == 'failed' %}
+                <div class="calendar-day failed
+                    {% if is_today %}today{% endif %}"
+                    data-newsletter-guid="{{ newsletter.guid }}"
+                    data-newsletter-status="{{ newsletter.status }}"
+                    data-retry-count="{{ newsletter.retry_count }}"
+                    onclick="handleFailedNewsletter('{{ newsletter.guid }}', '{{ newsletter.date }}', {{ newsletter.retry_count }})">
                 {% else %}
                 <div class="calendar-day
                     {% if has_newsletter and newsletter.status == 'pending' %}pending{% endif %}
                     {% if has_newsletter and newsletter.status == 'generating' %}generating{% endif %}
-                    {% if has_newsletter and newsletter.status == 'failed' %}failed{% endif %}
                     {% if is_today %}today{% endif %}"
                     {% if has_newsletter %}data-newsletter-guid="{{ newsletter.guid }}" data-newsletter-status="{{ newsletter.status }}"{% endif %}>
                 {% endif %}
@@ -265,6 +271,63 @@
             closeNewsletterModal();
         }
     });
+
+    // Handle Failed Newsletter Click
+    async function handleFailedNewsletter(guid, date, retryCount) {
+        const maxRetries = 3;
+
+        // Format date nicely
+        const dateObj = new Date(date);
+        const formattedDate = dateObj.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        let message;
+        if (retryCount >= maxRetries) {
+            message = `Newsletter for ${formattedDate} has failed after ${maxRetries} attempts. Maximum retry limit reached.`;
+            NewsLlama.showToast(message, 'error');
+            return;
+        }
+
+        message = `Newsletter for ${formattedDate} failed to generate. Would you like to retry?\n\n(Attempt ${retryCount + 1} of ${maxRetries})`;
+
+        if (confirm(message)) {
+            await retryNewsletter(guid);
+        }
+    }
+
+    // Retry Failed Newsletter
+    async function retryNewsletter(guid) {
+        try {
+            const response = await fetch(`/newsletters/${guid}/retry`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                NewsLlama.showToast('Newsletter queued for retry! Generation will begin shortly.', 'success');
+
+                // Update the calendar day display
+                const dayEl = document.querySelector(`[data-newsletter-guid="${guid}"]`);
+                if (dayEl) {
+                    dayEl.dataset.newsletterStatus = 'pending';
+                    updateNewsletterDayDisplay(dayEl, 'pending');
+                }
+            } else {
+                const error = await response.json();
+                NewsLlama.showToast(`Failed to retry: ${error.detail}`, 'error');
+            }
+        } catch (error) {
+            console.error('Failed to retry newsletter:', error);
+            NewsLlama.showToast('Failed to retry newsletter. Please try again.', 'error');
+        }
+    }
 
     // Newsletter Status Polling
     let pollingInterval = null;

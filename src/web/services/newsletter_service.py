@@ -13,6 +13,10 @@ import uuid
 from src.web.models import Newsletter
 
 
+# Constants
+MAX_RETRIES = 3
+
+
 # Custom Exceptions
 class NewsletterServiceError(Exception):
     """Base exception for newsletter service errors."""
@@ -278,3 +282,45 @@ def delete_newsletter(db: Session, newsletter_id: int) -> None:
 
     db.delete(newsletter)
     db.commit()
+
+
+def retry_newsletter(db: Session, guid: str) -> Newsletter:
+    """
+    Retry a failed newsletter by resetting it to pending status.
+
+    Args:
+        db: Database session
+        guid: Newsletter GUID
+
+    Returns:
+        Updated Newsletter object
+
+    Raises:
+        NewsletterNotFoundError: If newsletter doesn't exist
+        NewsletterValidationError: If newsletter is not in failed status
+        NewsletterValidationError: If max retry limit exceeded
+    """
+    newsletter = db.query(Newsletter).filter(Newsletter.guid == guid).first()
+
+    if not newsletter:
+        raise NewsletterNotFoundError(f"Newsletter with GUID {guid} not found")
+
+    # Validate newsletter is in failed status
+    if newsletter.status != "failed":
+        raise NewsletterValidationError(
+            f"Newsletter must be in failed status to retry (current: {newsletter.status})"
+        )
+
+    # Enforce max retries
+    if newsletter.retry_count >= MAX_RETRIES:
+        raise NewsletterValidationError(
+            f"Newsletter has reached max retry limit ({MAX_RETRIES})"
+        )
+
+    # Reset to pending status
+    newsletter.status = "pending"
+
+    db.commit()
+    db.refresh(newsletter)
+
+    return newsletter

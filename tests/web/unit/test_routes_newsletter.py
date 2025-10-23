@@ -331,6 +331,112 @@ class TestGetNewsletterByGuid:
         assert data["guid"] == newsletter.guid
 
 
+class TestNewsletterRetry:
+    """Tests for POST /newsletters/{guid}/retry - retry failed newsletters."""
+
+    def test_retry_requires_failed_status(self, authenticated_client, db: Session):
+        """Should only allow retry of failed newsletters."""
+        client, user = authenticated_client
+
+        # Create pending newsletter
+        newsletter = create_pending_newsletter(db, user.id, date(2025, 10, 22))
+
+        response = client.post(f"/newsletters/{newsletter.guid}/retry")
+
+        # Should reject non-failed newsletters
+        assert response.status_code == 400
+        data = response.json()
+        assert "failed" in data["detail"].lower()
+
+    def test_retry_failed_newsletter(self, authenticated_client, db: Session):
+        """Should reset failed newsletter to pending and queue for regeneration."""
+        client, user = authenticated_client
+
+        # Create failed newsletter
+        newsletter = create_pending_newsletter(db, user.id, date(2025, 10, 22))
+        from src.web.services.newsletter_service import mark_newsletter_failed
+
+        mark_newsletter_failed(db, newsletter.id)
+
+        response = client.post(f"/newsletters/{newsletter.guid}/retry")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+
+        # Verify newsletter was reset to pending
+        from src.web.services.newsletter_service import get_newsletter_by_guid
+
+        updated_newsletter = get_newsletter_by_guid(db, newsletter.guid)
+        assert updated_newsletter.status == "pending"
+
+    def test_retry_nonexistent_newsletter(self, authenticated_client):
+        """Should return 404 for non-existent newsletter."""
+        client, user = authenticated_client
+
+        response = client.post("/newsletters/invalid-guid-12345/retry")
+
+        assert response.status_code == 404
+        data = response.json()
+        assert "not found" in data["detail"].lower()
+
+    def test_retry_enforces_max_retries(self, authenticated_client, db: Session):
+        """Should prevent retry if max retry count (3) exceeded."""
+        client, user = authenticated_client
+
+        # Create newsletter with 3 retries
+        newsletter = create_pending_newsletter(db, user.id, date(2025, 10, 22))
+        from src.web.services.newsletter_service import mark_newsletter_failed
+
+        # Fail it 3 times (max retries)
+        mark_newsletter_failed(db, newsletter.id)
+        mark_newsletter_failed(db, newsletter.id)
+        mark_newsletter_failed(db, newsletter.id)
+
+        response = client.post(f"/newsletters/{newsletter.guid}/retry")
+
+        # Should reject due to max retries
+        assert response.status_code == 400
+        data = response.json()
+        assert "max" in data["detail"].lower() or "limit" in data["detail"].lower()
+
+    def test_retry_increments_retry_count(self, authenticated_client, db: Session):
+        """Should preserve retry count when retrying."""
+        client, user = authenticated_client
+
+        # Create failed newsletter with 1 retry
+        newsletter = create_pending_newsletter(db, user.id, date(2025, 10, 22))
+        from src.web.services.newsletter_service import mark_newsletter_failed
+
+        mark_newsletter_failed(db, newsletter.id)
+
+        response = client.post(f"/newsletters/{newsletter.guid}/retry")
+
+        assert response.status_code == 200
+
+        # Verify retry count is preserved
+        from src.web.services.newsletter_service import get_newsletter_by_guid
+
+        updated_newsletter = get_newsletter_by_guid(db, newsletter.guid)
+        assert updated_newsletter.retry_count == 1
+        assert updated_newsletter.status == "pending"
+
+    def test_retry_without_authentication(self, client: TestClient, db: Session):
+        """Should require authentication to retry newsletters."""
+        # Create user and failed newsletter
+        user = create_user(db, first_name="RetryUser")
+        newsletter = create_pending_newsletter(db, user.id, date(2025, 10, 22))
+        from src.web.services.newsletter_service import mark_newsletter_failed
+
+        mark_newsletter_failed(db, newsletter.id)
+
+        # Try to retry without authentication
+        response = client.post(f"/newsletters/{newsletter.guid}/retry")
+
+        # Should require authentication
+        assert response.status_code in [303, 401]
+
+
 class TestNewsletterIntegration:
     """Integration tests for full newsletter workflow."""
 

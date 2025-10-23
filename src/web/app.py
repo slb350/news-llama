@@ -391,6 +391,32 @@ async def view_newsletter(guid: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Newsletter not found")
 
 
+@app.post("/newsletters/{guid}/retry")
+async def retry_newsletter_route(
+    guid: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+):
+    """Retry a failed newsletter by resetting it to pending status."""
+    # Require user session
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        # Retry the newsletter
+        newsletter = newsletter_service.retry_newsletter(db, guid)
+
+        return {
+            "status": "success",
+            "guid": newsletter.guid,
+            "newsletter_status": newsletter.status,
+            "retry_count": newsletter.retry_count,
+        }
+
+    except newsletter_service.NewsletterNotFoundError:
+        raise HTTPException(status_code=404, detail="Newsletter not found")
+    except newsletter_service.NewsletterValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @app.get("/calendar/{year}/{month}", response_class=HTMLResponse)
 async def calendar_month(
     request: Request,
