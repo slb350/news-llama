@@ -376,6 +376,10 @@ async def calendar_view(
     # Check if any newsletters are pending/generating
     has_active = any(n.status in ["pending", "generating"] for n in newsletters)
 
+    # Get today's date for highlighting in calendar
+    from datetime import date
+    today = date.today()
+
     return templates.TemplateResponse(
         request,
         "calendar.html",
@@ -386,6 +390,7 @@ async def calendar_view(
             "year": year,
             "month": month,
             "has_active": has_active,
+            "today": today,
         },
     )
 
@@ -745,6 +750,10 @@ async def calendar_month(
     # Check if any newsletters are pending/generating
     has_active = any(n.status in ["pending", "generating"] for n in newsletters)
 
+    # Get today's date for highlighting in calendar
+    from datetime import date
+    today = date.today()
+
     return templates.TemplateResponse(
         request,
         "calendar.html",
@@ -755,6 +764,7 @@ async def calendar_month(
             "year": year,
             "month": month,
             "has_active": has_active,
+            "today": today,
         },
     )
 

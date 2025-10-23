@@ -188,7 +188,7 @@
                 {% set date_str = "2025-10-" ~ ("%02d"|format(day)) %}
                 {% set has_newsletter = newsletters|selectattr('date', 'equalto', date_str)|list|length > 0 %}
                 {% set newsletter = newsletters|selectattr('date', 'equalto', date_str)|first if has_newsletter else none %}
-                {% set is_today = day == 22 %}
+                {% set is_today = (today.year == year and today.month == month and today.day == day) %}
 
                 {% if has_newsletter and newsletter.status == 'completed' %}
                 <div class="calendar-day has-newsletter
