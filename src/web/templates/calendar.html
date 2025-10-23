@@ -77,6 +77,42 @@
         </button>
     </div>
 
+    <!-- Empty State -->
+    {% if newsletters|length == 0 %}
+    <div class="empty-state py-12 text-center" data-state="empty">
+        <div class="text-6xl mb-4">📰</div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">No Newsletters Yet</h3>
+        <p class="text-gray-600 mb-6">Get started by generating your first AI-powered news digest!</p>
+        <button
+            onclick="generateTodayNewsletter()"
+            class="btn-primary"
+            data-loading-text="Generating..."
+        >
+            ✨ Generate Today's Newsletter
+        </button>
+    </div>
+    <script>
+        async function generateTodayNewsletter() {
+            const today = new Date().toISOString().split('T')[0];
+            try {
+                const response = await fetch('/newsletters/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date: today })
+                });
+                if (response.ok) {
+                    NewsLlama.showToast('Newsletter queued! Generation will begin shortly.', 'success');
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    const error = await response.json();
+                    NewsLlama.showToast(`Failed: ${error.detail}`, 'error');
+                }
+            } catch (error) {
+                NewsLlama.showToast('Failed to generate newsletter. Please try again.', 'error');
+            }
+        }
+    </script>
+    {% else %}
     <!-- Calendar Grid -->
     <div id="calendar-container">
         <!-- Day Headers -->
@@ -157,8 +193,10 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
     <!-- Legend -->
+    {% if newsletters|length > 0 %}
     <div class="mt-6 pt-6 border-t border-gray-200">
         <div class="flex gap-4 justify-center text-sm flex-wrap">
             <div class="flex items-center gap-2">
@@ -183,6 +221,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 
 <!-- Stats Card -->

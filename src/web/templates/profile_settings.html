@@ -25,7 +25,9 @@
     <form hx-post="/profile/update"
           hx-trigger="submit"
           hx-target="body"
-          class="space-y-8">
+          class="space-y-8"
+          data-loading="form"
+          aria-busy="false">
 
         <!-- Profile Information Section -->
         <div class="border-b border-gray-200 pb-8">
@@ -43,7 +45,11 @@
                         name="first_name"
                         value="{{ user.first_name }}"
                         required
+                        minlength="1"
+                        maxlength="100"
                         class="w-full"
+                        aria-label="First name"
+                        aria-required="true"
                     >
                 </div>
 
@@ -90,9 +96,13 @@
                 type="search"
                 placeholder="Add any interest or choose from pre-configured categories below..."
                 class="w-full mb-4"
+                maxlength="100"
                 hx-get="/interests/autocomplete"
                 hx-trigger="keyup changed delay:300ms"
                 hx-target="#interest-suggestions"
+                aria-label="Search for interests"
+                data-loading="input"
+                aria-busy="false"
             >
 
             <!-- Selected Interests -->
@@ -108,7 +118,9 @@
                         </span>
                         {% endfor %}
                     {% else %}
-                        <span class="text-xs text-gray-500">No interests selected yet</span>
+                        <span class="text-xs text-gray-500 empty-state">
+                            No interests selected yet. Add your interests to personalize your news!
+                        </span>
                     {% endif %}
                 </div>
             </div>
