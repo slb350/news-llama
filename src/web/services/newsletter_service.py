@@ -255,3 +255,26 @@ def get_newsletter_count(
         query = query.filter(Newsletter.status == status)
 
     return query.count()
+
+
+def delete_newsletter(db: Session, newsletter_id: int) -> None:
+    """
+    Delete newsletter from database.
+
+    Used for regeneration scenarios where we want to delete a pending/generating
+    newsletter and create a new one.
+
+    Args:
+        db: Database session
+        newsletter_id: Newsletter ID to delete
+
+    Raises:
+        NewsletterNotFoundError: If newsletter doesn't exist
+    """
+    newsletter = db.query(Newsletter).filter(Newsletter.id == newsletter_id).first()
+
+    if not newsletter:
+        raise NewsletterNotFoundError(f"Newsletter with ID {newsletter_id} not found")
+
+    db.delete(newsletter)
+    db.commit()

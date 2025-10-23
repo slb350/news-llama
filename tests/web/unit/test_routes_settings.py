@@ -7,13 +7,16 @@ Tests profile settings management:
 """
 
 import pytest
+from datetime import date
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+from unittest.mock import patch
 
 from src.web.app import app
 from src.web.database import get_test_db, get_db
 from src.web.services.user_service import create_user
 from src.web.services.interest_service import add_user_interest
+from src.web.services.newsletter_service import create_pending_newsletter
 
 
 @pytest.fixture
@@ -151,6 +154,9 @@ class TestProfileSettingsPost:
             "/profile/settings",
             json={"first_name": "  Trimmed  "},
         )
+
+        # Should return success (200 or redirect)
+        assert response.status_code in [200, 303]
 
         from src.web.services.user_service import get_user
 
@@ -299,3 +305,95 @@ class TestProfileSettingsPost:
 
         # Should redirect or return 401
         assert response.status_code in [303, 401]
+
+
+class TestInterestUpdateNewsletterRegeneration:
+    """Tests for newsletter regeneration when interests are modified."""
+
+    @patch("src.web.services.generation_service.queue_newsletter_generation")
+    def test_add_interest_queues_newsletter_regeneration(
+        self, mock_queue, client: TestClient, user_with_interests, db: Session
+    ):
+        """Should queue newsletter regeneration when interest is added."""
+        client.cookies.set("user_id", str(user_with_interests.id))
+
+        # Add an interest
+        response = client.post(
+            "/profile/settings/interests/add",
+            json={"interest_name": "databases", "is_predefined": True},
+        )
+
+        assert response.status_code == 200
+
+        # Verify newsletter regeneration was queued
+        mock_queue.assert_called_once()
+        call_args = mock_queue.call_args[0]
+        assert call_args[0] == db  # db session
+        assert call_args[1] == user_with_interests.id  # user_id
+        assert call_args[2] == date.today()  # today's date
+
+    @patch("src.web.services.generation_service.queue_newsletter_generation")
+    def test_remove_interest_queues_newsletter_regeneration(
+        self, mock_queue, client: TestClient, user_with_interests, db: Session
+    ):
+        """Should queue newsletter regeneration when interest is removed."""
+        client.cookies.set("user_id", str(user_with_interests.id))
+
+        # Remove an interest
+        response = client.post(
+            "/profile/settings/interests/remove",
+            json={"interest_name": "rust"},
+        )
+
+        assert response.status_code == 200
+
+        # Verify newsletter regeneration was queued
+        mock_queue.assert_called_once()
+        call_args = mock_queue.call_args[0]
+        assert call_args[0] == db  # db session
+        assert call_args[1] == user_with_interests.id  # user_id
+        assert call_args[2] == date.today()  # today's date
+
+    @patch("src.web.services.generation_service.queue_newsletter_generation")
+    def test_interest_update_deletes_existing_pending_newsletter(
+        self, mock_queue, client: TestClient, user_with_interests, db: Session
+    ):
+        """Should delete existing pending newsletter before queueing new one."""
+        client.cookies.set("user_id", str(user_with_interests.id))
+
+        # Create existing pending newsletter for today
+        existing = create_pending_newsletter(db, user_with_interests.id, date.today())
+
+        # Add an interest
+        response = client.post(
+            "/profile/settings/interests/add",
+            json={"interest_name": "databases", "is_predefined": True},
+        )
+
+        assert response.status_code == 200
+
+        # Verify old newsletter was deleted
+        from src.web.services.newsletter_service import get_newsletter_by_guid
+
+        with pytest.raises(Exception):  # NewsletterNotFoundError
+            get_newsletter_by_guid(db, existing.guid)
+
+        # Verify new newsletter was queued
+        mock_queue.assert_called_once()
+
+    def test_interest_update_returns_regeneration_message(
+        self, client: TestClient, user_with_interests
+    ):
+        """Should return message about newsletter regeneration."""
+        client.cookies.set("user_id", str(user_with_interests.id))
+
+        response = client.post(
+            "/profile/settings/interests/add",
+            json={"interest_name": "databases", "is_predefined": True},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "status" in data
+        # Should indicate newsletter is being regenerated
+        assert "newsletter_regenerated" in data or "regenerating" in str(data).lower()

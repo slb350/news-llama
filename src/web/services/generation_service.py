@@ -182,3 +182,62 @@ def handle_generation_error(db: Session, newsletter_id: int, error_message: str)
 
     # Mark as failed and increment retry count
     newsletter_service.mark_newsletter_failed(db, newsletter_id)
+
+
+def requeue_newsletter_for_today(db: Session, user_id: int) -> bool:
+    """
+    Delete existing newsletter for today (if pending/generating) and queue a new one.
+
+    This is used when user updates their interests and we want to regenerate
+    today's newsletter with the new interests.
+
+    Args:
+        db: Database session
+        user_id: User ID
+
+    Returns:
+        True if newsletter was requeued, False if no action taken
+
+    Raises:
+        GenerationServiceError: If user not found or generation fails
+    """
+    # Validate user exists
+    try:
+        user_service.get_user(db, user_id)
+    except user_service.UserNotFoundError:
+        raise GenerationServiceError(f"User with ID {user_id} not found")
+
+    today = date.today()
+
+    # Check if newsletter already exists for today
+    try:
+        newsletters = newsletter_service.get_newsletters_by_month(
+            db, user_id, today.year, today.month
+        )
+        today_str = today.isoformat()
+        existing = next((n for n in newsletters if n.date == today_str), None)
+
+        if existing:
+            # Only delete and requeue if pending or generating
+            # If completed, we let it be (user can manually regenerate later)
+            if existing.status in ["pending", "generating"]:
+                logger.info(
+                    f"Deleting existing {existing.status} newsletter {existing.id} for regeneration"
+                )
+                newsletter_service.delete_newsletter(db, existing.id)
+            elif existing.status == "completed":
+                # Don't regenerate completed newsletters automatically
+                logger.info(
+                    f"Newsletter {existing.id} already completed, skipping regeneration"
+                )
+                return False
+            # If failed, we'll delete and retry
+
+        # Queue new newsletter
+        queue_newsletter_generation(db, user_id, today)
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to requeue newsletter for user {user_id}: {str(e)}")
+        # Don't raise - we don't want interest updates to fail if newsletter fails
+        return False

@@ -263,7 +263,7 @@ async def add_interest_route(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Add interest to user's profile."""
+    """Add interest to user's profile and trigger newsletter regeneration."""
     # Require user session
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -275,7 +275,17 @@ async def add_interest_route(
             interest_name=interest_data.interest_name,
             is_predefined=interest_data.is_predefined,
         )
-        return {"status": "success", "interest": interest.interest_name}
+
+        # Trigger newsletter regeneration for today
+        newsletter_regenerated = generation_service.requeue_newsletter_for_today(
+            db, user.id
+        )
+
+        return {
+            "status": "success",
+            "interest": interest.interest_name,
+            "newsletter_regenerated": newsletter_regenerated,
+        }
     except interest_service.DuplicateInterestError:
         raise HTTPException(status_code=409, detail="Interest already exists")
     except interest_service.InterestValidationError as e:
@@ -288,14 +298,23 @@ async def remove_interest_route(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Remove interest from user's profile."""
+    """Remove interest from user's profile and trigger newsletter regeneration."""
     # Require user session
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     try:
         interest_service.remove_user_interest(db, user.id, interest_data.interest_name)
-        return {"status": "success"}
+
+        # Trigger newsletter regeneration for today
+        newsletter_regenerated = generation_service.requeue_newsletter_for_today(
+            db, user.id
+        )
+
+        return {
+            "status": "success",
+            "newsletter_regenerated": newsletter_regenerated,
+        }
     except interest_service.InterestNotFoundError:
         raise HTTPException(status_code=404, detail="Interest not found")
 
