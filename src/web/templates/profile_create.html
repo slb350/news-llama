@@ -191,7 +191,11 @@
         }
     });
 
-    // Upload avatar function
+    /**
+     * Upload avatar file after profile creation
+     * Uses the file stored in uploadedAvatarFile from handleAvatarSelect
+     * @fires NewsLlama.showToast - On error (success is silent)
+     */
     async function uploadAvatar() {
         if (!uploadedAvatarFile) {
             return;

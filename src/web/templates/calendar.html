@@ -108,6 +108,11 @@
             </button>
         </div>
         <script>
+            /**
+             * Generate newsletter for today's date
+             * Queues generation job and reloads page after 2 seconds
+             * @fires NewsLlama.showToast - Success or error message
+             */
             async function generateTodayNewsletter() {
             const today = new Date().toISOString().split('T')[0];
             try {
@@ -293,6 +298,11 @@
     // Configuration constants
     const POLL_INTERVAL_MS = 30 * 1000;  // 30 seconds
 
+    /**
+     * Open newsletter modal to view completed newsletter
+     * @param {string} guid - Newsletter unique identifier
+     * @param {string} date - Newsletter date in YYYY-MM-DD format
+     */
     function openNewsletterModal(guid, date) {
         const modal = document.getElementById('newsletter-modal');
         const iframe = document.getElementById('newsletter-iframe');
@@ -319,6 +329,10 @@
         document.body.style.overflow = 'hidden';
     }
 
+    /**
+     * Close newsletter modal and clean up
+     * Restores body scroll and clears iframe source
+     */
     function closeNewsletterModal() {
         const modal = document.getElementById('newsletter-modal');
         const iframe = document.getElementById('newsletter-iframe');
@@ -433,6 +447,12 @@
     // Newsletter Status Polling
     let pollingInterval = null;
 
+    /**
+     * Poll newsletter status for all active (pending/generating) newsletters
+     * Updates UI when status changes and shows toast notifications
+     * Shows/hides polling indicator based on active newsletter count
+     * @fires NewsLlama.showToast - When newsletter completes or fails
+     */
     function pollNewsletterStatus() {
         const indicator = document.getElementById('polling-indicator');
 
@@ -508,6 +528,12 @@
         });
     }
 
+    /**
+     * Update calendar day display based on newsletter status
+     * Changes icon, classes, and click handlers based on status
+     * @param {HTMLElement} dayEl - Calendar day element to update
+     * @param {string} status - Newsletter status (completed/generating/pending/failed)
+     */
     function updateNewsletterDayDisplay(dayEl, status) {
         // Remove old status classes
         dayEl.classList.remove('pending', 'generating', 'failed');

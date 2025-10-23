@@ -13,6 +13,8 @@ if sys.platform == "darwin":  # macOS
     os.environ.setdefault("DYLD_LIBRARY_PATH", "/opt/homebrew/lib")
 
 import magic
+import io
+from PIL import Image
 from fastapi import FastAPI, Request, Depends, Response, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -284,8 +286,51 @@ async def upload_avatar(
     if not str(avatar_path).startswith(str(avatars_dir.resolve())):
         raise HTTPException(status_code=400, detail="Invalid file path")
 
-    with open(avatar_path, "wb") as f:
-        f.write(contents)
+    # Open and compress image
+    try:
+        image = Image.open(io.BytesIO(contents))
+
+        # Resize to max 512x512 (preserve aspect ratio)
+        image.thumbnail((512, 512), Image.Resampling.LANCZOS)
+
+        # Convert to RGB if necessary (for PNG with transparency, etc.)
+        if image.mode in ('RGBA', 'LA', 'P'):
+            # Create white background
+            background = Image.new('RGB', image.size, (255, 255, 255))
+            # Convert to RGBA if palette mode
+            if image.mode == 'P':
+                image = image.convert('RGBA')
+            # Paste with alpha channel as mask
+            if 'A' in image.mode:
+                background.paste(image, mask=image.split()[-1])
+            else:
+                background.paste(image)
+            image = background
+        elif image.mode != 'RGB':
+            image = image.convert('RGB')
+
+        # Save compressed JPEG
+        output = io.BytesIO()
+        image.save(output, format='JPEG', quality=85, optimize=True)
+        compressed_contents = output.getvalue()
+
+        # Always save as .jpg regardless of original extension
+        avatar_filename = f"{user.id}.jpg"
+        avatar_path = (avatars_dir / avatar_filename).resolve()
+
+        # Verify path again after modification
+        if not str(avatar_path).startswith(str(avatars_dir.resolve())):
+            raise HTTPException(status_code=400, detail="Invalid file path")
+
+        with open(avatar_path, "wb") as f:
+            f.write(compressed_contents)
+
+    except Exception as e:
+        logger.error(f"Image processing failed: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail="Failed to process image. Please upload a valid image file."
+        )
 
     # Update user's avatar_path in database
     user_service.update_user(db, user.id, avatar_path=avatar_filename)
