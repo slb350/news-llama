@@ -1,4 +1,4 @@
-# News Llama 🦙📰
+# News Llama 📰🦙
 
 AI-powered news curation engine that aggregates content from RSS, Twitter/X, Hacker News, Reddit, and web search, then summarizes the most relevant articles using local LLM.
 
