@@ -1,8 +1,11 @@
 """FastAPI application for News Llama web interface.
 
-Phase 3: Backend integration with database services.
+Phase 6: Background scheduler integration.
 """
 
+import os
+import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Depends, Response, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -26,10 +29,46 @@ from src.web.services import (
     interest_service,
     newsletter_service,
     generation_service,
+    scheduler_service,
 )
 
-# Initialize FastAPI app
-app = FastAPI(title="News Llama")
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifecycle (startup/shutdown)."""
+    # Startup
+    logger.info("Starting News Llama web application")
+
+    # Disable scheduler during tests to avoid interference with test fixtures
+    is_testing = os.getenv("TESTING", "false").lower() == "true"
+
+    if not is_testing:
+        # Load scheduler configuration from environment
+        config = {
+            "SCHEDULER_ENABLED": os.getenv("SCHEDULER_ENABLED", "true").lower()
+            == "true",
+            "SCHEDULER_HOUR": int(os.getenv("SCHEDULER_HOUR", "6")),
+            "SCHEDULER_MINUTE": int(os.getenv("SCHEDULER_MINUTE", "0")),
+            "SCHEDULER_TIMEZONE": os.getenv(
+                "SCHEDULER_TIMEZONE", "America/Los_Angeles"
+            ),
+        }
+
+        # Start scheduler
+        scheduler_service.start_scheduler(config)
+
+    yield
+
+    # Shutdown
+    if not is_testing:
+        logger.info("Shutting down News Llama web application")
+        scheduler_service.stop_scheduler()
+
+
+# Initialize FastAPI app with lifespan
+app = FastAPI(title="News Llama", lifespan=lifespan)
 
 # Mount static files
 static_path = Path(__file__).parent / "static"
@@ -464,6 +503,32 @@ async def calendar_month(
             "month": month,
         },
     )
+
+
+@app.get("/health/scheduler")
+async def scheduler_health():
+    """
+    Check scheduler status and jobs.
+
+    Returns scheduler running status and list of scheduled jobs with their next run times.
+    """
+    jobs_info = []
+    for job in scheduler_service.scheduler.get_jobs():
+        jobs_info.append(
+            {
+                "id": job.id,
+                "next_run": job.next_run_time.isoformat()
+                if job.next_run_time
+                else None,
+                "name": str(job.func),
+            }
+        )
+
+    return {
+        "running": scheduler_service.scheduler.running,
+        "jobs": jobs_info,
+        "job_count": len(jobs_info),
+    }
 
 
 if __name__ == "__main__":
