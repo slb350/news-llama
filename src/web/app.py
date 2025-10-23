@@ -636,6 +636,16 @@ async def generate_newsletter(
         raise HTTPException(status_code=500, detail=get_friendly_message(e))
 
 
+@app.get("/newsletters/logo.png")
+async def serve_newsletter_logo():
+    """Serve logo for newsletter HTML files (backwards compatibility)."""
+    logo_path = static_path / "logo.png"
+    if logo_path.exists():
+        with open(logo_path, "rb") as f:
+            return Response(content=f.read(), media_type="image/png")
+    raise HTTPException(status_code=404, detail="Logo not found")
+
+
 @app.get("/newsletters/{guid}")
 async def view_newsletter(guid: str, db: Session = Depends(get_db)):
     """View a newsletter by GUID - database-backed retrieval."""

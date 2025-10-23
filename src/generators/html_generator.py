@@ -150,7 +150,7 @@ class HTMLGenerator:
             <div class="text-center mb-6">
                 {% if has_logo %}
                 <div class="flex justify-center mb-6">
-                    <img src="/newsletters/logo.png" alt="" class="h-64 w-auto">
+                    <img src="/static/logo.png" alt="" class="h-64 w-auto">
                 </div>
                 {% endif %}
                 <h1 class="text-5xl font-bold text-gray-900 mb-3">Daily News Digest</h1>
