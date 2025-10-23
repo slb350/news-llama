@@ -32,6 +32,7 @@ from src.web.services import (
     generation_service,
     scheduler_service,
 )
+from src.web.rate_limiter import rate_limit
 from src.web.error_handlers import (
     global_exception_handler,
     validation_exception_handler,
@@ -370,12 +371,13 @@ async def remove_interest_route(
 
 
 @app.post("/newsletters/generate", response_model=NewsletterResponse)
+@rate_limit(lambda user: user.id if user else None)
 async def generate_newsletter(
     newsletter_data: NewsletterCreate,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Generate newsletter for specified date."""
+    """Generate newsletter for specified date with rate limiting."""
     # Require user session
     if not user:
         return RedirectResponse(url="/", status_code=303)
