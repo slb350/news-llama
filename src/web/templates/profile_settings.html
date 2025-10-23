@@ -33,6 +33,7 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2" for="first_name">
                         First Name
+                        <span class="text-red-600" aria-label="required">*</span>
                     </label>
                     <input
                         type="text"
@@ -45,7 +46,10 @@
                         class="w-full"
                         aria-label="First name"
                         aria-required="true"
+                        aria-describedby="first_name-error"
+                        aria-invalid="false"
                     >
+                    <div id="first_name-error" class="text-xs text-red-600 mt-1" role="alert" aria-live="polite"></div>
                 </div>
 
                 <!-- Avatar Upload -->
@@ -115,11 +119,14 @@
                         maxlength="100"
                         class="flex-1"
                         aria-label="Custom interest"
+                        aria-describedby="custom-interest-error"
+                        aria-invalid="false"
                     >
                     <button type="button" class="btn-secondary" onclick="addCustomInterest()">
                         Add
                     </button>
                 </div>
+                <div id="custom-interest-error" class="text-xs text-red-600 mt-1" role="alert" aria-live="polite"></div>
             </div>
 
             <!-- Available Interests -->
@@ -146,19 +153,19 @@
             <h2 class="text-xl font-bold text-gray-900 mb-4">Account Statistics</h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="stats-box">
-                    <div class="stats-number coral-accent">{{ user_interests|length }}</div>
+                    <div class="stats-number coral-accent">{{ stats.interests_count }}</div>
                     <div class="stats-label">Active Interests</div>
                 </div>
                 <div class="stats-box">
-                    <div class="stats-number">22</div>
+                    <div class="stats-number">{{ stats.this_month }}</div>
                     <div class="stats-label">Newsletters This Month</div>
                 </div>
                 <div class="stats-box">
-                    <div class="stats-number">154</div>
+                    <div class="stats-number">{{ stats.total }}</div>
                     <div class="stats-label">Total Newsletters</div>
                 </div>
                 <div class="stats-box">
-                    <div class="stats-number">365</div>
+                    <div class="stats-number">{{ stats.retention_days }}</div>
                     <div class="stats-label">Days Retention</div>
                 </div>
             </div>
@@ -199,6 +206,11 @@
 <script type="module">
     import { AvatarManager } from '/static/avatar-manager.js';
     import { InterestManager } from '/static/interest-manager.js';
+    import { FormAccessibility } from '/static/form-accessibility.js';
+
+    // Set up accessibility for form inputs
+    FormAccessibility.setupTextInput('first_name', 'First name is required');
+    FormAccessibility.setupFileInput('avatar');
 
     // Interest manager instance
     const interestManager = new InterestManager();

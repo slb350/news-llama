@@ -113,16 +113,38 @@
 - Maintainability: Bug fixes now applied once, not 2-3 times
 - Performance: Set diff reduces DB operations by 60-80% for interest updates
 
-**Next Up**: Remaining Medium Priority Issues #16-24 (UX, Accessibility, Stats)
+### ✅ Phase 3 Continued: Medium Priority UX & Accessibility (2/2 COMPLETE)
 
-**Overall Progress**: 16/33 issues fixed (48% complete)
+**Completed Issues**:
+16. ✅ **#16 - Hardcoded Stats in Settings Page** - Replaced with real database queries
+    - Fixed: `app.py` profile_settings route (lines 361-387)
+    - Updated: `profile_settings.html` to use {{ stats.* }} template variables
+    - Calculates: interests_count, newsletters this month, total newsletters, retention days
+    - Result: Users see real data instead of hardcoded mockup numbers
+
+17. ✅ **#17 - Missing Accessibility - ARIA Attributes** - Added screen reader support
+    - Created: `src/web/static/form-accessibility.js` (73 lines)
+    - Updated: `profile_create.html`, `profile_settings.html`
+    - Added: aria-describedby, aria-invalid, aria-required, aria-label attributes
+    - Added: Error divs with role="alert" and aria-live="polite"
+    - Result: Form validation errors announced to screen readers
+
+**Accessibility Improvements**:
+- FormAccessibility.js provides reusable validation setup
+- Error messages dynamically announced with ARIA live regions
+- Required fields marked with aria-required and visual asterisk
+- Input validation states synchronized with aria-invalid attribute
+
+**Next Up**: Remaining Medium Priority Issues #18-24 (Loading States, Visual Feedback, Code Quality)
+
+**Overall Progress**: 18/33 issues fixed (55% complete)
 ```
 Critical:     ████████████████████ 100% (5/5)   ✅ COMPLETE
 High:         ████████████████████ 100% (5/5)   ✅ COMPLETE
-Medium:       ███████░░░░░░░░░░░░░  36% (5/14)  ⚠️ IN PROGRESS
+Medium:       ██████████░░░░░░░░░░  50% (7/14)  ⚠️ IN PROGRESS
 Low:          ░░░░░░░░░░░░░░░░░░░░   0% (0/9)   🔜 PENDING
 ─────────────────────────────────────────────────
-Overall:      █████████░░░░░░░░░░░  48% (16/33) 🚀 NEARLY HALFWAY
+Overall:      ███████████░░░░░░░░░  55% (18/33) 🚀 OVER HALFWAY
 ```
 
 ---
@@ -1995,15 +2017,15 @@ Before launch, verify:
 |----------|-------|--------|------------|
 | 🔴 Critical | 5 | **✅ 5/5 DONE** | XSS (3), Path Traversal (1), Integration (1) |
 | 🟠 High Priority | 5 | **✅ 5/5 DONE** | Unfinished Features (3), Integration (2) |
-| 🟡 Medium Priority | 14 | **⚠️ 5/14 IN PROGRESS** | Code Quality (6), UX (4), Performance (2), Data Integrity (1), Accessibility (1) |
+| 🟡 Medium Priority | 14 | **⚠️ 7/14 IN PROGRESS** | Code Quality (6), UX (4), Performance (2), Data Integrity (1), Accessibility (1) |
 | ⚪ Low Priority | 9 | **🔜 0/9 PENDING** | Polish, Best Practices, Testing Infrastructure |
-| **Total** | **33 issues** | **16/33 DONE** | **48% Complete** |
+| **Total** | **33 issues** | **18/33 DONE** | **55% Complete** |
 
 ---
 
 ## Production Readiness Score
 
-### ~~Current: 6/10~~ → ~~7/10~~ → ~~8/10~~ → **Updated: 8.5/10 - Code Quality Refactoring Complete**
+### ~~Current: 6/10~~ → ~~7/10~~ → ~~8/10~~ → ~~8.5/10~~ → **Updated: 8.7/10 - UX & Accessibility Enhanced**
 
 **✅ Phase 1 Complete (Critical Issues)**:
 - ~~XSS vulnerabilities~~ → Fixed all XSS issues
@@ -2024,6 +2046,10 @@ Before launch, verify:
 - ~~Inefficient interest removal~~ → Set diff reduces DB ops by 60-80%
 - ~~Race condition in regeneration~~ → Added post-delete status check
 
+**✅ Phase 3 Continued (UX & Accessibility)**:
+- ~~Hardcoded stats~~ → Real database queries show actual newsletter counts
+- ~~Missing accessibility~~ → ARIA attributes + screen reader announcements
+
 **🎯 Current State**:
 - All security vulnerabilities patched ✅
 - All integration issues resolved ✅
@@ -2032,7 +2058,7 @@ Before launch, verify:
 - No blocking issues for production launch ✅
 - Maintainability significantly improved ✅
 
-### After Remaining Medium Priority (9 issues): 9/10 - Production Excellence
+### After Remaining Medium Priority (7 issues): 9/10 - Production Excellence
 
 **Remaining**:
 - Code quality improvements

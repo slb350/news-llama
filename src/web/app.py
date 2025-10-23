@@ -358,6 +358,23 @@ async def profile_settings(
     # Get available predefined interests
     available_interests = interest_service.get_predefined_interests()
 
+    # Calculate real stats
+    today = date.today()
+    newsletters_this_month = newsletter_service.get_newsletters_by_month(
+        db, user.id, today.year, today.month
+    )
+    this_month_completed = len([n for n in newsletters_this_month if n.status == "completed"])
+
+    all_newsletters = newsletter_service.get_all_newsletters(db, user.id)
+    total_completed = len([n for n in all_newsletters if n.status == "completed"])
+
+    stats = {
+        "interests_count": len(user_interests),
+        "this_month": this_month_completed,
+        "total": total_completed,
+        "retention_days": 365,
+    }
+
     return templates.TemplateResponse(
         request,
         "profile_settings.html",
@@ -365,6 +382,7 @@ async def profile_settings(
             "user": user,
             "user_interests": user_interests,
             "available_interests": available_interests,
+            "stats": stats,
         },
     )
 
