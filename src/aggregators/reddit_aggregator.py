@@ -1,7 +1,7 @@
 """
 Reddit aggregator using asyncpraw
 """
-import asyncio
+
 from datetime import datetime, timedelta, timezone
 from typing import List
 import asyncpraw
@@ -12,20 +12,35 @@ from src.utils.logger import logger
 
 
 class RedditAggregator(BaseAggregator):
-    """Aggregates content from Reddit using async API"""
+    """Aggregates content from Reddit using async API with lazy initialization"""
 
     def __init__(self, config):
         super().__init__(config)
         self.reddit = None
-        self._setup_reddit_client()
+        self._client_initialized = False
+        self._initialization_failed = False
 
-    def _setup_reddit_client(self):
-        """Setup Reddit API client from config credentials"""
+    async def _ensure_reddit_client(self):
+        """
+        Lazy initialization of Reddit client.
+
+        Only creates asyncpraw.Reddit() when actually needed (inside async context).
+        This prevents "no event loop" errors when instantiated in sync code or background threads.
+        """
+        # Already initialized or failed
+        if self._client_initialized or self._initialization_failed:
+            return
+
         try:
             creds = self.config.social_media
             user_agent = creds.reddit_user_agent or "news-llama/1.0"
 
-            if creds.reddit_client_id and creds.reddit_client_secret and creds.reddit_username and creds.reddit_password:
+            if (
+                creds.reddit_client_id
+                and creds.reddit_client_secret
+                and creds.reddit_username
+                and creds.reddit_password
+            ):
                 # Script auth
                 self.reddit = asyncpraw.Reddit(
                     client_id=creds.reddit_client_id,
@@ -34,7 +49,10 @@ class RedditAggregator(BaseAggregator):
                     username=creds.reddit_username,
                     password=creds.reddit_password,
                 )
-                logger.info("Reddit client configured with asyncpraw script credentials")
+                logger.info(
+                    "Reddit client configured with asyncpraw script credentials"
+                )
+                self._client_initialized = True
             elif creds.reddit_client_id and creds.reddit_client_secret:
                 # Read-only app
                 self.reddit = asyncpraw.Reddit(
@@ -43,15 +61,23 @@ class RedditAggregator(BaseAggregator):
                     user_agent=user_agent,
                 )
                 logger.info("Reddit client configured with asyncpraw in read-only mode")
+                self._client_initialized = True
             else:
-                logger.warning("Reddit credentials not set; disabling Reddit aggregation")
+                logger.warning(
+                    "Reddit credentials not set; disabling Reddit aggregation"
+                )
                 self.reddit = None
+                self._initialization_failed = True
         except Exception as e:
-            logger.warning(f"Reddit client setup failed: {e}")
+            logger.warning(f"Reddit client initialization failed: {e}")
             self.reddit = None
-    
+            self._initialization_failed = True
+
     async def collect(self) -> List[Article]:
         """Collect posts from configured subreddits"""
+        # Lazy initialize client (only happens once, inside async context)
+        await self._ensure_reddit_client()
+
         if not self.reddit:
             logger.warning("Reddit client not configured, skipping Reddit aggregation")
             return []
@@ -59,13 +85,17 @@ class RedditAggregator(BaseAggregator):
         try:
             articles = []
 
-            for subreddit_config in self.config.sources.get('reddit', []):
+            for subreddit_config in self.config.sources.get("reddit", []):
                 try:
                     posts = await self._collect_from_subreddit(subreddit_config)
                     articles.extend(posts)
-                    logger.info(f"Collected {len(posts)} posts from r/{subreddit_config['subreddit']}")
+                    logger.info(
+                        f"Collected {len(posts)} posts from r/{subreddit_config['subreddit']}"
+                    )
                 except Exception as e:
-                    logger.error(f"Error collecting from subreddit r/{subreddit_config['subreddit']}: {e}")
+                    logger.error(
+                        f"Error collecting from subreddit r/{subreddit_config['subreddit']}: {e}"
+                    )
 
             return articles
         finally:
@@ -77,15 +107,20 @@ class RedditAggregator(BaseAggregator):
         if self.reddit:
             await self.reddit.close()
 
-    async def search_reddit(self, query: str, category: str, limit: int = 50) -> List[Article]:
+    async def search_reddit(
+        self, query: str, category: str, limit: int = 50
+    ) -> List[Article]:
         """Search all of Reddit for posts matching a query with progressive time filter fallback"""
+        # Lazy initialize client (only happens once, inside async context)
+        await self._ensure_reddit_client()
+
         if not self.reddit:
             logger.warning("Reddit client not configured, skipping Reddit search")
             return []
 
         try:
             # Progressive time filters: try month -> year -> all time
-            time_filters = ['month', 'year', 'all']
+            time_filters = ["month", "year", "all"]
 
             for time_filter in time_filters:
                 logger.info(f"Searching Reddit for: {query} (time: {time_filter})")
@@ -94,10 +129,7 @@ class RedditAggregator(BaseAggregator):
                 subreddit = await self.reddit.subreddit("all")
 
                 # Build search parameters
-                search_params = {
-                    'limit': limit,
-                    'time_filter': time_filter
-                }
+                search_params = {"limit": limit, "time_filter": time_filter}
 
                 async for submission in subreddit.search(query, **search_params):
                     try:
@@ -105,14 +137,20 @@ class RedditAggregator(BaseAggregator):
                         if article and self._is_valid_article(article):
                             articles.append(article)
                     except Exception as e:
-                        logger.warning(f"Error parsing search result for '{query}': {e}")
+                        logger.warning(
+                            f"Error parsing search result for '{query}': {e}"
+                        )
 
                 # If we found articles, return them
                 if articles:
-                    logger.info(f"Found {len(articles)} posts for query '{query}' using time_filter '{time_filter}'")
+                    logger.info(
+                        f"Found {len(articles)} posts for query '{query}' using time_filter '{time_filter}'"
+                    )
                     return articles
                 else:
-                    logger.info(f"Found 0 posts for query '{query}' with time_filter '{time_filter}', trying broader filter")
+                    logger.info(
+                        f"Found 0 posts for query '{query}' with time_filter '{time_filter}', trying broader filter"
+                    )
 
             # If we exhausted all time filters without finding anything
             logger.info(f"Found 0 posts for query '{query}' across all time filters")
@@ -124,15 +162,15 @@ class RedditAggregator(BaseAggregator):
 
     async def _collect_from_subreddit(self, config: dict) -> List[Article]:
         """Collect posts from a specific subreddit"""
-        subreddit_name = config['subreddit']
-        category = config['category']
-        limit = config.get('limit', 50)
+        subreddit_name = config["subreddit"]
+        category = config["category"]
+        limit = config.get("limit", 50)
 
         subreddit = await self.reddit.subreddit(subreddit_name)
 
         articles = []
         # Get top posts from last 24 hours
-        async for submission in subreddit.top(time_filter='day', limit=limit):
+        async for submission in subreddit.top(time_filter="day", limit=limit):
             try:
                 article = await self._parse_submission(submission, category)
                 if article and self._is_valid_article(article):
@@ -155,10 +193,10 @@ class RedditAggregator(BaseAggregator):
 
         # Extract image URL if available
         image_url = None
-        if hasattr(submission, 'preview') and submission.preview:
-            images = submission.preview.get('images', [])
+        if hasattr(submission, "preview") and submission.preview:
+            images = submission.preview.get("images", [])
             if images:
-                image_url = images[0]['source']['url']
+                image_url = images[0]["source"]["url"]
 
         return Article(
             title=submission.title,
@@ -171,24 +209,24 @@ class RedditAggregator(BaseAggregator):
             published_at=post_time,
             image_url=image_url,
             metadata={
-                'score': submission.score,
-                'num_comments': submission.num_comments,
-                'upvote_ratio': getattr(submission, 'upvote_ratio', 0),
-                'is_self_post': submission.is_self,
-                'flair': submission.link_flair_text
-            }
+                "score": submission.score,
+                "num_comments": submission.num_comments,
+                "upvote_ratio": getattr(submission, "upvote_ratio", 0),
+                "is_self_post": submission.is_self,
+                "flair": submission.link_flair_text,
+            },
         )
-    
+
     def _is_valid_article(self, article: Article) -> bool:
         """Validate Reddit post meets quality criteria"""
         # Skip posts with very low scores (could be spam)
         score_threshold = 1
-        if article.metadata.get('score', 0) < score_threshold:
+        if article.metadata.get("score", 0) < score_threshold:
             return False
 
         # For link posts, just check title length (content is just URL)
         # For self posts, check combined length
-        if article.metadata.get('is_self_post'):
+        if article.metadata.get("is_self_post"):
             # Self post: check full content
             if not article.content.strip():
                 return False
