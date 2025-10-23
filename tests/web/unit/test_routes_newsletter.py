@@ -121,7 +121,7 @@ class TestGenerateNewsletterPost:
         assert response2.status_code == 409  # Conflict
         data = response2.json()
         assert "detail" in data
-        assert "already exists" in data["detail"].lower()
+        assert "already" in data["detail"].lower()
 
     @patch("src.web.services.generation_service.process_newsletter_generation")
     def test_generate_accepts_today_as_default(
@@ -346,7 +346,8 @@ class TestNewsletterRetry:
         # Should reject non-failed newsletters
         assert response.status_code == 400
         data = response.json()
-        assert "failed" in data["detail"].lower()
+        # Should return generic validation message
+        assert "please" in data["detail"].lower() or "check" in data["detail"].lower()
 
     def test_retry_failed_newsletter(self, authenticated_client, db: Session):
         """Should reset failed newsletter to pending and queue for regeneration."""
@@ -398,7 +399,8 @@ class TestNewsletterRetry:
         # Should reject due to max retries
         assert response.status_code == 400
         data = response.json()
-        assert "max" in data["detail"].lower() or "limit" in data["detail"].lower()
+        # Should return max retries friendly message
+        assert "tried" in data["detail"].lower() or "multiple" in data["detail"].lower()
 
     def test_retry_increments_retry_count(self, authenticated_client, db: Session):
         """Should preserve retry count when retrying."""

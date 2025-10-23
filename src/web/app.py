@@ -10,6 +10,7 @@ from fastapi import FastAPI, Request, Depends, Response, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy.orm import Session
 from pathlib import Path
 from datetime import date
@@ -30,6 +31,11 @@ from src.web.services import (
     newsletter_service,
     generation_service,
     scheduler_service,
+)
+from src.web.error_handlers import (
+    global_exception_handler,
+    validation_exception_handler,
+    get_friendly_message,
 )
 
 logger = logging.getLogger(__name__)
@@ -69,6 +75,10 @@ async def lifespan(app: FastAPI):
 
 # Initialize FastAPI app with lifespan
 app = FastAPI(title="News Llama", lifespan=lifespan)
+
+# Register global exception handlers
+app.add_exception_handler(Exception, global_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
 # Mount static files
 static_path = Path(__file__).parent / "static"
@@ -326,10 +336,10 @@ async def add_interest_route(
             "interest": interest.interest_name,
             "newsletter_regenerated": newsletter_regenerated,
         }
-    except interest_service.DuplicateInterestError:
-        raise HTTPException(status_code=409, detail="Interest already exists")
+    except interest_service.DuplicateInterestError as e:
+        raise HTTPException(status_code=409, detail=get_friendly_message(e))
     except interest_service.InterestValidationError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail=get_friendly_message(e))
 
 
 @app.post("/profile/settings/interests/remove")
@@ -393,9 +403,9 @@ async def generate_newsletter(
         )
 
     except generation_service.NewsletterAlreadyExistsError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+        raise HTTPException(status_code=409, detail=get_friendly_message(e))
     except generation_service.GenerationServiceError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=get_friendly_message(e))
 
 
 @app.get("/newsletters/{guid}")
@@ -452,10 +462,10 @@ async def retry_newsletter_route(
             "retry_count": newsletter.retry_count,
         }
 
-    except newsletter_service.NewsletterNotFoundError:
-        raise HTTPException(status_code=404, detail="Newsletter not found")
+    except newsletter_service.NewsletterNotFoundError as e:
+        raise HTTPException(status_code=404, detail=get_friendly_message(e))
     except newsletter_service.NewsletterValidationError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=get_friendly_message(e))
 
 
 @app.get("/calendar/{year}/{month}", response_class=HTMLResponse)
