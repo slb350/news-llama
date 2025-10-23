@@ -454,6 +454,7 @@ async def profile_settings_update(
         user_service.update_user(db, user.id, first_name=update_data.first_name)
 
     # Update interests if provided
+    interests_changed = False
     if update_data.interests is not None:
         # Get predefined interests for comparison
         predefined_interests = interest_service.get_predefined_interests()
@@ -479,6 +480,7 @@ async def profile_settings_update(
         # Only remove interests that were deleted
         for interest_name in to_remove:
             interest_service.remove_user_interest(db, user.id, interest_name)
+            interests_changed = True
 
         # Only add interests that are new
         for interest_name in to_add:
@@ -489,6 +491,11 @@ async def profile_settings_update(
                 interest_name=interest_name,
                 is_predefined=is_predefined,
             )
+            interests_changed = True
+
+        # Trigger newsletter regeneration if interests changed
+        if interests_changed:
+            generation_service.requeue_newsletter_for_today(db, user.id)
 
     return {"status": "success"}
 

@@ -397,3 +397,57 @@ class TestInterestUpdateNewsletterRegeneration:
         assert "status" in data
         # Should indicate newsletter is being regenerated
         assert "newsletter_regenerated" in data or "regenerating" in str(data).lower()
+
+    @patch("src.web.services.generation_service.queue_newsletter_generation")
+    def test_settings_update_triggers_regeneration_when_interests_change(
+        self, mock_queue, client: TestClient, user_with_interests, db: Session
+    ):
+        """POST /profile/settings should queue newsletter regeneration when interests change."""
+        client.cookies.set("user_id", str(user_with_interests.id))
+
+        # Update settings with new interests (add 'databases', remove 'rust')
+        response = client.post(
+            "/profile/settings",
+            json={
+                "first_name": user_with_interests.first_name,
+                "interests": [
+                    "AI",
+                    "LocalLLM",
+                    "databases",
+                ],  # Added databases, removed rust
+            },
+        )
+
+        assert response.status_code == 200
+
+        # Verify newsletter regeneration was queued
+        mock_queue.assert_called_once()
+        call_args = mock_queue.call_args[0]
+        assert call_args[0] == db  # db session
+        assert call_args[1] == user_with_interests.id  # user_id
+        assert call_args[2] == date.today()  # today's date
+
+    @patch("src.web.services.generation_service.queue_newsletter_generation")
+    def test_settings_update_no_regeneration_when_interests_unchanged(
+        self, mock_queue, client: TestClient, user_with_interests, db: Session
+    ):
+        """POST /profile/settings should NOT queue regeneration if interests didn't change."""
+        client.cookies.set("user_id", str(user_with_interests.id))
+
+        # Update settings with SAME interests (user has AI, rust, python)
+        response = client.post(
+            "/profile/settings",
+            json={
+                "first_name": user_with_interests.first_name,
+                "interests": [
+                    "AI",
+                    "rust",
+                    "python",
+                ],  # Same as existing, different order OK
+            },
+        )
+
+        assert response.status_code == 200
+
+        # Verify newsletter regeneration was NOT queued
+        mock_queue.assert_not_called()
