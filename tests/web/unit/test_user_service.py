@@ -262,3 +262,128 @@ class TestDeleteUser:
         )
         assert len(remaining_newsletters) == 0
         assert get_all_users(db) == []
+
+    def test_delete_user_removes_avatar_file(self, db: Session, tmp_path):
+        """Should delete avatar file from disk when user is deleted."""
+        from pathlib import Path
+
+        # Create a test avatar file
+        avatars_dir = tmp_path / "avatars"
+        avatars_dir.mkdir()
+        avatar_filename = "test-avatar.jpg"
+        avatar_path = avatars_dir / avatar_filename
+        avatar_path.write_text("fake avatar data")
+
+        # Create user with avatar
+        user = create_user(db, first_name="AvatarUser", avatar_path=avatar_filename)
+
+        # Verify avatar file exists
+        assert avatar_path.exists()
+
+        # Mock the avatars directory to use tmp_path
+        import src.web.services.user_service as user_service_module
+
+        original_avatars_path = getattr(
+            user_service_module, "AVATARS_DIR", Path("src/web/static/avatars")
+        )
+
+        try:
+            # Temporarily override the avatars directory
+            user_service_module.AVATARS_DIR = avatars_dir
+
+            # Delete user
+            delete_user(db, user.id)
+
+            # Verify avatar file was deleted
+            assert not avatar_path.exists()
+        finally:
+            # Restore original path
+            if hasattr(user_service_module, "AVATARS_DIR"):
+                user_service_module.AVATARS_DIR = original_avatars_path
+
+    def test_delete_user_without_avatar_succeeds(self, db: Session):
+        """Should successfully delete user even if they have no avatar."""
+        user = create_user(db, first_name="NoAvatar", avatar_path=None)
+
+        # Should not raise exception
+        delete_user(db, user.id)
+
+        # Verify user was deleted
+        with pytest.raises(UserNotFoundError):
+            get_user(db, user.id)
+
+    def test_delete_user_removes_newsletter_files(self, db: Session, tmp_path):
+        """Should delete newsletter HTML files from disk when user is deleted."""
+        from src.web.models import Newsletter
+        from datetime import datetime
+
+        # Create output directory
+        output_dir = tmp_path / "output"
+        output_dir.mkdir()
+
+        # Create user and newsletters with files
+        user = create_user(db, first_name="NewsletterUser")
+
+        newsletter1_path = output_dir / "news-2025-01-01-guid1.html"
+        newsletter1_path.write_text("<html>Newsletter 1</html>")
+
+        newsletter2_path = output_dir / "news-2025-01-02-guid2.html"
+        newsletter2_path.write_text("<html>Newsletter 2</html>")
+
+        # Create newsletter records
+        newsletter1 = Newsletter(
+            user_id=user.id,
+            date="2025-01-01",
+            guid="guid1",
+            file_path=str(newsletter1_path),
+            status="completed",
+            generated_at=datetime.now().isoformat(),
+        )
+        newsletter2 = Newsletter(
+            user_id=user.id,
+            date="2025-01-02",
+            guid="guid2",
+            file_path=str(newsletter2_path),
+            status="completed",
+            generated_at=datetime.now().isoformat(),
+        )
+        db.add(newsletter1)
+        db.add(newsletter2)
+        db.commit()
+
+        # Verify files exist
+        assert newsletter1_path.exists()
+        assert newsletter2_path.exists()
+
+        # Delete user
+        delete_user(db, user.id)
+
+        # Verify newsletter files were deleted
+        assert not newsletter1_path.exists()
+        assert not newsletter2_path.exists()
+
+    def test_delete_user_handles_missing_newsletter_files(self, db: Session):
+        """Should gracefully handle newsletter records with missing files."""
+        from src.web.models import Newsletter
+        from datetime import datetime
+
+        # Create user and newsletter record WITHOUT creating the file
+        user = create_user(db, first_name="MissingFile")
+
+        newsletter = Newsletter(
+            user_id=user.id,
+            date="2025-01-01",
+            guid="guid-missing",
+            file_path="/nonexistent/path/news.html",
+            status="completed",
+            generated_at=datetime.now().isoformat(),
+        )
+        db.add(newsletter)
+        db.commit()
+
+        # Should not raise exception even though file doesn't exist
+        delete_user(db, user.id)
+
+        # Verify user was deleted
+        with pytest.raises(UserNotFoundError):
+            get_user(db, user.id)

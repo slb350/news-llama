@@ -6,10 +6,13 @@ Follows TDD approach with comprehensive test coverage.
 """
 
 from typing import Optional
+from pathlib import Path
 from sqlalchemy.orm import Session
-from datetime import datetime
 
-from src.web.models import User
+from src.web.models import User, Newsletter
+
+# Directory paths for file cleanup
+AVATARS_DIR = Path("src/web/static/avatars")
 
 
 # Custom Exceptions
@@ -60,10 +63,8 @@ def create_user(
     if len(first_name) > 100:
         raise UserValidationError("First name cannot exceed 100 characters")
 
-    # Create user
-    user = User(
-        first_name=first_name, avatar_path=avatar_path, created_at=datetime.now()
-    )
+    # Create user - let database handle created_at default
+    user = User(first_name=first_name, avatar_path=avatar_path)
 
     db.add(user)
     db.commit()
@@ -163,6 +164,7 @@ def delete_user(db: Session, user_id: int) -> bool:
     Delete user by ID.
 
     Cascades to user_interests and newsletters tables due to foreign key constraints.
+    Also cleans up avatar and newsletter files from disk.
 
     Args:
         db: Database session
@@ -176,6 +178,29 @@ def delete_user(db: Session, user_id: int) -> bool:
     """
     user = get_user(db, user_id)
 
+    # Clean up avatar file if exists
+    if user.avatar_path:
+        avatar_full_path = AVATARS_DIR / user.avatar_path
+        if avatar_full_path.exists():
+            try:
+                avatar_full_path.unlink()
+            except OSError:
+                # Log error but don't fail deletion if file cleanup fails
+                pass
+
+    # Clean up newsletter files
+    newsletters = db.query(Newsletter).filter(Newsletter.user_id == user_id).all()
+    for newsletter in newsletters:
+        if newsletter.file_path:
+            newsletter_path = Path(newsletter.file_path)
+            if newsletter_path.exists():
+                try:
+                    newsletter_path.unlink()
+                except OSError:
+                    # Log error but don't fail deletion if file cleanup fails
+                    pass
+
+    # Delete user from database (cascades to interests and newsletters)
     db.delete(user)
     db.commit()
 
