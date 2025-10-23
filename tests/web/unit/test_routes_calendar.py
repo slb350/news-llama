@@ -120,7 +120,7 @@ class TestCalendarView:
         """Should only show newsletters for the logged-in user."""
         # Create another user with different newsletters
         other_user = create_user(db, first_name="OtherUser")
-        other_newsletter = create_pending_newsletter(
+        create_pending_newsletter(
             db, other_user.id, date(2025, 10, 25)
         )
 

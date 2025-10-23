@@ -234,7 +234,13 @@ def requeue_newsletter_for_today(db: Session, user_id: int) -> bool:
             # If failed, we'll delete and retry
 
         # Queue new newsletter
-        queue_newsletter_generation(db, user_id, today)
+        newsletter = queue_newsletter_generation(db, user_id, today)
+
+        # Queue for immediate background processing
+        from src.web.services import scheduler_service
+
+        scheduler_service.queue_immediate_generation(newsletter.id)
+
         return True
 
     except Exception as e:

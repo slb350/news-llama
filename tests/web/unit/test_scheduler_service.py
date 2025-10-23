@@ -80,9 +80,7 @@ class TestScheduleDailyGeneration:
         _user2 = user_service.create_user(db, first_name="Bob")
 
         # Mock the immediate processing
-        with patch.object(
-            scheduler_service, "queue_immediate_generation"
-        ):
+        with patch.object(scheduler_service, "queue_immediate_generation"):
             # Trigger daily generation manually
             scheduler_service.schedule_daily_generation(hour=6, minute=0)
 
@@ -167,9 +165,7 @@ class TestQueueImmediateGeneration:
         )
 
         # Mock the processing
-        with patch.object(
-            generation_service, "process_newsletter_generation"
-        ):
+        with patch.object(generation_service, "process_newsletter_generation"):
             # Queue and execute immediately
             scheduler_service.queue_immediate_generation(newsletter.id)
 

@@ -172,7 +172,7 @@ class TestGetNewsletterCount:
         """Should count newsletters by status."""
         n1 = create_pending_newsletter(db, user.id, date(2025, 10, 20))
         n2 = create_pending_newsletter(db, user.id, date(2025, 10, 21))
-        n3 = create_pending_newsletter(db, user.id, date(2025, 10, 22))
+        create_pending_newsletter(db, user.id, date(2025, 10, 22))
 
         mark_newsletter_completed(db, n1.id, "output/1.html")
         mark_newsletter_failed(db, n2.id)

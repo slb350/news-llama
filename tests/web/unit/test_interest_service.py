@@ -163,9 +163,9 @@ class TestAddUserInterest:
 
     def test_add_user_interest_multiple(self, db: Session, user):
         """Should add multiple interests to same user."""
-        interest1 = add_user_interest(db, user.id, "AI", is_predefined=True)
-        interest2 = add_user_interest(db, user.id, "rust", is_predefined=True)
-        interest3 = add_user_interest(db, user.id, "Custom", is_predefined=False)
+        add_user_interest(db, user.id, "AI", is_predefined=True)
+        add_user_interest(db, user.id, "rust", is_predefined=True)
+        add_user_interest(db, user.id, "Custom", is_predefined=False)
 
         interests = get_user_interests(db, user.id)
         assert len(interests) == 3
@@ -285,9 +285,9 @@ class TestGetUserInterests:
 
     def test_get_user_interests_ordered_by_added_at(self, db: Session, user):
         """Should return interests in order they were added."""
-        interest1 = add_user_interest(db, user.id, "First", is_predefined=True)
-        interest2 = add_user_interest(db, user.id, "Second", is_predefined=True)
-        interest3 = add_user_interest(db, user.id, "Third", is_predefined=False)
+        add_user_interest(db, user.id, "First", is_predefined=True)
+        add_user_interest(db, user.id, "Second", is_predefined=True)
+        add_user_interest(db, user.id, "Third", is_predefined=False)
 
         interests = get_user_interests(db, user.id)
 

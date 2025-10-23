@@ -179,7 +179,10 @@ async def profile_create(
     # Queue newsletter generation for today
     newsletter_queued = False
     try:
-        generation_service.queue_newsletter_generation(db, user.id, date.today())
+        newsletter = generation_service.queue_newsletter_generation(
+            db, user.id, date.today()
+        )
+        scheduler_service.queue_immediate_generation(newsletter.id)
         newsletter_queued = True
     except generation_service.NewsletterAlreadyExistsError:
         # Newsletter already exists for today - this is fine, continue
@@ -375,6 +378,7 @@ async def generate_newsletter(
         newsletter = generation_service.queue_newsletter_generation(
             db, user.id, newsletter_date
         )
+        scheduler_service.queue_immediate_generation(newsletter.id)
 
         # Return newsletter response
         return NewsletterResponse(
