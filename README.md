@@ -309,7 +309,7 @@ Built with **FastAPI**, **SQLAlchemy**, **SQLite** (WAL mode), **Alembic** migra
 - **API**: RESTful endpoints with cookie-based sessions
 - **Performance**: Database indexes, rate limiting, LRU file caching, eager loading
 
-📖 **Deep dive**: [Why We Over-Engineered Database Indexes for a Family SQLite App](https://open.substack.com/pub/stephenbrandon525517/p/a-love-letter-to-indexes-sqlite-and) - A detailed exploration of our indexing strategy and performance philosophy.
+**Deep dive**: [Why We Over-Engineered Database Indexes for a Family SQLite App](https://open.substack.com/pub/stephenbrandon525517/p/a-love-letter-to-indexes-sqlite-and) - A detailed exploration of our indexing strategy and performance philosophy.
 
 **API Endpoints**:
 - **Pages**: `/`, `/profile/new`, `/calendar`, `/profile/settings`, `/newsletters/{guid}`
@@ -351,7 +351,7 @@ For end-user documentation, see [docs/user-guide.md](docs/user-guide.md).
 
 For technical architecture details, see [docs/architecture.md](docs/architecture.md).
 
-## 🔧 Development
+## Development
 
 ### Development Commands
 
@@ -427,7 +427,7 @@ tests/
 
 **Coverage Target**: 80%+ for src/web/ (250+ tests, 99%+ pass rate)
 
-## 📊 Output Examples
+## Output Examples
 
 ### HTML Digest Features
 - **Personalized Header**: Shows your interests and discovery stats
