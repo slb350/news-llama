@@ -495,7 +495,12 @@ async def profile_settings_update(
 
         # Trigger newsletter regeneration if interests changed
         if interests_changed:
+            logger.info(
+                f"Interests changed for user {user.id}, triggering newsletter regeneration"
+            )
             generation_service.requeue_newsletter_for_today(db, user.id)
+        else:
+            logger.info(f"No interest changes for user {user.id}, skipping regeneration")
 
     return {"status": "success"}
 
