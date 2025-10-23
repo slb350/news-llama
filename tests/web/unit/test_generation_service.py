@@ -306,3 +306,233 @@ class TestHandleGenerationError:
         """Should raise error for non-existent newsletter."""
         with pytest.raises(GenerationServiceError, match="Newsletter.*not found"):
             handle_generation_error(db, 99999, "Test error")
+
+
+class TestProcessNewsletterWithRetry:
+    """Tests for process_newsletter_with_retry - automatic retry logic."""
+
+    @pytest.mark.asyncio
+    async def test_retry_succeeds_on_first_attempt(
+        self, db: Session, user_with_interests
+    ):
+        """Should succeed without retries if generation works first time."""
+        from src.web.services.generation_service import process_newsletter_with_retry
+
+        newsletter = create_pending_newsletter(
+            db, user_with_interests.id, date(2025, 10, 22)
+        )
+
+        # Mock successful generation
+        with patch(
+            "src.web.services.generation_service.process_newsletter_generation"
+        ) as mock_process:
+            await process_newsletter_with_retry(db, newsletter.id, max_retries=3)
+
+            # Should only call once (no retries)
+            assert mock_process.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_retry_attempts_up_to_max_retries(
+        self, db: Session, user_with_interests
+    ):
+        """Should retry up to max_retries times on failures."""
+        from src.web.services.generation_service import process_newsletter_with_retry
+
+        newsletter = create_pending_newsletter(
+            db, user_with_interests.id, date(2025, 10, 22)
+        )
+
+        # Mock both generation and sleep
+        with (
+            patch(
+                "src.web.services.generation_service.process_newsletter_generation"
+            ) as mock_process,
+            patch("src.web.services.generation_service.asyncio.sleep"),
+        ):
+            mock_process.side_effect = Exception("Generation failed")
+
+            with pytest.raises(Exception, match="Generation failed"):
+                await process_newsletter_with_retry(db, newsletter.id, max_retries=3)
+
+            # Should attempt 3 times
+            assert mock_process.call_count == 3
+
+    @pytest.mark.asyncio
+    async def test_retry_succeeds_on_second_attempt(
+        self, db: Session, user_with_interests
+    ):
+        """Should succeed on retry after initial failure."""
+        from src.web.services.generation_service import process_newsletter_with_retry
+
+        newsletter = create_pending_newsletter(
+            db, user_with_interests.id, date(2025, 10, 22)
+        )
+
+        # Mock: fail once, then succeed (also mock sleep to avoid delays)
+        with (
+            patch(
+                "src.web.services.generation_service.process_newsletter_generation"
+            ) as mock_process,
+            patch("src.web.services.generation_service.asyncio.sleep"),
+        ):
+            mock_process.side_effect = [Exception("Transient error"), None]
+
+            await process_newsletter_with_retry(db, newsletter.id, max_retries=3)
+
+            # Should call twice (fail then succeed)
+            assert mock_process.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_retry_uses_exponential_backoff(
+        self, db: Session, user_with_interests
+    ):
+        """Should use exponential backoff between retries."""
+        from src.web.services.generation_service import process_newsletter_with_retry
+
+        newsletter = create_pending_newsletter(
+            db, user_with_interests.id, date(2025, 10, 22)
+        )
+
+        # Track sleep calls to verify backoff timing
+        sleep_calls = []
+
+        async def track_sleep(seconds):
+            sleep_calls.append(seconds)
+
+        # Mock generation to fail twice, succeed third time
+        with patch(
+            "src.web.services.generation_service.process_newsletter_generation"
+        ) as mock_process:
+            mock_process.side_effect = [
+                Exception("Error 1"),
+                Exception("Error 2"),
+                None,
+            ]
+
+            with patch(
+                "src.web.services.generation_service.asyncio.sleep",
+                side_effect=track_sleep,
+            ):
+                await process_newsletter_with_retry(db, newsletter.id, max_retries=3)
+
+            # Should have 2 sleep calls (after 1st and 2nd failures)
+            assert len(sleep_calls) == 2
+            # Exponential backoff: 300s (5min), 600s (10min)
+            assert sleep_calls[0] == 300  # 5 minutes
+            assert sleep_calls[1] == 600  # 10 minutes
+
+    @pytest.mark.asyncio
+    async def test_retry_marks_failed_after_max_retries(
+        self, db: Session, user_with_interests
+    ):
+        """Should mark newsletter as failed after exhausting retries."""
+        from src.web.services.generation_service import process_newsletter_with_retry
+
+        newsletter = create_pending_newsletter(
+            db, user_with_interests.id, date(2025, 10, 22)
+        )
+
+        # Mock generation to always fail (and mock sleep to avoid delays)
+        with (
+            patch(
+                "src.web.services.generation_service.process_newsletter_generation"
+            ) as mock_process,
+            patch("src.web.services.generation_service.asyncio.sleep"),
+        ):
+            mock_process.side_effect = Exception("Persistent error")
+
+            with pytest.raises(Exception):
+                await process_newsletter_with_retry(db, newsletter.id, max_retries=3)
+
+        # Newsletter should be marked as failed
+        updated = get_newsletter_by_guid(db, newsletter.guid)
+        assert updated.status == "failed"
+
+
+class TestGenerationMetrics:
+    """Tests for GenerationMetrics tracking."""
+
+    def test_metrics_initial_state(self):
+        """Should initialize with zeros."""
+        from src.web.services.generation_service import GenerationMetrics
+
+        metrics = GenerationMetrics()
+
+        assert metrics.total_generated == 0
+        assert metrics.total_failed == 0
+        assert metrics.average_duration == 0.0
+        assert metrics.queue_depth == 0
+
+    def test_metrics_record_success(self):
+        """Should track successful generations."""
+        from src.web.services.generation_service import GenerationMetrics
+
+        metrics = GenerationMetrics()
+
+        metrics.record_success(duration_seconds=600.0)  # 10 minutes
+
+        assert metrics.total_generated == 1
+        assert metrics.average_duration == 600.0
+
+    def test_metrics_record_multiple_successes(self):
+        """Should calculate average duration correctly."""
+        from src.web.services.generation_service import GenerationMetrics
+
+        metrics = GenerationMetrics()
+
+        metrics.record_success(duration_seconds=600.0)  # 10 min
+        metrics.record_success(duration_seconds=900.0)  # 15 min
+        metrics.record_success(duration_seconds=1200.0)  # 20 min
+
+        assert metrics.total_generated == 3
+        # Average: (600 + 900 + 1200) / 3 = 900
+        assert metrics.average_duration == 900.0
+
+    def test_metrics_record_failure(self):
+        """Should track failed generations."""
+        from src.web.services.generation_service import GenerationMetrics
+
+        metrics = GenerationMetrics()
+
+        metrics.record_failure()
+        metrics.record_failure()
+
+        assert metrics.total_failed == 2
+
+    def test_metrics_get_stats(self):
+        """Should return complete stats dictionary."""
+        from src.web.services.generation_service import GenerationMetrics
+
+        metrics = GenerationMetrics()
+        metrics.record_success(600.0)
+        metrics.record_success(900.0)
+        metrics.record_failure()
+
+        stats = metrics.get_stats()
+
+        assert stats["total_generated"] == 2
+        assert stats["total_failed"] == 1
+        assert stats["success_rate"] == 2 / 3  # 66.67%
+        assert stats["average_duration_seconds"] == 750.0  # (600+900)/2
+        assert stats["queue_depth"] == 0
+
+    def test_metrics_success_rate_no_attempts(self):
+        """Should return 0 success rate when no attempts."""
+        from src.web.services.generation_service import GenerationMetrics
+
+        metrics = GenerationMetrics()
+        stats = metrics.get_stats()
+
+        assert stats["success_rate"] == 0
+
+    def test_metrics_success_rate_all_failed(self):
+        """Should return 0 success rate when all failed."""
+        from src.web.services.generation_service import GenerationMetrics
+
+        metrics = GenerationMetrics()
+        metrics.record_failure()
+        metrics.record_failure()
+
+        stats = metrics.get_stats()
+
+        assert stats["success_rate"] == 0

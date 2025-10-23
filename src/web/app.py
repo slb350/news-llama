@@ -535,6 +535,16 @@ async def scheduler_health():
     }
 
 
+@app.get("/health/generation")
+async def generation_health():
+    """
+    Check generation metrics and performance.
+
+    Returns generation stats including success/failure counts, success rate, and average duration.
+    """
+    return generation_service.metrics.get_stats()
+
+
 if __name__ == "__main__":
     import uvicorn
 

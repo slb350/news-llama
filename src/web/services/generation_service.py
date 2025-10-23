@@ -8,6 +8,8 @@ web application database and file management.
 from sqlalchemy.orm import Session
 from datetime import date
 import logging
+import asyncio
+import time
 
 from src.web.services import user_service, interest_service, newsletter_service
 from src.web.models import Newsletter
@@ -182,6 +184,103 @@ def handle_generation_error(db: Session, newsletter_id: int, error_message: str)
 
     # Mark as failed and increment retry count
     newsletter_service.mark_newsletter_failed(db, newsletter_id)
+
+
+class GenerationMetrics:
+    """Track generation performance metrics."""
+
+    def __init__(self):
+        self.total_generated = 0
+        self.total_failed = 0
+        self.average_duration = 0.0
+        self.queue_depth = 0
+
+    def record_success(self, duration_seconds: float):
+        """Record successful generation with duration."""
+        self.total_generated += 1
+        # Calculate new average: ((old_avg * old_count) + new_value) / new_count
+        self.average_duration = (
+            self.average_duration * (self.total_generated - 1) + duration_seconds
+        ) / self.total_generated
+
+    def record_failure(self):
+        """Record failed generation."""
+        self.total_failed += 1
+
+    def get_stats(self):
+        """Get current metrics as dictionary."""
+        total_attempts = self.total_generated + self.total_failed
+        success_rate = (
+            self.total_generated / total_attempts if total_attempts > 0 else 0
+        )
+
+        return {
+            "total_generated": self.total_generated,
+            "total_failed": self.total_failed,
+            "success_rate": success_rate,
+            "average_duration_seconds": self.average_duration,
+            "queue_depth": self.queue_depth,
+        }
+
+
+# Global metrics instance
+metrics = GenerationMetrics()
+
+
+async def process_newsletter_with_retry(
+    db: Session, newsletter_id: int, max_retries: int = 3
+):
+    """
+    Process newsletter generation with automatic retries and exponential backoff.
+
+    Args:
+        db: Database session
+        newsletter_id: Newsletter ID to process
+        max_retries: Maximum number of retry attempts (default 3)
+
+    Raises:
+        Exception: If all retry attempts fail
+    """
+    newsletter = db.query(Newsletter).filter(Newsletter.id == newsletter_id).first()
+    if not newsletter:
+        raise GenerationServiceError(f"Newsletter with ID {newsletter_id} not found")
+
+    start_time = time.time()
+
+    for attempt in range(max_retries):
+        try:
+            # Attempt generation
+            process_newsletter_generation(db, newsletter_id)
+
+            # Record success
+            duration = time.time() - start_time
+            metrics.record_success(duration)
+
+            logger.info(
+                f"Newsletter {newsletter_id} generated successfully on attempt {attempt + 1}"
+            )
+            return
+
+        except Exception as e:
+            logger.warning(
+                f"Newsletter {newsletter_id} failed on attempt {attempt + 1}: {e}"
+            )
+
+            if attempt < max_retries - 1:
+                # Exponential backoff: 5 min (300s), 10 min (600s), 20 min (1200s)
+                backoff_seconds = 300 * (2**attempt)
+                logger.info(f"Retrying in {backoff_seconds} seconds...")
+                await asyncio.sleep(backoff_seconds)
+            else:
+                # Max retries exceeded
+                logger.error(
+                    f"Newsletter {newsletter_id} failed after {max_retries} attempts"
+                )
+                handle_generation_error(
+                    db, newsletter_id, f"Max retries exceeded: {str(e)}"
+                )
+                metrics.record_failure()
+                raise
 
 
 def requeue_newsletter_for_today(db: Session, user_id: int) -> bool:
