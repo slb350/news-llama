@@ -19,6 +19,10 @@ from src.web.services.llama_wrapper import (
 
 logger = logging.getLogger(__name__)
 
+# Configuration constants
+RETRY_BASE_DELAY_SECONDS = 300  # 5 minutes
+MAX_RETRIES = 3
+
 
 # Custom Exceptions
 class GenerationServiceError(Exception):
@@ -228,7 +232,7 @@ metrics = GenerationMetrics()
 
 
 async def process_newsletter_with_retry(
-    db: Session, newsletter_id: int, max_retries: int = 3
+    db: Session, newsletter_id: int, max_retries: int = MAX_RETRIES
 ):
     """
     Process newsletter generation with automatic retries and exponential backoff.
@@ -267,8 +271,8 @@ async def process_newsletter_with_retry(
             )
 
             if attempt < max_retries - 1:
-                # Exponential backoff: 5 min (300s), 10 min (600s), 20 min (1200s)
-                backoff_seconds = 300 * (2**attempt)
+                # Exponential backoff: 5 min, 10 min, 20 min
+                backoff_seconds = RETRY_BASE_DELAY_SECONDS * (2**attempt)
                 logger.info(f"Retrying in {backoff_seconds} seconds...")
                 await asyncio.sleep(backoff_seconds)
             else:

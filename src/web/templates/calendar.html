@@ -22,7 +22,15 @@
         </div>
 
         <!-- Actions -->
-        <div class="flex gap-3">
+        <div class="flex items-center gap-3">
+            <!-- Polling Indicator -->
+            <div id="polling-indicator" class="hidden">
+                <div class="flex items-center gap-2 text-xs text-gray-500">
+                    <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span>Checking for updates...</span>
+                </div>
+            </div>
+
             <a href="/profile/settings"
                hx-get="/profile/settings"
                hx-trigger="click"
@@ -79,20 +87,28 @@
 
     <!-- Empty State -->
     {% if newsletters|length == 0 %}
-    <div class="empty-state py-12 text-center" data-state="empty">
-        <div class="text-6xl mb-4">📰</div>
-        <h3 class="text-2xl font-bold text-gray-900 mb-2">No Newsletters Yet</h3>
-        <p class="text-gray-600 mb-6">Get started by generating your first AI-powered news digest!</p>
-        <button
-            onclick="generateTodayNewsletter()"
-            class="btn-primary"
-            data-loading-text="Generating..."
-        >
-            ✨ Generate Today's Newsletter
-        </button>
-    </div>
-    <script>
-        async function generateTodayNewsletter() {
+        {% if has_active %}
+        <div class="empty-state py-12 text-center" data-state="generating">
+            <div class="text-6xl mb-4">⚙️</div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Newsletter Generating...</h3>
+            <p class="text-gray-600 mb-2">Your first newsletter is being created! This may take 10-15 minutes.</p>
+            <p class="text-sm text-gray-500">The page will automatically update when ready.</p>
+        </div>
+        {% else %}
+        <div class="empty-state py-12 text-center" data-state="empty">
+            <div class="text-6xl mb-4">📰</div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">No Newsletters Yet</h3>
+            <p class="text-gray-600 mb-6">Get started by generating your first AI-powered news digest!</p>
+            <button
+                onclick="generateTodayNewsletter()"
+                class="btn-primary"
+                data-loading-text="Generating..."
+            >
+                ✨ Generate Today's Newsletter
+            </button>
+        </div>
+        <script>
+            async function generateTodayNewsletter() {
             const today = new Date().toISOString().split('T')[0];
             try {
                 const response = await fetch('/newsletters/generate', {
@@ -120,7 +136,8 @@
                 NewsLlama.showToast('Failed to generate newsletter. Please try again.', 'error');
             }
         }
-    </script>
+        </script>
+        {% endif %}
     {% else %}
     <!-- Calendar Grid -->
     <div id="calendar-container">
@@ -273,6 +290,9 @@
 <script>
     // Toast notification system provided by base.html globally as NewsLlama.showToast()
 
+    // Configuration constants
+    const POLL_INTERVAL_MS = 30 * 1000;  // 30 seconds
+
     function openNewsletterModal(guid, date) {
         const modal = document.getElementById('newsletter-modal');
         const iframe = document.getElementById('newsletter-iframe');
@@ -414,16 +434,32 @@
     let pollingInterval = null;
 
     function pollNewsletterStatus() {
+        const indicator = document.getElementById('polling-indicator');
+
         // Find all calendar days with pending or generating newsletters
         const activeDays = document.querySelectorAll('[data-newsletter-guid][data-newsletter-status]');
 
-        activeDays.forEach(async (dayEl) => {
+        // Filter to only pending or generating
+        const activePollingDays = Array.from(activeDays).filter(dayEl => {
+            const status = dayEl.dataset.newsletterStatus;
+            return status === 'pending' || status === 'generating';
+        });
+
+        // If no active newsletters, hide indicator and return
+        if (activePollingDays.length === 0) {
+            if (indicator) indicator.classList.add('hidden');
+            return;
+        }
+
+        // Show indicator
+        if (indicator) indicator.classList.remove('hidden');
+
+        // Poll all active newsletters
+        Promise.all(activePollingDays.map(async (dayEl) => {
             const guid = dayEl.dataset.newsletterGuid;
             const currentStatus = dayEl.dataset.newsletterStatus;
 
-            // Only poll for pending or generating newsletters
-            if (currentStatus === 'pending' || currentStatus === 'generating') {
-                try {
+            try {
                     const response = await fetch(`/newsletters/${guid}`);
 
                     // Check content type to determine if it's JSON or HTML
@@ -461,10 +497,14 @@
                         // Show toast
                         NewsLlama.showToast('Newsletter ready! Click the date to view.', 'success');
                     }
-                } catch (error) {
-                    console.error(`Failed to poll newsletter ${guid}:`, error);
-                }
+            } catch (error) {
+                console.error(`Failed to poll newsletter ${guid}:`, error.message);
             }
+        })).then(() => {
+            // Hide indicator when done (with slight delay for UX)
+            setTimeout(() => {
+                if (indicator) indicator.classList.add('hidden');
+            }, 500);
         });
     }
 
@@ -497,8 +537,8 @@
         }
     }
 
-    // Start polling when page loads (30-second intervals)
-    pollingInterval = setInterval(pollNewsletterStatus, 30000);
+    // Start polling when page loads
+    pollingInterval = setInterval(pollNewsletterStatus, POLL_INTERVAL_MS);
 
     // Poll immediately on page load
     pollNewsletterStatus();

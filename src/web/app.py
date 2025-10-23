@@ -327,6 +327,9 @@ async def calendar_view(
     # Get newsletters for current month
     newsletters = newsletter_service.get_newsletters_by_month(db, user.id, year, month)
 
+    # Check if any newsletters are pending/generating
+    has_active = any(n.status in ["pending", "generating"] for n in newsletters)
+
     return templates.TemplateResponse(
         request,
         "calendar.html",
@@ -336,6 +339,7 @@ async def calendar_view(
             "current_month": current_month,
             "year": year,
             "month": month,
+            "has_active": has_active,
         },
     )
 
@@ -390,13 +394,10 @@ async def profile_settings(
 @app.post("/profile/settings")
 async def profile_settings_update(
     update_data: ProfileUpdateRequest,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_user),
     db: Session = Depends(get_db),
 ):
     """Update profile settings (first name and interests)."""
-    # Redirect to profile select if no user session
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
 
     # Update first name if provided
     if update_data.first_name is not None:
@@ -445,13 +446,10 @@ async def profile_settings_update(
 @app.post("/profile/settings/interests/add")
 async def add_interest_route(
     interest_data: InterestAdd,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_user),
     db: Session = Depends(get_db),
 ):
     """Add interest to user's profile and trigger newsletter regeneration."""
-    # Require user session
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
 
     try:
         interest = interest_service.add_user_interest(
@@ -480,13 +478,10 @@ async def add_interest_route(
 @app.post("/profile/settings/interests/remove")
 async def remove_interest_route(
     interest_data: InterestAdd,  # Reuse schema, only need interest_name
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_user),
     db: Session = Depends(get_db),
 ):
     """Remove interest from user's profile and trigger newsletter regeneration."""
-    # Require user session
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
 
     try:
         interest_service.remove_user_interest(db, user.id, interest_data.interest_name)
@@ -586,12 +581,9 @@ async def view_newsletter(guid: str, db: Session = Depends(get_db)):
 
 @app.post("/newsletters/{guid}/retry")
 async def retry_newsletter_route(
-    guid: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    guid: str, user: User = Depends(require_user), db: Session = Depends(get_db)
 ):
     """Retry a failed newsletter by resetting it to pending status."""
-    # Require user session
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
 
     try:
         # Retry the newsletter
@@ -648,6 +640,9 @@ async def calendar_month(
     # Get newsletters for specified month
     newsletters = newsletter_service.get_newsletters_by_month(db, user.id, year, month)
 
+    # Check if any newsletters are pending/generating
+    has_active = any(n.status in ["pending", "generating"] for n in newsletters)
+
     return templates.TemplateResponse(
         request,
         "calendar.html",
@@ -657,6 +652,7 @@ async def calendar_month(
             "current_month": current_month,
             "year": year,
             "month": month,
+            "has_active": has_active,
         },
     )
 
