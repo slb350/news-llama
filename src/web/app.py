@@ -390,11 +390,6 @@ async def profile_settings_update(
         predefined_interests = interest_service.get_predefined_interests()
         predefined_set = {i.lower() for i in predefined_interests}
 
-        # Remove all existing interests
-        existing_interests = interest_service.get_user_interests(db, user.id)
-        for interest in existing_interests:
-            interest_service.remove_user_interest(db, user.id, interest.interest_name)
-
         # Deduplicate interests (case-insensitive)
         seen = set()
         unique_interests = []
@@ -404,8 +399,20 @@ async def profile_settings_update(
                 seen.add(interest_lower)
                 unique_interests.append(interest)
 
-        # Add new interests
-        for interest_name in unique_interests:
+        # Calculate diff (what changed) - only modify what's different
+        existing_interests = interest_service.get_user_interests(db, user.id)
+        existing_set = {i.interest_name for i in existing_interests}
+        new_set = set(unique_interests)
+
+        to_remove = existing_set - new_set
+        to_add = new_set - existing_set
+
+        # Only remove interests that were deleted
+        for interest_name in to_remove:
+            interest_service.remove_user_interest(db, user.id, interest_name)
+
+        # Only add interests that are new
+        for interest_name in to_add:
             is_predefined = interest_name.lower() in predefined_set
             interest_service.add_user_interest(
                 db,

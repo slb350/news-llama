@@ -196,9 +196,14 @@
     </form>
 </div>
 
-<script>
-    // Initialize with existing interests
-    const selectedInterests = new Set({{ user_interests|tojson }});
+<script type="module">
+    import { AvatarManager } from '/static/avatar-manager.js';
+    import { InterestManager } from '/static/interest-manager.js';
+
+    // Interest manager instance
+    const interestManager = new InterestManager();
+    interestManager.initialize({{ user_interests|tojson }});  // Initialize with existing interests
+
     let uploadedAvatarFile = null;
 
     // Add event delegation for interest removal (safe from XSS)
@@ -206,149 +211,38 @@
         const interestTag = e.target.closest('.interest-tag[data-interest]');
         if (interestTag && !interestTag.classList.contains('empty-state')) {
             const interest = interestTag.dataset.interest;
-            removeInterest(interest);
+            interestManager.remove(interest);
         }
     });
 
-    // Handle avatar file selection
-    async function handleAvatarSelect(input) {
-        const file = input.files[0];
-        const statusEl = document.getElementById('avatar-status');
-        const avatarPreview = document.getElementById('avatar-preview');
+    // Handle avatar file selection using shared module
+    window.handleAvatarSelect = async function(input) {
+        await AvatarManager.handleAvatarSelect(
+            input,
+            'avatar-preview',
+            'avatar-status',
+            true  // Upload immediately in settings
+        );
+    };
 
-        if (!file) {
-            return;
-        }
-
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            statusEl.textContent = 'Please select an image file';
-            statusEl.className = 'text-xs mt-1 text-red-600';
-            return;
-        }
-
-        // Validate file size (500KB max)
-        if (file.size > 500 * 1024) {
-            statusEl.textContent = 'File size must be less than 500KB';
-            statusEl.className = 'text-xs mt-1 text-red-600';
-            return;
-        }
-
-        // Show preview
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            avatarPreview.innerHTML = `<img src="${e.target.result}" alt="Avatar preview" class="w-full h-full object-cover rounded-full">`;
-        };
-        reader.readAsDataURL(file);
-
-        // Upload immediately
-        statusEl.textContent = 'Uploading...';
-        statusEl.className = 'text-xs mt-1 text-blue-600';
-
-        const formData = new FormData();
-        formData.append('avatar', file);
-
-        try {
-            const response = await fetch('/profile/avatar', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (response.ok) {
-                statusEl.textContent = 'Avatar uploaded successfully!';
-                statusEl.className = 'text-xs mt-1 text-green-600';
-            } else {
-                // Parse error message from backend
-                let errorMessage = 'Upload failed. Please try again.';
-                try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.detail || errorMessage;
-                } catch {
-                    // Response wasn't JSON
-                }
-                statusEl.textContent = errorMessage;
-                statusEl.className = 'text-xs mt-1 text-red-600';
-                NewsLlama.showToast(errorMessage, 'error');
-            }
-        } catch (error) {
-            console.error('Avatar upload error:', error.message);
-            const errorMessage = 'Network error. Please check your connection.';
-            statusEl.textContent = errorMessage;
-            statusEl.className = 'text-xs mt-1 text-red-600';
-            NewsLlama.showToast(errorMessage, 'error');
-        }
-    }
-
-    function toggleInterest(button, interest) {
-        if (selectedInterests.has(interest)) {
-            selectedInterests.delete(interest);
-            if (button) button.classList.remove('selected');
-        } else {
-            selectedInterests.add(interest);
-            if (button) button.classList.add('selected');
-        }
-        updateSelectedDisplay();
-    }
-
-    function removeInterest(interest) {
-        selectedInterests.delete(interest);
-        // Also remove 'selected' class from the grid button if it exists
-        const gridButtons = document.querySelectorAll('.interest-tag');
-        gridButtons.forEach(btn => {
-            if (btn.textContent.trim() === interest) {
-                btn.classList.remove('selected');
-            }
-        });
-        updateSelectedDisplay();
-    }
-
-    function addCustomInterest() {
-        const input = document.getElementById('custom-interest');
-        const interest = input.value.trim();
-        if (interest && interest.length > 0) {
-            selectedInterests.add(interest);
-            updateSelectedDisplay();
-            input.value = '';
-        }
-    }
+    // Make interest management functions available globally
+    window.toggleInterest = (btn, interest) => interestManager.toggle(btn, interest);
+    window.addCustomInterest = () => interestManager.addCustom('custom-interest');
 
     // Allow Enter key to add custom interest
     document.getElementById('custom-interest').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            addCustomInterest();
+            interestManager.addCustom('custom-interest');
         }
     });
-
-    function updateSelectedDisplay() {
-        const container = document.getElementById('selected-interests');
-
-        // Clear container
-        container.innerHTML = '';
-
-        if (selectedInterests.size === 0) {
-            const span = document.createElement('span');
-            span.className = 'text-xs text-gray-500 empty-state';
-            span.textContent = 'No interests selected yet';
-            container.appendChild(span);
-        } else {
-            // Create elements safely using DOM methods (no onclick, use data attributes)
-            Array.from(selectedInterests).forEach(interest => {
-                const span = document.createElement('span');
-                span.className = 'interest-tag cursor-pointer hover:opacity-80';
-                span.textContent = interest;  // Safe - sets text, not HTML
-                span.dataset.interest = interest;  // Safe - use data attribute instead of onclick
-                container.appendChild(span);
-            });
-        }
-    }
 
     // Form submission handler
     document.getElementById('settings-form').addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const firstName = document.getElementById('first_name').value.trim();
-        const interests = Array.from(selectedInterests);
+        const interests = interestManager.getSelected();
 
         if (!firstName) {
             alert('Please enter your first name');

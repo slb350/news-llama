@@ -271,68 +271,7 @@
 </div>
 
 <script>
-    // Simple toast notification system
-    const NewsLlama = {
-        showToast: function(message, type = 'info') {
-            // Create toast container if it doesn't exist
-            let toastContainer = document.getElementById('toast-container');
-            if (!toastContainer) {
-                toastContainer = document.createElement('div');
-                toastContainer.id = 'toast-container';
-                toastContainer.style.cssText = 'position: fixed; top: 1rem; right: 1rem; z-index: 9999;';
-                document.body.appendChild(toastContainer);
-            }
-
-            // Create toast element
-            const toast = document.createElement('div');
-            const bgColor = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6';
-            toast.style.cssText = `
-                background: ${bgColor};
-                color: white;
-                padding: 0.75rem 1rem;
-                border-radius: 0.375rem;
-                margin-bottom: 0.5rem;
-                max-width: 20rem;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                font-family: 'JetBrains Mono', monospace;
-                font-size: 0.875rem;
-                animation: slideIn 0.3s ease-out;
-            `;
-            toast.textContent = message;
-
-            // Add animation keyframes if not already added
-            if (!document.getElementById('toast-animations')) {
-                const style = document.createElement('style');
-                style.id = 'toast-animations';
-                style.textContent = `
-                    @keyframes slideIn {
-                        from { transform: translateX(100%); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                    @keyframes slideOut {
-                        from { transform: translateX(0); opacity: 1; }
-                        to { transform: translateX(100%); opacity: 0; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-
-            // Add toast to container
-            toastContainer.appendChild(toast);
-
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                toast.style.animation = 'slideOut 0.3s ease-out';
-                setTimeout(() => {
-                    toast.remove();
-                    // Remove container if empty
-                    if (toastContainer.children.length === 0) {
-                        toastContainer.remove();
-                    }
-                }, 300);
-            }, 5000);
-        }
-    };
+    // Toast notification system provided by base.html globally as NewsLlama.showToast()
 
     function openNewsletterModal(guid, date) {
         const modal = document.getElementById('newsletter-modal');

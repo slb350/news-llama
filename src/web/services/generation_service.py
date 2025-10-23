@@ -324,6 +324,18 @@ def requeue_newsletter_for_today(db: Session, user_id: int) -> bool:
                     f"Deleting existing {existing.status} newsletter {existing.id} for regeneration"
                 )
                 newsletter_service.delete_newsletter(db, existing.id)
+
+                # Check again after delete - another thread might have queued one
+                # (prevents race condition when rapidly adding/removing interests)
+                newsletters_after_delete = newsletter_service.get_newsletters_by_month(
+                    db, user_id, today.year, today.month
+                )
+                existing_after_delete = next((n for n in newsletters_after_delete if n.date == today_str), None)
+                if existing_after_delete:
+                    logger.info(
+                        f"Newsletter {existing_after_delete.id} already queued by another request, skipping"
+                    )
+                    return True
             elif existing.status == "completed":
                 # Don't regenerate completed newsletters automatically
                 logger.info(
