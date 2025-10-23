@@ -8,6 +8,12 @@ import sys
 import logging
 from contextlib import asynccontextmanager
 
+# Configure logging to show INFO level messages
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s:     %(name)s - %(message)s'
+)
+
 # Fix libmagic path on macOS (python-magic needs help finding Homebrew's libmagic)
 if sys.platform == "darwin":  # macOS
     os.environ.setdefault("DYLD_LIBRARY_PATH", "/opt/homebrew/lib")

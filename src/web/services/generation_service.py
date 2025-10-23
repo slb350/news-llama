@@ -321,34 +321,26 @@ def requeue_newsletter_for_today(db: Session, user_id: int) -> bool:
         existing = next((n for n in newsletters if n.date == today_str), None)
 
         if existing:
-            # Only delete and requeue if pending or generating
-            # If completed, we let it be (user can manually regenerate later)
-            if existing.status in ["pending", "generating"]:
-                logger.info(
-                    f"Deleting existing {existing.status} newsletter {existing.id} for regeneration"
-                )
-                newsletter_service.delete_newsletter(db, existing.id)
+            # Delete and requeue for any status (pending, generating, completed, or failed)
+            # When interests change, we want to regenerate with the new interests
+            logger.info(
+                f"Deleting existing {existing.status} newsletter {existing.id} for regeneration due to interest changes"
+            )
+            newsletter_service.delete_newsletter(db, existing.id)
 
-                # Check again after delete - another thread might have queued one
-                # (prevents race condition when rapidly adding/removing interests)
-                newsletters_after_delete = newsletter_service.get_newsletters_by_month(
-                    db, user_id, today.year, today.month
-                )
-                existing_after_delete = next(
-                    (n for n in newsletters_after_delete if n.date == today_str), None
-                )
-                if existing_after_delete:
-                    logger.info(
-                        f"Newsletter {existing_after_delete.id} already queued by another request, skipping"
-                    )
-                    return True
-            elif existing.status == "completed":
-                # Don't regenerate completed newsletters automatically
+            # Check again after delete - another thread might have queued one
+            # (prevents race condition when rapidly adding/removing interests)
+            newsletters_after_delete = newsletter_service.get_newsletters_by_month(
+                db, user_id, today.year, today.month
+            )
+            existing_after_delete = next(
+                (n for n in newsletters_after_delete if n.date == today_str), None
+            )
+            if existing_after_delete:
                 logger.info(
-                    f"Newsletter {existing.id} already completed, skipping regeneration"
+                    f"Newsletter {existing_after_delete.id} already queued by another request, skipping"
                 )
-                return False
-            # If failed, we'll delete and retry
+                return True
 
         # Queue new newsletter
         newsletter = queue_newsletter_generation(db, user_id, today)
