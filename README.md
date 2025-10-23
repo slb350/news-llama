@@ -2,6 +2,12 @@
 
 AI-powered news curation engine that aggregates content from RSS, Twitter/X, Hacker News, Reddit, and web search, then summarizes the most relevant articles using local LLM.
 
+![News Llama Demo](screenshots/demo.gif)
+
+## Why News Llama?
+
+Tired of doom-scrolling through endless feeds? News Llama curates a personalized daily digest based on *your* interests using AI-powered source discovery. It runs locally, keeps your reading habits private, and cuts through the noise with intelligent summarization. No ads, no tracking, no drama—just news.
+
 ## Features
 
 - **AI-Powered Source Discovery**: Five-tier progressive discovery strategy with intelligent subreddit matching
@@ -19,8 +25,7 @@ AI-powered news curation engine that aggregates content from RSS, Twitter/X, Hac
 
 ```bash
 # Clone and setup
-git clone <your-repo>
-cd news-llama
+cd news-llama  # Navigate to your cloned repository
 python setup.py
 
 # Or manually:
@@ -296,98 +301,21 @@ Check scheduler status: `http://localhost:8000/health/scheduler`
 
 ### Architecture
 
-#### Technology Stack
+Built with **FastAPI**, **SQLAlchemy**, **SQLite** (WAL mode), **Alembic** migrations, and **APScheduler** for background jobs.
 
-- **[FastAPI](https://fastapi.tiangolo.com/)**: Modern async web framework
-- **[SQLAlchemy](https://www.sqlalchemy.org/)**: ORM with relationship management
-- **[SQLite](https://www.sqlite.org/)**: Lightweight database with WAL mode
-- **[Alembic](https://alembic.sqlalchemy.org/)**: Database migration management
-- **[APScheduler](https://apscheduler.readthedocs.io/)**: Background job scheduler
-- **[Jinja2](https://jinja.palletsprojects.com/)**: HTML template rendering
-- **[Pydantic](https://docs.pydantic.dev/)**: Request/response validation
+**Key Components**:
+- **Database**: 3 tables (Users, UserInterests, Newsletters) with optimized indexes
+- **Service Layer**: 5 services (user, interest, newsletter, generation, scheduler)
+- **API**: RESTful endpoints with cookie-based sessions
+- **Performance**: Database indexes, rate limiting, LRU file caching, eager loading
 
-#### Database Schema
+**API Endpoints**:
+- **Pages**: `/`, `/profile/new`, `/calendar`, `/profile/settings`, `/newsletters/{guid}`
+- **API**: Profile creation/updates, interest management, newsletter generation/retry, health checks
 
-**Users**: Store user profiles
-- `id`, `first_name`, `avatar_path`, `created_at`
+**Error Handling**: User-friendly messages for all scenarios, no stack traces exposed.
 
-**UserInterests**: User interest preferences (many-to-many)
-- `id`, `user_id`, `interest_name`, `is_predefined`, `added_at`
-
-**Newsletters**: Newsletter generation tracking
-- `id`, `user_id`, `date`, `guid`, `file_path`, `status`, `generated_at`, `retry_count`
-
-**Indexes**: Optimized for fast queries
-- `idx_newsletters_user_id`: User's newsletters
-- `idx_newsletters_date`: Date-based lookups
-- `idx_newsletters_status`: Status filtering
-- `idx_newsletters_user_date`: Composite lookup (unique constraint)
-- `idx_user_interests_user_id`: User's interests
-
-#### Service Layer
-
-**user_service**: User CRUD operations
-- `create_user()`, `get_user()`, `update_user()`, `delete_user()`, `get_all_users()`
-
-**interest_service**: Interest management
-- `add_user_interest()`, `remove_user_interest()`, `get_user_interests()`, `get_predefined_interests()`
-
-**newsletter_service**: Newsletter CRUD and retrieval
-- `create_newsletter()`, `get_newsletter_by_guid()`, `get_newsletters_by_month()`, `update_newsletter_status()`, `retry_newsletter()`
-
-**generation_service**: Newsletter generation orchestration
-- `queue_newsletter_generation()`, `process_newsletter()`, `requeue_newsletter_for_today()`
-- Integrates with `NewsLlama` class to run full aggregation/summarization pipeline
-
-**scheduler_service**: Background job management
-- `start_scheduler()`, `stop_scheduler()`, `schedule_daily_generation()`, `queue_immediate_generation()`
-
-#### Performance Optimizations
-
-**Database Indexes**: O(log n) lookups instead of O(n) table scans
-- Query times: <100ms for monthly newsletter queries with realistic data
-
-**Rate Limiting**: Sliding window algorithm (10 requests per 60 seconds per user)
-- Prevents abuse of newsletter generation endpoint
-- In-memory tracking (consider Redis for production)
-
-**File Caching**: LRU cache for newsletter HTML files (maxsize=100)
-- Reduces disk I/O for frequently accessed newsletters
-- ~10MB max memory usage (100 newsletters × 100KB avg)
-
-**Eager Loading**: SQLAlchemy `joinedload()` to avoid N+1 queries
-- Fetches user interests in single query instead of per-user queries
-
-#### API Endpoints
-
-**Authentication**: Cookie-based sessions with `user_id`
-
-**Pages** (HTML):
-- `GET /`: Profile selection
-- `GET /profile/new`: Create profile form
-- `GET /calendar`: Newsletter calendar
-- `GET /profile/settings`: Profile settings
-- `GET /newsletters/{guid}`: View newsletter
-
-**API** (JSON):
-- `POST /profile/create`: Create new user profile
-- `POST /profile/settings`: Update profile settings
-- `POST /profile/settings/interests/add`: Add interest
-- `POST /profile/settings/interests/remove`: Remove interest
-- `POST /newsletters/generate`: Queue newsletter generation (rate limited)
-- `POST /newsletters/{guid}/retry`: Retry failed newsletter
-- `GET /health/scheduler`: Scheduler status
-- `GET /health/generation`: Generation metrics
-
-#### Error Handling
-
-User-friendly error messages for all scenarios:
-- User not found → Redirect to profile selection
-- Newsletter already exists → "Check your calendar!"
-- Generation failed → "We'll retry automatically"
-- Rate limit exceeded → "Try again in 60 seconds"
-
-No stack traces exposed to end users (logged server-side only).
+For detailed architecture documentation, see [docs/architecture.md](docs/architecture.md).
 
 ### Configuration Reference
 
@@ -495,7 +423,7 @@ tests/
         └── test_generation_service.py  # Newsletter generation
 ```
 
-**Coverage Target**: 80%+ for src/web/ (currently 256/258 tests passing)
+**Coverage Target**: 80%+ for src/web/ (250+ tests, 99%+ pass rate)
 
 ## 📊 Output Examples
 
