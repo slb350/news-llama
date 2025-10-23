@@ -4,7 +4,7 @@ Pydantic schemas for News Llama web API.
 Request/response models for FastAPI endpoints with validation.
 """
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Optional
 from datetime import date
 
@@ -28,13 +28,12 @@ class UserCreate(BaseModel):
 class UserResponse(BaseModel):
     """Response schema for user data."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     first_name: str
     avatar_path: Optional[str]
     created_at: str
-
-    class Config:
-        from_attributes = True
 
 
 # Interest Schemas
@@ -56,14 +55,13 @@ class InterestAdd(BaseModel):
 class InterestResponse(BaseModel):
     """Response schema for interest data."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
     interest_name: str
     is_predefined: bool
     added_at: str
-
-    class Config:
-        from_attributes = True
 
 
 class InterestSearch(BaseModel):
@@ -76,6 +74,8 @@ class InterestSearch(BaseModel):
 class NewsletterResponse(BaseModel):
     """Response schema for newsletter data."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
     date: str
@@ -84,9 +84,6 @@ class NewsletterResponse(BaseModel):
     status: str
     generated_at: Optional[str]
     retry_count: int
-
-    class Config:
-        from_attributes = True
 
 
 class NewsletterCreate(BaseModel):

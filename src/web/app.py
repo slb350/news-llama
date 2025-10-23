@@ -92,9 +92,7 @@ MOCK_NEWSLETTERS = [
 async def profile_select(request: Request, db: Session = Depends(get_db)):
     """Profile selection page with real users from database."""
     users = user_service.get_all_users(db)
-    return templates.TemplateResponse(
-        "profile_select.html", {"request": request, "users": users}
-    )
+    return templates.TemplateResponse(request, "profile_select.html", {"users": users})
 
 
 @app.get("/profile/new", response_class=HTMLResponse)
@@ -102,7 +100,7 @@ async def profile_create_page(request: Request):
     """Profile creation page with predefined interests."""
     interests = interest_service.get_predefined_interests()
     return templates.TemplateResponse(
-        "profile_create.html", {"request": request, "interests": interests}
+        request, "profile_create.html", {"interests": interests}
     )
 
 
@@ -198,9 +196,9 @@ async def calendar_view(
     newsletters = newsletter_service.get_newsletters_by_month(db, user.id, year, month)
 
     return templates.TemplateResponse(
+        request,
         "calendar.html",
         {
-            "request": request,
             "user": user,
             "newsletters": newsletters,
             "current_month": current_month,
@@ -229,9 +227,9 @@ async def profile_settings(
     available_interests = interest_service.get_predefined_interests()
 
     return templates.TemplateResponse(
+        request,
         "profile_settings.html",
         {
-            "request": request,
             "user": user,
             "user_interests": user_interests,
             "available_interests": available_interests,
@@ -456,9 +454,9 @@ async def calendar_month(
     newsletters = newsletter_service.get_newsletters_by_month(db, user.id, year, month)
 
     return templates.TemplateResponse(
+        request,
         "calendar.html",
         {
-            "request": request,
             "user": user,
             "newsletters": newsletters,
             "current_month": current_month,
