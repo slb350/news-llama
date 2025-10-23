@@ -309,6 +309,8 @@ Built with **FastAPI**, **SQLAlchemy**, **SQLite** (WAL mode), **Alembic** migra
 - **API**: RESTful endpoints with cookie-based sessions
 - **Performance**: Database indexes, rate limiting, LRU file caching, eager loading
 
+📖 **Deep dive**: [Why We Over-Engineered Database Indexes for a Family SQLite App](https://open.substack.com/pub/stephenbrandon525517/p/a-love-letter-to-indexes-sqlite-and) - A detailed exploration of our indexing strategy and performance philosophy.
+
 **API Endpoints**:
 - **Pages**: `/`, `/profile/new`, `/calendar`, `/profile/settings`, `/newsletters/{guid}`
 - **API**: Profile creation/updates, interest management, newsletter generation/retry, health checks
