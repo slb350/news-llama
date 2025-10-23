@@ -311,8 +311,9 @@
         const iframe = document.getElementById('newsletter-iframe');
         const dateEl = document.getElementById('modal-date');
 
-        // Format date nicely
-        const dateObj = new Date(date);
+        // Format date nicely - parse as local date to avoid timezone issues
+        const [year, month, day] = date.split('-').map(Number);
+        const dateObj = new Date(year, month - 1, day);  // month is 0-indexed
         const formattedDate = dateObj.toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
