@@ -135,6 +135,7 @@ class ProfileUpdateRequest(BaseModel):
     """Request schema for updating profile."""
 
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    interests: Optional[list[str]] = Field(None)
 
     @field_validator("first_name")
     @classmethod

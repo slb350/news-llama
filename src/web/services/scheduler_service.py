@@ -82,7 +82,9 @@ def schedule_daily_generation(
 
         except Exception as e:
             # Log any critical errors that prevent the entire job from running
-            logger.error(f"Critical error in daily newsletter generation: {e}", exc_info=True)
+            logger.error(
+                f"Critical error in daily newsletter generation: {e}", exc_info=True
+            )
             # Could add alerting here (email admin, send to monitoring service, etc.)
 
         finally:

@@ -6,8 +6,8 @@ pending → generating → completed/failed
 """
 
 from typing import Optional
-from sqlalchemy.orm import Session
-from datetime import date, datetime
+from sqlalchemy.orm import Session, joinedload
+from datetime import date, datetime, timezone
 import uuid
 
 from src.web.models import Newsletter
@@ -138,7 +138,13 @@ def get_newsletter_by_guid(db: Session, guid: str) -> Newsletter:
     Raises:
         NewsletterNotFoundError: If newsletter doesn't exist
     """
-    newsletter = db.query(Newsletter).filter(Newsletter.guid == guid).first()
+    # Eager load user relationship to avoid N+1 queries
+    newsletter = (
+        db.query(Newsletter)
+        .options(joinedload(Newsletter.user))
+        .filter(Newsletter.guid == guid)
+        .first()
+    )
 
     if not newsletter:
         raise NewsletterNotFoundError(f"Newsletter with GUID {guid} not found")
@@ -201,7 +207,8 @@ def mark_newsletter_completed(
 
     newsletter.status = "completed"
     newsletter.file_path = file_path
-    newsletter.generated_at = datetime.now().isoformat()
+    # Use UTC to match database's datetime('now') default
+    newsletter.generated_at = datetime.now(timezone.utc).isoformat()
 
     db.commit()
     db.refresh(newsletter)

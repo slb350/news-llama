@@ -10,7 +10,7 @@ Tests integration between web app and main NewsLlama engine:
 import pytest
 from datetime import date
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, AsyncMock
 import tempfile
 
 from src.web.services.llama_wrapper import (
@@ -31,12 +31,8 @@ class TestGenerateNewsletterForInterests:
         mock_instance = Mock()
         mock_news_llama_class.return_value = mock_instance
 
-        # Mock run method to create output file
-        def mock_run():
-            # Simulate creating output file
-            pass
-
-        mock_instance.run = Mock(side_effect=mock_run)
+        # Mock async run method
+        mock_instance.run = AsyncMock()
 
         interests = ["AI", "rust", "python"]
         output_date = date(2025, 10, 22)
@@ -60,7 +56,7 @@ class TestGenerateNewsletterForInterests:
         """Should handle empty interests list."""
         mock_instance = Mock()
         mock_news_llama_class.return_value = mock_instance
-        mock_instance.run = Mock()
+        mock_instance.run = AsyncMock()
 
         interests = []
         output_date = date(2025, 10, 22)
@@ -92,7 +88,7 @@ class TestGenerateNewsletterForInterests:
         """Should raise error if output file is not created."""
         mock_instance = Mock()
         mock_news_llama_class.return_value = mock_instance
-        mock_instance.run = Mock()  # Run succeeds but no file created
+        mock_instance.run = AsyncMock()  # Run succeeds but no file created
 
         interests = ["AI"]
         output_date = date(2025, 10, 22)
@@ -107,7 +103,7 @@ class TestGenerateNewsletterForInterests:
         """Should create output directory if missing."""
         mock_instance = Mock()
         mock_news_llama_class.return_value = mock_instance
-        mock_instance.run = Mock()
+        mock_instance.run = AsyncMock()
 
         interests = ["AI"]
         output_date = date(2025, 10, 22)
@@ -126,7 +122,7 @@ class TestGenerateNewsletterForInterests:
         """Should format date correctly in output filename."""
         mock_instance = Mock()
         mock_news_llama_class.return_value = mock_instance
-        mock_instance.run = Mock()
+        mock_instance.run = AsyncMock()
 
         interests = ["AI"]
         output_date = date(2025, 1, 5)  # Test single-digit month/day
@@ -147,9 +143,9 @@ class TestGetOutputFilePath:
 
         file_path = get_output_file_path(output_date)
 
-        # Should be in output/newsletters directory
+        # Should be in output directory (NewsLlama outputs to output/, not output/newsletters/)
         assert "output" in file_path
-        assert "newsletters" in file_path
+        assert file_path.endswith("output/news-2025-10-22.html")
 
         # Should include date
         assert "2025-10-22" in file_path
@@ -260,10 +256,10 @@ class TestIntegrationWithRealFiles:
             # Create a real output file when run() is called
             output_file = Path(tmpdir) / "news-2025-10-22.html"
 
-            def create_output_file():
+            async def create_output_file():
                 output_file.write_text("<html>Test Newsletter</html>")
 
-            mock_instance.run.side_effect = create_output_file
+            mock_instance.run = AsyncMock(side_effect=create_output_file)
 
             # Mock the output path to use our temp directory
             with patch(

@@ -65,16 +65,19 @@ class TestGenerateNewsletterPost:
     """Tests for POST /newsletters/generate - manual newsletter generation."""
 
     def test_generate_requires_authentication(self, client: TestClient):
-        """Should redirect to profile select if no user session."""
+        """Should return 401 JSON error if no user session."""
         response = client.post(
             "/newsletters/generate",
             json={"date": "2025-10-22"},
             follow_redirects=False,
         )
 
-        # Should redirect to profile selection
-        assert response.status_code == 303
-        assert response.headers["location"] == "/"
+        # API endpoints use require_user, which returns JSON errors (not redirects)
+        assert response.status_code == 401
+        assert (
+            response.json()["detail"]
+            == "No active user session. Please select a profile."
+        )
 
     @patch("src.web.services.generation_service.process_newsletter_generation")
     def test_generate_creates_pending_newsletter(
@@ -450,8 +453,10 @@ class TestNewsletterIntegration:
         client, user = authenticated_client
 
         # Mock NewsLlama
+        from unittest.mock import AsyncMock
+
         mock_instance = mock_llama_class.return_value
-        mock_instance.run = lambda: None
+        mock_instance.run = AsyncMock()
 
         # Create temporary output file
         with tempfile.TemporaryDirectory() as tmpdir:

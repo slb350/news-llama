@@ -334,7 +334,9 @@ def requeue_newsletter_for_today(db: Session, user_id: int) -> bool:
                 newsletters_after_delete = newsletter_service.get_newsletters_by_month(
                     db, user_id, today.year, today.month
                 )
-                existing_after_delete = next((n for n in newsletters_after_delete if n.date == today_str), None)
+                existing_after_delete = next(
+                    (n for n in newsletters_after_delete if n.date == today_str), None
+                )
                 if existing_after_delete:
                     logger.info(
                         f"Newsletter {existing_after_delete.id} already queued by another request, skipping"

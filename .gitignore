@@ -114,6 +114,10 @@ data/
 *.sqlite
 *.sqlite3
 
+# Web application generated files
+src/web/static/avatars/
+templates/news.html
+
 # Compiled files
 *.pyc
 *.pyo

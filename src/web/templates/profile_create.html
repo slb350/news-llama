@@ -98,7 +98,7 @@
                         aria-describedby="custom-interest-error"
                         aria-invalid="false"
                     >
-                    <button type="button" class="btn-secondary" onclick="addCustomInterest()">
+                    <button type="button" class="btn-secondary" id="add-custom-btn">
                         Add
                     </button>
                 </div>
@@ -116,7 +116,7 @@
                 <button
                     type="button"
                     class="interest-tag text-center"
-                    onclick="toggleInterest(this, '{{ interest }}')"
+                    data-interest="{{ interest }}"
                 >
                     {{ interest }}
                 </button>
@@ -158,6 +158,19 @@
             const interest = interestTag.dataset.interest;
             interestManager.remove(interest);
         }
+    });
+
+    // Add event listeners for predefined interest grid (safe from XSS)
+    document.querySelectorAll('.interest-tag[data-interest]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const interest = this.dataset.interest;
+            interestManager.toggle(this, interest);
+        });
+    });
+
+    // Add custom interest button click handler (safe from XSS)
+    document.getElementById('add-custom-btn').addEventListener('click', function() {
+        interestManager.addCustom('custom-interest');
     });
 
     // Update avatar preview when first name changes

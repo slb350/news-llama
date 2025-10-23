@@ -124,6 +124,9 @@
                 if (response.ok) {
                     NewsLlama.showToast('Newsletter queued! Generation will begin shortly.', 'success');
                     setTimeout(() => window.location.reload(), 2000);
+                } else if (response.status === 401) {
+                    // No profile selected - redirect to profile selection
+                    window.location.href = '/';
                 } else {
                     // Handle error with safe JSON parsing
                     let errorMessage = 'Failed to generate newsletter.';

@@ -113,14 +113,11 @@ class TestLoadingStates:
         response = client.get("/profile/new")
 
         assert response.status_code == 200
-        # Form should have data attribute for loading state
-        assert (
-            "data-loading" in response.text
-            or "data-state" in response.text
-            or "loading" in response.text
-        )
-        # Submit button should have loading text
-        assert "data-loading-text" in response.text or "aria-busy" in response.text
+        # Form should have submit button with id for JavaScript loading state
+        assert 'id="submit-btn"' in response.text
+        # JavaScript should handle loading state (check for submit handler)
+        assert "submitBtn.disabled = true" in response.text
+        assert "submitBtn.textContent = 'Creating...'" in response.text
 
     def test_settings_form_has_loading_state(self, client, db: Session):
         """Settings form should have loading state attributes."""
@@ -131,12 +128,11 @@ class TestLoadingStates:
         response = client.get("/profile/settings")
 
         assert response.status_code == 200
-        # Form should support loading states
-        assert (
-            "data-loading" in response.text
-            or "loading" in response.text
-            or "aria-busy" in response.text
-        )
+        # Form should have submit button with id for JavaScript loading state
+        assert 'id="submit-btn"' in response.text
+        # JavaScript should handle loading state (check for submit handler)
+        assert "submitBtn.disabled = true" in response.text
+        assert "submitBtn.textContent = 'Saving...'" in response.text
 
     def test_interest_buttons_have_loading_state(self, client, db: Session):
         """Interest add/remove buttons should have loading state attributes."""

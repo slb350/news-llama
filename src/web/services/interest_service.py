@@ -6,7 +6,6 @@ Supports both predefined categories and custom user interests.
 """
 
 from sqlalchemy.orm import Session
-from datetime import datetime
 
 from src.web.models import UserInterest
 
@@ -135,12 +134,9 @@ def add_user_interest(
     if existing:
         raise DuplicateInterestError(f"User already has interest '{interest_name}'")
 
-    # Create interest
+    # Create interest - let database handle added_at default
     user_interest = UserInterest(
-        user_id=user_id,
-        interest_name=interest_name,
-        is_predefined=is_predefined,
-        added_at=datetime.now(),
+        user_id=user_id, interest_name=interest_name, is_predefined=is_predefined
     )
 
     db.add(user_interest)
