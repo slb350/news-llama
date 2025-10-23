@@ -6,7 +6,7 @@ Phase 6: Background scheduler integration.
 import os
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, Depends, Response, HTTPException
+from fastapi import FastAPI, Request, Depends, Response, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -16,7 +16,7 @@ from pathlib import Path
 from datetime import date
 
 from src.web.database import get_db
-from src.web.dependencies import get_current_user
+from src.web.dependencies import get_current_user, require_user
 from src.web.schemas import (
     ProfileCreateRequest,
     ProfileUpdateRequest,
@@ -32,7 +32,6 @@ from src.web.services import (
     generation_service,
     scheduler_service,
 )
-from src.web.rate_limiter import rate_limit
 from src.web.error_handlers import (
     global_exception_handler,
     validation_exception_handler,
@@ -203,15 +202,72 @@ async def profile_create(
         # Newsletter generation failures shouldn't prevent user onboarding
         pass
 
-    # Set user_id cookie and redirect with toast message
+    # Return JSON response with redirect URL and set cookie
     if newsletter_queued:
         redirect_url = "/calendar?toast=Generating your first newsletter! This may take 10-15 minutes depending on your interests.&toast_type=info"
     else:
         redirect_url = "/calendar"
 
-    redirect = RedirectResponse(url=redirect_url, status_code=303)
-    redirect.set_cookie(key="user_id", value=str(user.id))
-    return redirect
+    response_data = {
+        "status": "success",
+        "redirect_url": redirect_url,
+        "user_id": user.id
+    }
+    response = JSONResponse(content=response_data)
+    response.set_cookie(key="user_id", value=str(user.id))
+    return response
+
+
+@app.post("/profile/avatar")
+async def upload_avatar(
+    avatar: UploadFile = File(...),
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+):
+    """Upload profile avatar image."""
+    # Validate file size (500KB max)
+    contents = await avatar.read()
+    if len(contents) > 500 * 1024:
+        raise HTTPException(status_code=400, detail="File size must be less than 500KB")
+
+    # Validate file extension against whitelist
+    ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+
+    if avatar.filename:
+        file_extension = avatar.filename.rsplit(".", 1)[-1].lower()
+        # Sanitize extension to prevent path traversal
+        file_extension = file_extension.replace('/', '').replace('\\', '').replace('..', '')
+    else:
+        file_extension = "jpg"
+
+    if file_extension not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type. Allowed: {', '.join(ALLOWED_EXTENSIONS)}"
+        )
+
+    if len(file_extension) > 10:  # Prevent absurdly long extensions
+        raise HTTPException(status_code=400, detail="Invalid file extension")
+
+    # Create avatars directory if it doesn't exist
+    avatars_dir = Path(__file__).parent / "static" / "avatars"
+    avatars_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save file with user ID as filename
+    avatar_filename = f"{user.id}.{file_extension}"
+    avatar_path = (avatars_dir / avatar_filename).resolve()
+
+    # Verify final path is within avatars_dir (prevent path traversal)
+    if not str(avatar_path).startswith(str(avatars_dir.resolve())):
+        raise HTTPException(status_code=400, detail="Invalid file path")
+
+    with open(avatar_path, "wb") as f:
+        f.write(contents)
+
+    # Update user's avatar_path in database
+    user_service.update_user(db, user.id, avatar_path=avatar_filename)
+
+    return {"status": "success", "avatar_path": avatar_filename}
 
 
 @app.get("/calendar", response_class=HTMLResponse)
@@ -296,7 +352,7 @@ async def profile_settings_update(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Update profile settings (first name)."""
+    """Update profile settings (first name and interests)."""
     # Redirect to profile select if no user session
     if not user:
         return RedirectResponse(url="/", status_code=303)
@@ -304,6 +360,36 @@ async def profile_settings_update(
     # Update first name if provided
     if update_data.first_name is not None:
         user_service.update_user(db, user.id, first_name=update_data.first_name)
+
+    # Update interests if provided
+    if update_data.interests is not None:
+        # Get predefined interests for comparison
+        predefined_interests = interest_service.get_predefined_interests()
+        predefined_set = {i.lower() for i in predefined_interests}
+
+        # Remove all existing interests
+        existing_interests = interest_service.get_user_interests(db, user.id)
+        for interest in existing_interests:
+            interest_service.remove_user_interest(db, user.id, interest.interest_name)
+
+        # Deduplicate interests (case-insensitive)
+        seen = set()
+        unique_interests = []
+        for interest in update_data.interests:
+            interest_lower = interest.lower()
+            if interest_lower not in seen:
+                seen.add(interest_lower)
+                unique_interests.append(interest)
+
+        # Add new interests
+        for interest_name in unique_interests:
+            is_predefined = interest_name.lower() in predefined_set
+            interest_service.add_user_interest(
+                db,
+                user_id=user.id,
+                interest_name=interest_name,
+                is_predefined=is_predefined,
+            )
 
     return {"status": "success"}
 
@@ -371,16 +457,21 @@ async def remove_interest_route(
 
 
 @app.post("/newsletters/generate", response_model=NewsletterResponse)
-@rate_limit(lambda user: user.id if user else None)
 async def generate_newsletter(
     newsletter_data: NewsletterCreate,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_user),
     db: Session = Depends(get_db),
 ):
     """Generate newsletter for specified date with rate limiting."""
-    # Require user session
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
+
+    # Apply rate limiting only for authenticated users
+    from src.web.rate_limiter import newsletter_rate_limiter
+    is_allowed, remaining = newsletter_rate_limiter.is_allowed(str(user.id))
+    if not is_allowed:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded. Please wait before making another request."
+        )
 
     try:
         # Parse date from validated input

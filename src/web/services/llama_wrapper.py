@@ -32,6 +32,8 @@ def generate_newsletter_for_interests(interests: list[str], output_date: date) -
     Raises:
         NewsLlamaWrapperError: If generation fails
     """
+    import asyncio
+
     try:
         # Get output file path
         output_file = get_output_file_path(output_date)
@@ -42,8 +44,8 @@ def generate_newsletter_for_interests(interests: list[str], output_date: date) -
         # Initialize NewsLlama with user interests
         news_llama = NewsLlama(user_interests=interests)
 
-        # Generate the newsletter
-        news_llama.run()
+        # Generate the newsletter (run async method in sync context)
+        asyncio.run(news_llama.run())
 
         # Verify output file was created
         if not Path(output_file).exists():
@@ -82,8 +84,9 @@ def get_output_file_path(output_date: date, guid: str = None) -> str:
     # Get project root (parent of src/)
     project_root = Path(__file__).parent.parent.parent.parent
 
-    # Build absolute path: project_root/output/newsletters/filename
-    output_path = project_root / "output" / "newsletters" / filename
+    # Build absolute path: project_root/output/filename
+    # Note: NewsLlama outputs to output/, not output/newsletters/
+    output_path = project_root / "output" / filename
 
     return str(output_path.absolute())
 

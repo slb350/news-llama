@@ -104,10 +104,19 @@
                     NewsLlama.showToast('Newsletter queued! Generation will begin shortly.', 'success');
                     setTimeout(() => window.location.reload(), 2000);
                 } else {
-                    const error = await response.json();
-                    NewsLlama.showToast(`Failed: ${error.detail}`, 'error');
+                    // Handle error with safe JSON parsing
+                    let errorMessage = 'Failed to generate newsletter.';
+                    try {
+                        const error = await response.json();
+                        errorMessage = error.detail || errorMessage;
+                    } catch (parseError) {
+                        // Response wasn't JSON (e.g., 500 HTML page)
+                        console.error('Failed to parse error response:', parseError.message);
+                    }
+                    NewsLlama.showToast(errorMessage, 'error');
                 }
             } catch (error) {
+                console.error('Newsletter generation error:', error.message);
                 NewsLlama.showToast('Failed to generate newsletter. Please try again.', 'error');
             }
         }
@@ -159,20 +168,22 @@
                 {% if has_newsletter and newsletter.status == 'completed' %}
                 <div class="calendar-day has-newsletter
                     {% if is_today %}today{% endif %}"
-                    onclick="openNewsletterModal('{{ newsletter.guid }}', '{{ newsletter.date }}')">
+                    data-newsletter-guid="{{ newsletter.guid }}"
+                    data-newsletter-date="{{ newsletter.date }}"
+                    data-newsletter-status="{{ newsletter.status }}">
                 {% elif has_newsletter and newsletter.status == 'failed' %}
                 <div class="calendar-day failed
                     {% if is_today %}today{% endif %}"
                     data-newsletter-guid="{{ newsletter.guid }}"
+                    data-newsletter-date="{{ newsletter.date }}"
                     data-newsletter-status="{{ newsletter.status }}"
-                    data-retry-count="{{ newsletter.retry_count }}"
-                    onclick="handleFailedNewsletter('{{ newsletter.guid }}', '{{ newsletter.date }}', {{ newsletter.retry_count }})">
+                    data-retry-count="{{ newsletter.retry_count }}">
                 {% else %}
                 <div class="calendar-day
                     {% if has_newsletter and newsletter.status == 'pending' %}pending{% endif %}
                     {% if has_newsletter and newsletter.status == 'generating' %}generating{% endif %}
                     {% if is_today %}today{% endif %}"
-                    {% if has_newsletter %}data-newsletter-guid="{{ newsletter.guid }}" data-newsletter-status="{{ newsletter.status }}"{% endif %}>
+                    {% if has_newsletter %}data-newsletter-guid="{{ newsletter.guid }}" data-newsletter-date="{{ newsletter.date }}" data-newsletter-status="{{ newsletter.status }}"{% endif %}>
                 {% endif %}
                     <span class="text-sm font-semibold">{{ day }}</span>
                     {% if has_newsletter and newsletter.status == 'completed' %}
@@ -260,6 +271,69 @@
 </div>
 
 <script>
+    // Simple toast notification system
+    const NewsLlama = {
+        showToast: function(message, type = 'info') {
+            // Create toast container if it doesn't exist
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.style.cssText = 'position: fixed; top: 1rem; right: 1rem; z-index: 9999;';
+                document.body.appendChild(toastContainer);
+            }
+
+            // Create toast element
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6';
+            toast.style.cssText = `
+                background: ${bgColor};
+                color: white;
+                padding: 0.75rem 1rem;
+                border-radius: 0.375rem;
+                margin-bottom: 0.5rem;
+                max-width: 20rem;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 0.875rem;
+                animation: slideIn 0.3s ease-out;
+            `;
+            toast.textContent = message;
+
+            // Add animation keyframes if not already added
+            if (!document.getElementById('toast-animations')) {
+                const style = document.createElement('style');
+                style.id = 'toast-animations';
+                style.textContent = `
+                    @keyframes slideIn {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                    @keyframes slideOut {
+                        from { transform: translateX(0); opacity: 1; }
+                        to { transform: translateX(100%); opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            // Add toast to container
+            toastContainer.appendChild(toast);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => {
+                    toast.remove();
+                    // Remove container if empty
+                    if (toastContainer.children.length === 0) {
+                        toastContainer.remove();
+                    }
+                }, 300);
+            }, 5000);
+        }
+    };
+
     function openNewsletterModal(guid, date) {
         const modal = document.getElementById('newsletter-modal');
         const iframe = document.getElementById('newsletter-iframe');
@@ -278,7 +352,7 @@
 
         // Add cache buster to ensure fresh content
         const cacheBuster = '?v=' + new Date().getTime();
-        iframe.src = '/newsletter/' + guid + cacheBuster;
+        iframe.src = '/newsletters/' + guid + cacheBuster;
 
         modal.style.display = 'flex';
 
@@ -308,6 +382,27 @@
     document.getElementById('newsletter-modal')?.addEventListener('click', function(e) {
         if (e.target === this) {
             closeNewsletterModal();
+        }
+    });
+
+    // Add click handlers for completed newsletters (safe from XSS)
+    document.addEventListener('click', function(e) {
+        const completedDay = e.target.closest('.calendar-day.has-newsletter');
+        if (completedDay) {
+            const guid = completedDay.dataset.newsletterGuid;
+            const date = completedDay.dataset.newsletterDate;
+            openNewsletterModal(guid, date);
+        }
+    });
+
+    // Add click handlers for failed newsletters (safe from XSS)
+    document.addEventListener('click', function(e) {
+        const failedDay = e.target.closest('.calendar-day.failed');
+        if (failedDay) {
+            const guid = failedDay.dataset.newsletterGuid;
+            const date = failedDay.dataset.newsletterDate;
+            const retryCount = parseInt(failedDay.dataset.retryCount, 10);
+            handleFailedNewsletter(guid, date, retryCount);
         }
     });
 
@@ -359,11 +454,19 @@
                     updateNewsletterDayDisplay(dayEl, 'pending');
                 }
             } else {
-                const error = await response.json();
-                NewsLlama.showToast(`Failed to retry: ${error.detail}`, 'error');
+                // Handle error with safe JSON parsing
+                let errorMessage = 'Failed to retry newsletter.';
+                try {
+                    const error = await response.json();
+                    errorMessage = error.detail || errorMessage;
+                } catch (parseError) {
+                    // Response wasn't JSON (e.g., 500 HTML page)
+                    console.error('Failed to parse error response:', parseError.message);
+                }
+                NewsLlama.showToast(errorMessage, 'error');
             }
         } catch (error) {
-            console.error('Failed to retry newsletter:', error);
+            console.error('Failed to retry newsletter:', error.message);
             NewsLlama.showToast('Failed to retry newsletter. Please try again.', 'error');
         }
     }
@@ -383,24 +486,41 @@
             if (currentStatus === 'pending' || currentStatus === 'generating') {
                 try {
                     const response = await fetch(`/newsletters/${guid}`);
-                    const data = await response.json();
 
-                    // Check if status changed
-                    if (data.status !== currentStatus) {
-                        console.log(`Newsletter ${guid} status changed: ${currentStatus} → ${data.status}`);
+                    // Check content type to determine if it's JSON or HTML
+                    const contentType = response.headers.get('content-type');
 
-                        // Update data attribute
-                        dayEl.dataset.newsletterStatus = data.status;
+                    if (contentType && contentType.includes('application/json')) {
+                        // It's JSON - parse and process status update
+                        const data = await response.json();
 
-                        // Update classes and icon
-                        updateNewsletterDayDisplay(dayEl, data.status);
+                        // Check if status changed
+                        if (data.status !== currentStatus) {
+                            console.log(`Newsletter ${guid} status changed: ${currentStatus} → ${data.status}`);
 
-                        // Show toast for completed or failed
-                        if (data.status === 'completed') {
-                            NewsLlama.showToast('Newsletter ready! Click the date to view.', 'success');
-                        } else if (data.status === 'failed') {
-                            NewsLlama.showToast('Newsletter generation failed. Please try again.', 'error');
+                            // Update data attribute
+                            dayEl.dataset.newsletterStatus = data.status;
+
+                            // Update classes and icon
+                            updateNewsletterDayDisplay(dayEl, data.status);
+
+                            // Show toast for completed or failed
+                            if (data.status === 'completed') {
+                                NewsLlama.showToast('Newsletter ready! Click the date to view.', 'success');
+                            } else if (data.status === 'failed') {
+                                NewsLlama.showToast('Newsletter generation failed. Please try again.', 'error');
+                            }
                         }
+                    } else if (contentType && contentType.includes('text/html')) {
+                        // It's HTML - newsletter is completed and ready
+                        console.log(`Newsletter ${guid} is completed and file is ready`);
+
+                        // Update status to completed
+                        dayEl.dataset.newsletterStatus = 'completed';
+                        updateNewsletterDayDisplay(dayEl, 'completed');
+
+                        // Show toast
+                        NewsLlama.showToast('Newsletter ready! Click the date to view.', 'success');
                     }
                 } catch (error) {
                     console.error(`Failed to poll newsletter ${guid}:`, error);
@@ -419,8 +539,9 @@
         if (status === 'completed') {
             // Make clickable
             dayEl.classList.add('has-newsletter');
-            const date = dayEl.closest('[data-newsletter-guid]')?.dataset.newsletterGuid;
-            dayEl.onclick = () => openNewsletterModal(dayEl.dataset.newsletterGuid, date);
+            const guid = dayEl.dataset.newsletterGuid;
+            const date = dayEl.dataset.newsletterDate || '';
+            dayEl.onclick = () => openNewsletterModal(guid, date);
             if (iconEl) iconEl.textContent = '🦙';
         } else if (status === 'generating') {
             dayEl.classList.add('generating');

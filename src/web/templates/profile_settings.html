@@ -22,12 +22,7 @@
     </div>
 
     <!-- Form -->
-    <form hx-post="/profile/update"
-          hx-trigger="submit"
-          hx-target="body"
-          class="space-y-8"
-          data-loading="form"
-          aria-busy="false">
+    <form id="settings-form" class="space-y-8">
 
         <!-- Profile Information Section -->
         <div class="border-b border-gray-200 pb-8">
@@ -73,14 +68,13 @@
                                 name="avatar"
                                 accept="image/*"
                                 class="hidden"
-                                hx-post="/profile/avatar"
-                                hx-encoding="multipart/form-data"
-                                hx-target="#avatar-preview"
+                                onchange="handleAvatarSelect(this)"
                             >
-                            <label for="avatar" class="btn-secondary inline-block mb-2">
+                            <label for="avatar" class="btn-secondary inline-block mb-2 cursor-pointer">
                                 Change Avatar
                             </label>
                             <p class="text-xs text-gray-500">Max 500KB, 512x512px</p>
+                            <p id="avatar-status" class="text-xs mt-1"></p>
                         </div>
                     </div>
                 </div>
@@ -91,20 +85,6 @@
         <div class="border-b border-gray-200 pb-8">
             <h2 class="text-xl font-bold text-gray-900 mb-4">Your Interests</h2>
 
-            <!-- Search Box -->
-            <input
-                type="search"
-                placeholder="Add any interest or choose from pre-configured categories below..."
-                class="w-full mb-4"
-                maxlength="100"
-                hx-get="/interests/autocomplete"
-                hx-trigger="keyup changed delay:300ms"
-                hx-target="#interest-suggestions"
-                aria-label="Search for interests"
-                data-loading="input"
-                aria-busy="false"
-            >
-
             <!-- Selected Interests -->
             <div class="coral-bg-light rounded-lg p-4 mb-4 min-h-[60px]">
                 <div class="text-xs text-gray-600 uppercase tracking-wide font-semibold mb-2">
@@ -113,7 +93,7 @@
                 <div id="selected-interests" class="flex flex-wrap gap-2">
                     {% if user_interests %}
                         {% for interest in user_interests %}
-                        <span class="interest-tag cursor-pointer hover:opacity-80" onclick="removeInterest('{{ interest }}')">
+                        <span class="interest-tag cursor-pointer hover:opacity-80" data-interest="{{ interest }}">
                             {{ interest }}
                         </span>
                         {% endfor %}
@@ -125,13 +105,30 @@
                 </div>
             </div>
 
+            <!-- Custom Interest Input -->
+            <div class="mb-4">
+                <div class="flex gap-2">
+                    <input
+                        type="text"
+                        id="custom-interest"
+                        placeholder="Add custom interest..."
+                        maxlength="100"
+                        class="flex-1"
+                        aria-label="Custom interest"
+                    >
+                    <button type="button" class="btn-secondary" onclick="addCustomInterest()">
+                        Add
+                    </button>
+                </div>
+            </div>
+
             <!-- Available Interests -->
             <div class="mb-2">
                 <div class="text-xs text-gray-600 uppercase tracking-wide font-semibold mb-2">
                     Pre-configured Categories (click to add)
                 </div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2" id="interest-suggestions">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                 {% for interest in available_interests %}
                 <button
                     type="button"
@@ -189,16 +186,10 @@
 
         <!-- Submit Buttons -->
         <div class="flex gap-4 pt-6">
-            <button type="submit" class="btn-primary flex-1">
+            <button type="submit" class="btn-primary flex-1" id="submit-btn">
                 Save Changes
             </button>
-            <a href="/calendar"
-               hx-get="/calendar"
-               hx-trigger="click"
-               hx-target="body"
-               hx-swap="innerHTML"
-               hx-push-url="true"
-               class="btn-secondary flex-1 text-center">
+            <a href="/calendar" class="btn-secondary flex-1 text-center">
                 Cancel
             </a>
         </div>
@@ -208,6 +199,74 @@
 <script>
     // Initialize with existing interests
     const selectedInterests = new Set({{ user_interests|tojson }});
+    let uploadedAvatarFile = null;
+
+    // Add event delegation for interest removal (safe from XSS)
+    document.getElementById('selected-interests').addEventListener('click', function(e) {
+        const interestTag = e.target.closest('.interest-tag[data-interest]');
+        if (interestTag && !interestTag.classList.contains('empty-state')) {
+            const interest = interestTag.dataset.interest;
+            removeInterest(interest);
+        }
+    });
+
+    // Handle avatar file selection
+    async function handleAvatarSelect(input) {
+        const file = input.files[0];
+        const statusEl = document.getElementById('avatar-status');
+        const avatarPreview = document.getElementById('avatar-preview');
+
+        if (!file) {
+            return;
+        }
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            statusEl.textContent = 'Please select an image file';
+            statusEl.className = 'text-xs mt-1 text-red-600';
+            return;
+        }
+
+        // Validate file size (500KB max)
+        if (file.size > 500 * 1024) {
+            statusEl.textContent = 'File size must be less than 500KB';
+            statusEl.className = 'text-xs mt-1 text-red-600';
+            return;
+        }
+
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            avatarPreview.innerHTML = `<img src="${e.target.result}" alt="Avatar preview" class="w-full h-full object-cover rounded-full">`;
+        };
+        reader.readAsDataURL(file);
+
+        // Upload immediately
+        statusEl.textContent = 'Uploading...';
+        statusEl.className = 'text-xs mt-1 text-blue-600';
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        try {
+            const response = await fetch('/profile/avatar', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                statusEl.textContent = 'Avatar uploaded successfully!';
+                statusEl.className = 'text-xs mt-1 text-green-600';
+            } else {
+                statusEl.textContent = 'Upload failed. Please try again.';
+                statusEl.className = 'text-xs mt-1 text-red-600';
+            }
+        } catch (error) {
+            console.error('Avatar upload error:', error);
+            statusEl.textContent = 'Upload failed. Please try again.';
+            statusEl.className = 'text-xs mt-1 text-red-600';
+        }
+    }
 
     function toggleInterest(button, interest) {
         if (selectedInterests.has(interest)) {
@@ -223,7 +282,7 @@
     function removeInterest(interest) {
         selectedInterests.delete(interest);
         // Also remove 'selected' class from the grid button if it exists
-        const gridButtons = document.querySelectorAll('#interest-suggestions button');
+        const gridButtons = document.querySelectorAll('.interest-tag');
         gridButtons.forEach(btn => {
             if (btn.textContent.trim() === interest) {
                 btn.classList.remove('selected');
@@ -232,15 +291,103 @@
         updateSelectedDisplay();
     }
 
-    function updateSelectedDisplay() {
-        const container = document.getElementById('selected-interests');
-        if (selectedInterests.size === 0) {
-            container.innerHTML = '<span class="text-xs text-gray-500">No interests selected yet</span>';
-        } else {
-            container.innerHTML = Array.from(selectedInterests)
-                .map(i => `<span class="interest-tag cursor-pointer hover:opacity-80" onclick="removeInterest('${i}')">${i}</span>`)
-                .join('');
+    function addCustomInterest() {
+        const input = document.getElementById('custom-interest');
+        const interest = input.value.trim();
+        if (interest && interest.length > 0) {
+            selectedInterests.add(interest);
+            updateSelectedDisplay();
+            input.value = '';
         }
     }
+
+    // Allow Enter key to add custom interest
+    document.getElementById('custom-interest').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addCustomInterest();
+        }
+    });
+
+    function updateSelectedDisplay() {
+        const container = document.getElementById('selected-interests');
+
+        // Clear container
+        container.innerHTML = '';
+
+        if (selectedInterests.size === 0) {
+            const span = document.createElement('span');
+            span.className = 'text-xs text-gray-500 empty-state';
+            span.textContent = 'No interests selected yet';
+            container.appendChild(span);
+        } else {
+            // Create elements safely using DOM methods (no onclick, use data attributes)
+            Array.from(selectedInterests).forEach(interest => {
+                const span = document.createElement('span');
+                span.className = 'interest-tag cursor-pointer hover:opacity-80';
+                span.textContent = interest;  // Safe - sets text, not HTML
+                span.dataset.interest = interest;  // Safe - use data attribute instead of onclick
+                container.appendChild(span);
+            });
+        }
+    }
+
+    // Form submission handler
+    document.getElementById('settings-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const firstName = document.getElementById('first_name').value.trim();
+        const interests = Array.from(selectedInterests);
+
+        if (!firstName) {
+            alert('Please enter your first name');
+            return;
+        }
+
+        // Disable submit button
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+
+        try {
+            const response = await fetch('/profile/settings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    first_name: firstName,
+                    interests: interests
+                })
+            });
+
+            if (response.ok) {
+                // Success - parse JSON response to be consistent
+                const result = await response.json();
+                if (result.status === 'success') {
+                    // Redirect with success message in query string
+                    window.location.href = '/calendar?toast=Profile updated successfully!&toast_type=success';
+                } else {
+                    throw new Error(result.message || 'Update failed');
+                }
+            } else {
+                // Handle error with safe JSON parsing
+                let errorMessage = 'An unexpected error occurred. Please try again.';
+                try {
+                    const error = await response.json();
+                    errorMessage = error.detail || errorMessage;
+                } catch (parseError) {
+                    // Response wasn't JSON (e.g., 500 HTML page)
+                    console.error('Failed to parse error response:', parseError.message);
+                }
+                throw new Error(errorMessage);
+            }
+        } catch (error) {
+            console.error('Error:', error.message);
+            alert(error.message || 'Network error. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Save Changes';
+        }
+    });
 </script>
 {% endblock %}

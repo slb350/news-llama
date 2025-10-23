@@ -11,75 +11,65 @@
     </div>
 
     <!-- Form -->
-    <form hx-post="/profile/create"
-          hx-trigger="submit"
-          hx-target="body"
-          class="space-y-8"
-          data-loading="form"
-          aria-busy="false">
+    <form id="profile-form" class="space-y-8">
+        <!-- Profile Information Section -->
+        <div class="border-b border-gray-200 pb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Profile Information</h2>
 
-        <!-- Profile Name -->
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2" for="first_name">
-                First Name
-            </label>
-            <input
-                type="text"
-                id="first_name"
-                name="first_name"
-                required
-                minlength="1"
-                maxlength="100"
-                placeholder="Enter your first name"
-                class="w-full"
-                aria-label="First name"
-                aria-required="true"
-            >
-        </div>
-
-        <!-- Avatar Upload -->
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
-                Profile Avatar (Optional)
-            </label>
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-coral-accent transition-colors">
-                <div class="profile-avatar mx-auto mb-4" style="width: 80px; height: 80px; font-size: 2rem;" id="avatar-preview">
-                    📷
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Name -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2" for="first_name">
+                        First Name
+                    </label>
+                    <input
+                        type="text"
+                        id="first_name"
+                        name="first_name"
+                        required
+                        minlength="1"
+                        maxlength="100"
+                        placeholder="Enter your first name"
+                        class="w-full"
+                        aria-label="First name"
+                        aria-required="true"
+                    >
                 </div>
-                <input
-                    type="file"
-                    id="avatar"
-                    name="avatar"
-                    accept="image/*"
-                    class="hidden"
-                    hx-post="/profile/avatar"
-                    hx-encoding="multipart/form-data"
-                    hx-target="#avatar-preview"
-                >
-                <label for="avatar" class="btn-secondary inline-block">
-                    Choose Image
-                </label>
-                <p class="text-xs text-gray-500 mt-2">Max 500KB, 512x512px recommended</p>
+
+                <!-- Avatar Upload -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Profile Avatar
+                    </label>
+                    <div class="flex items-center gap-4">
+                        <div class="profile-avatar" style="width: 80px; height: 80px; font-size: 2rem;" id="avatar-preview">
+                            <!-- Will show first letter of name -->
+                        </div>
+                        <div class="flex-1">
+                            <input
+                                type="file"
+                                id="avatar"
+                                name="avatar"
+                                accept="image/*"
+                                class="hidden"
+                                onchange="handleAvatarSelect(this)"
+                            >
+                            <label for="avatar" class="btn-secondary inline-block mb-2 cursor-pointer">
+                                Choose Avatar
+                            </label>
+                            <p class="text-xs text-gray-500">Max 500KB, 512x512px</p>
+                            <p id="avatar-status" class="text-xs mt-1"></p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Interest Selection -->
         <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2">
-                Select Your Interests (5-20 recommended)
+                Select Your Interests (1-50 recommended)
             </label>
-
-            <!-- Search Box -->
-            <input
-                type="search"
-                placeholder="Add any interest or choose from pre-configured categories below..."
-                class="w-full mb-4"
-                maxlength="100"
-                hx-get="/interests/autocomplete"
-                hx-trigger="keyup changed delay:300ms"
-                hx-target="#interest-suggestions"
-                aria-label="Search for interests"
-            >
 
             <!-- Selected Interests -->
             <div class="coral-bg-light rounded-lg p-4 mb-4 min-h-[60px]">
@@ -91,13 +81,30 @@
                 </div>
             </div>
 
-            <!-- Available Interests (5x20 grid mockup) -->
+            <!-- Custom Interest Input -->
+            <div class="mb-4">
+                <div class="flex gap-2">
+                    <input
+                        type="text"
+                        id="custom-interest"
+                        placeholder="Add custom interest..."
+                        maxlength="100"
+                        class="flex-1"
+                        aria-label="Custom interest"
+                    >
+                    <button type="button" class="btn-secondary" onclick="addCustomInterest()">
+                        Add
+                    </button>
+                </div>
+            </div>
+
+            <!-- Available Interests -->
             <div class="mb-2">
                 <div class="text-xs text-gray-600 uppercase tracking-wide font-semibold mb-2">
                     Pre-configured Categories (click to add)
                 </div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2" id="interest-suggestions">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                 {% for interest in interests %}
                 <button
                     type="button"
@@ -112,16 +119,10 @@
 
         <!-- Submit -->
         <div class="flex gap-4 pt-6 border-t border-gray-200">
-            <button type="submit" class="btn-primary flex-1" data-loading-text="Creating..." aria-busy="false">
+            <button type="submit" class="btn-primary flex-1" id="submit-btn">
                 Create Profile
             </button>
-            <a href="/"
-               hx-get="/"
-               hx-trigger="click"
-               hx-target="body"
-               hx-swap="innerHTML"
-               hx-push-url="true"
-               class="btn-secondary flex-1 text-center">
+            <a href="/" class="btn-secondary flex-1 text-center">
                 Cancel
             </a>
         </div>
@@ -129,8 +130,64 @@
 </div>
 
 <script>
-    // Simple interest selection toggle (will be replaced with HTMX in full implementation)
+    // Interest selection state
     const selectedInterests = new Set();
+    let uploadedAvatarFile = null;
+
+    // Add event delegation for interest removal (safe from XSS)
+    document.getElementById('selected-interests').addEventListener('click', function(e) {
+        const interestTag = e.target.closest('.interest-tag[data-interest]');
+        if (interestTag && !interestTag.classList.contains('empty-state')) {
+            const interest = interestTag.dataset.interest;
+            removeInterest(interest);
+        }
+    });
+
+    // Update avatar preview when first name changes
+    document.getElementById('first_name').addEventListener('input', function(e) {
+        const firstName = e.target.value.trim();
+        const avatarPreview = document.getElementById('avatar-preview');
+        if (firstName && !uploadedAvatarFile) {
+            avatarPreview.textContent = firstName[0].toUpperCase();
+        }
+    });
+
+    // Handle avatar file selection
+    async function handleAvatarSelect(input) {
+        const file = input.files[0];
+        const statusEl = document.getElementById('avatar-status');
+        const avatarPreview = document.getElementById('avatar-preview');
+
+        if (!file) {
+            return;
+        }
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            statusEl.textContent = 'Please select an image file';
+            statusEl.className = 'text-xs mt-1 text-red-600';
+            return;
+        }
+
+        // Validate file size (500KB max)
+        if (file.size > 500 * 1024) {
+            statusEl.textContent = 'File size must be less than 500KB';
+            statusEl.className = 'text-xs mt-1 text-red-600';
+            return;
+        }
+
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            avatarPreview.innerHTML = `<img src="${e.target.result}" alt="Avatar preview" class="w-full h-full object-cover rounded-full">`;
+        };
+        reader.readAsDataURL(file);
+
+        // Store file for upload after profile creation
+        uploadedAvatarFile = file;
+        statusEl.textContent = 'Avatar ready to upload';
+        statusEl.className = 'text-xs mt-1 text-green-600';
+    }
 
     function toggleInterest(button, interest) {
         if (selectedInterests.has(interest)) {
@@ -146,7 +203,7 @@
     function removeInterest(interest) {
         selectedInterests.delete(interest);
         // Also remove 'selected' class from the grid button if it exists
-        const gridButtons = document.querySelectorAll('#interest-suggestions button');
+        const gridButtons = document.querySelectorAll('.interest-tag');
         gridButtons.forEach(btn => {
             if (btn.textContent.trim() === interest) {
                 btn.classList.remove('selected');
@@ -155,15 +212,133 @@
         updateSelectedDisplay();
     }
 
-    function updateSelectedDisplay() {
-        const container = document.getElementById('selected-interests');
-        if (selectedInterests.size === 0) {
-            container.innerHTML = '<span class="text-xs text-gray-500">No interests selected yet</span>';
-        } else {
-            container.innerHTML = Array.from(selectedInterests)
-                .map(i => `<span class="interest-tag cursor-pointer hover:opacity-80" onclick="removeInterest('${i}')">${i}</span>`)
-                .join('');
+    function addCustomInterest() {
+        const input = document.getElementById('custom-interest');
+        const interest = input.value.trim();
+        if (interest && interest.length > 0) {
+            selectedInterests.add(interest);
+            updateSelectedDisplay();
+            input.value = '';
         }
     }
+
+    // Allow Enter key to add custom interest
+    document.getElementById('custom-interest').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addCustomInterest();
+        }
+    });
+
+    function updateSelectedDisplay() {
+        const container = document.getElementById('selected-interests');
+
+        // Clear container
+        container.innerHTML = '';
+
+        if (selectedInterests.size === 0) {
+            const span = document.createElement('span');
+            span.className = 'text-xs text-gray-500 empty-state';
+            span.textContent = 'No interests selected yet';
+            container.appendChild(span);
+        } else {
+            // Create elements safely using DOM methods (no onclick, use data attributes)
+            Array.from(selectedInterests).forEach(interest => {
+                const span = document.createElement('span');
+                span.className = 'interest-tag cursor-pointer hover:opacity-80';
+                span.textContent = interest;  // Safe - sets text, not HTML
+                span.dataset.interest = interest;  // Safe - use data attribute instead of onclick
+                container.appendChild(span);
+            });
+        }
+    }
+
+    // Upload avatar function
+    async function uploadAvatar() {
+        if (!uploadedAvatarFile) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('avatar', uploadedAvatarFile);
+
+        try {
+            const response = await fetch('/profile/avatar', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                console.error('Avatar upload failed');
+            }
+        } catch (error) {
+            console.error('Avatar upload error:', error);
+        }
+    }
+
+    // Form submission handler
+    document.getElementById('profile-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const firstName = document.getElementById('first_name').value.trim();
+        const interests = Array.from(selectedInterests);
+
+        if (!firstName) {
+            alert('Please enter your first name');
+            return;
+        }
+
+        // Disable submit button
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating...';
+
+        try {
+            const response = await fetch('/profile/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    first_name: firstName,
+                    interests: interests
+                })
+            });
+
+            if (response.ok) {
+                // Parse JSON response
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    // Profile created successfully, upload avatar if selected
+                    if (uploadedAvatarFile) {
+                        await uploadAvatar();
+                    }
+                    // Redirect to the specified URL
+                    window.location.href = result.redirect_url || '/calendar';
+                } else {
+                    throw new Error(result.message || 'Profile creation failed');
+                }
+            } else {
+                // Handle error with safe JSON parsing
+                let errorMessage = 'An unexpected error occurred. Please try again.';
+                try {
+                    const error = await response.json();
+                    errorMessage = error.detail || errorMessage;
+                } catch (parseError) {
+                    // Response wasn't JSON (e.g., 500 HTML page)
+                    console.error('Failed to parse error response:', parseError.message);
+                }
+                alert(errorMessage);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Profile';
+            }
+        } catch (error) {
+            console.error('Error:', error.message);
+            alert('Network error. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create Profile';
+        }
+    });
 </script>
 {% endblock %}

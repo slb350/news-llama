@@ -35,20 +35,34 @@
                 warning: '⚠'
             };
 
-            toast.innerHTML = `
-                <span class="toast-icon">${icons[type] || icons.info}</span>
-                <div class="toast-content">
-                    <div class="toast-message">${message}</div>
-                </div>
-                <button class="toast-close" onclick="NewsLlama.closeToast(this)">×</button>
-            `;
+            // Create elements safely using DOM methods (prevents XSS)
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'toast-icon';
+            iconSpan.textContent = icons[type] || icons.info;
 
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'toast-message';
+            messageDiv.textContent = message;  // Safe - sets text only, no HTML parsing
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'toast-content';
+            contentDiv.appendChild(messageDiv);
+
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'toast-close';
+            closeBtn.textContent = '×';
+            closeBtn.addEventListener('click', () => NewsLlama.closeToast(closeBtn));
+
+            // Assemble toast
+            toast.appendChild(iconSpan);
+            toast.appendChild(contentDiv);
+            toast.appendChild(closeBtn);
             container.appendChild(toast);
 
             // Auto-dismiss after duration
             if (duration > 0) {
                 setTimeout(() => {
-                    NewsLlama.closeToast(toast.querySelector('.toast-close'));
+                    NewsLlama.closeToast(closeBtn);
                 }, duration);
             }
         };
