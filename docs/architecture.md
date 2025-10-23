@@ -180,6 +180,7 @@ Browser → GET /newsletters/{guid} → NewsletterService.get_newsletter_by_guid
 │  - User management (user_service)           │
 │  - Interest management (interest_service)   │
 │  - Newsletter orchestration (generation)    │
+│  - NewsLlama CLI bridge (llama_wrapper)     │
 │  - Scheduling (scheduler_service)           │
 └────────────────┬────────────────────────────┘
                  │
@@ -621,21 +622,29 @@ def requeue_newsletter_for_today(db: Session, user_id: int) -> bool:
     """
 ```
 
-**Integration with NewsLlama CLI:**
+**Integration with NewsLlama CLI via LlamaWrapper:**
 
 ```python
 # generation_service.py
-from main import NewsLlama
+from src.web.services.llama_wrapper import generate_newsletter_for_interests
 
-async def process_newsletter(db: Session, newsletter_id: int):
+def process_newsletter_generation(db: Session, newsletter_id: int):
     # ... load user and interests ...
 
-    # Reuse CLI NewsLlama class
-    news_llama = NewsLlama(user_interests=interest_names)
-    await news_llama.run()
+    # Use wrapper to bridge web app and CLI
+    file_path = generate_newsletter_for_interests(
+        interests=interest_names,
+        output_date=newsletter.date
+    )
 
-    # NewsLlama generates output/news-YYYY-MM-DD.html
+    # Wrapper handles:
+    # - Async context for NewsLlama
+    # - Output directory creation
+    # - File path generation
+    # - Error handling
+
     # Update newsletter with file path
+    newsletter_service.mark_newsletter_completed(db, newsletter_id, file_path)
 ```
 
 **Metrics Tracking:**
@@ -667,6 +676,46 @@ Benefits:
 - Monitoring generation performance
 - Identifying slow generations
 - Alerting on high failure rates
+
+### LlamaWrapperService
+
+**Responsibilities:**
+- Bridge web application and CLI NewsLlama engine
+- Handle async context for newsletter generation
+- Manage output directory and file paths
+- Provide error handling and validation
+
+**Key Methods:**
+
+```python
+def generate_newsletter_for_interests(interests: list[str], output_date: date) -> str:
+    """
+    Generate newsletter for given interests and date.
+
+    Process:
+    1. Get output file path based on date
+    2. Ensure output directory exists
+    3. Initialize NewsLlama with user interests
+    4. Run generation (asyncio.run for sync context)
+    5. Verify output file created
+    6. Return absolute file path
+
+    Raises:
+        NewsLlamaWrapperError: If generation fails
+    """
+
+def get_output_file_path(output_date: date, guid: str = None) -> str:
+    """Build absolute path to output HTML file."""
+
+def ensure_output_directory(directory_path: str):
+    """Create output directory if missing."""
+```
+
+**Design Decisions:**
+- Wraps CLI in sync interface (uses asyncio.run internally)
+- Separates web app concerns from CLI concerns
+- Centralizes file path logic
+- Provides clean error messages for web context
 
 ### SchedulerService
 
@@ -703,10 +752,16 @@ def queue_immediate_generation(newsletter_id: int) -> None:
 **Implementation:**
 
 ```python
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from concurrent.futures import ThreadPoolExecutor
 
-scheduler = BackgroundScheduler()
+# Async scheduler for FastAPI compatibility
+scheduler = AsyncIOScheduler()
+
+# Thread pool for long-running newsletter generation
+# Max 3 concurrent generations for family-sized deployment
+executor = ThreadPoolExecutor(max_workers=3, thread_name_prefix="newsletter_gen")
 
 def start_scheduler(config):
     if not config["SCHEDULER_ENABLED"]:
@@ -734,10 +789,31 @@ def generate_daily_newsletters():
         for user in users:
             # Queue newsletter for each user
             newsletter = generation_service.queue_newsletter_generation(db, user.id, date.today())
-            # Process in background thread
-            threading.Thread(target=generation_service.process_newsletter, args=(db, newsletter.id)).start()
+            # Queue for immediate processing via scheduler + thread pool
+            scheduler_service.queue_immediate_generation(newsletter.id)
     finally:
         db.close()
+
+def queue_immediate_generation(newsletter_id: int):
+    """Queue newsletter for background processing using thread pool."""
+    def _process_with_db():
+        db = SessionLocal()
+        try:
+            generation_service.process_newsletter_generation(db, newsletter_id)
+        finally:
+            db.close()
+
+    def _schedule_in_thread_pool():
+        future = executor.submit(_process_with_db)
+        # Log completion when done
+
+    # Add immediate job that submits to thread pool
+    scheduler.add_job(
+        func=_schedule_in_thread_pool,
+        id=f"newsletter_{newsletter_id}",
+        replace_existing=True,
+        misfire_grace_time=3600  # 1 hour grace period
+    )
 ```
 
 ## API Layer
@@ -854,7 +930,7 @@ ERROR_MESSAGES = {
     "user_not_found": "We couldn't find your profile. Please select or create one.",
     "newsletter_duplicate": "You already have a newsletter for this date. Check your calendar!",
     "generation_failed": "Newsletter generation failed. We'll automatically retry in a few minutes.",
-    # ... 38 total predefined messages
+    # ... 21 total predefined messages covering all service exceptions
 }
 
 def get_friendly_message(exception: Exception) -> str:
@@ -1270,7 +1346,7 @@ Exception
 ERROR_MESSAGES = {
     "UserNotFoundError": "We couldn't find your profile. Please select or create one.",
     "DuplicateInterestError": "You already have this interest! Try adding a different one.",
-    # ... 38 total mappings
+    # ... 21 total mappings covering user, interest, newsletter, and generation errors
 }
 
 def get_friendly_message(exception: Exception) -> str:
@@ -1457,7 +1533,7 @@ tests/web/unit/
 ├── test_performance.py      # Indexes, caching, rate limiting (3 test classes, 14 tests)
 └── test_ui_states.py        # Empty states, loading states (3 test classes, 10 tests)
 
-Total: 256/258 tests passing (99.2% pass rate)
+Total: 281 tests (as of latest run)
 ```
 
 ### Testing Approach
@@ -1544,7 +1620,7 @@ def reset_rate_limiter():
 
 ### Coverage Target
 
-**Current Coverage**: 256/258 tests passing (99.2%)
+**Current Coverage**: 281 tests, 88% overall for src/web/
 
 **Coverage by Module:**
 - `models.py`: 100% (all models tested)
@@ -1651,7 +1727,7 @@ The News Llama web application is built on a solid architectural foundation:
 - **Service-Oriented**: Reusable business logic isolated from HTTP/database concerns
 - **Performance-Optimized**: Database indexes, eager loading, rate limiting, LRU caching
 - **Error Handling**: User-friendly messages, no stack trace exposure
-- **Testable**: 99.2% test pass rate with comprehensive unit/integration tests
+- **Testable**: 88% test coverage (281 tests) with comprehensive unit/integration tests
 - **Secure**: Input validation, SQL injection prevention, XSS protection
 - **Scalable**: Single-server design supports 1-100 users, multi-server path available
 
