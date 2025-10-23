@@ -8,7 +8,7 @@
     <div class="flex items-center justify-between">
         <!-- User Info -->
         <div class="flex items-center gap-4">
-            <div class="profile-avatar" style="width: 60px; height: 60px; font-size: 1.5rem;">
+            <div class="profile-avatar profile-avatar-small">
                 {% if user.avatar_path %}
                     <img src="/static/avatars/{{ user.avatar_path }}" alt="{{ user.first_name }}" class="w-full h-full object-cover rounded-full">
                 {% else %}
@@ -320,8 +320,8 @@
         dateEl.textContent = formattedDate;
 
         // Add cache buster to ensure fresh content
-        const cacheBuster = '?v=' + new Date().getTime();
-        iframe.src = '/newsletters/' + guid + cacheBuster;
+        const cacheBuster = `?v=${new Date().getTime()}`;
+        iframe.src = `/newsletters/${guid}${cacheBuster}`;
 
         modal.style.display = 'flex';
 

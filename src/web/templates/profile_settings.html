@@ -58,7 +58,7 @@
                         Profile Avatar
                     </label>
                     <div class="flex items-center gap-4">
-                        <div class="profile-avatar" style="width: 80px; height: 80px; font-size: 2rem;" id="avatar-preview">
+                        <div class="profile-avatar profile-avatar-medium" id="avatar-preview">
                             {% if user.avatar_path %}
                                 <img src="/static/avatars/{{ user.avatar_path }}" alt="{{ user.first_name }}" class="w-full h-full object-cover rounded-full">
                             {% else %}

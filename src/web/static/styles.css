@@ -72,6 +72,18 @@ body {
     margin: 0 auto 1rem;
 }
 
+.profile-avatar-small {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+}
+
+.profile-avatar-medium {
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+}
+
 /* Interest Tags */
 .interest-tag {
     display: inline-block;
