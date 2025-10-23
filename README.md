@@ -2,18 +2,18 @@
 
 AI-powered news curation engine that aggregates content from RSS, Twitter/X, Hacker News, Reddit, and web search, then summarizes the most relevant articles using local LLM.
 
-## ✨ Features
+## Features
 
-- **🤖 AI-Powered Source Discovery**: Five-tier progressive discovery strategy with intelligent subreddit matching
-- **📡 Multi-Source Aggregation**: RSS, Twitter/X, Reddit (with smart time filtering for 24h top posts)
-- **🧠 Smart Content Processing**: Duplicate detection, sentiment analysis, keyword extraction
-- **⚡ Performance Optimized**: Pre-filters articles before LLM summarization (saves ~90% of LLM time!)
-- **📝 AI Summarization**: Local LLM-powered summarization via open-agent-sdk
-- **🎯 Personalized Curation**: Discovery-only mode when interests provided (skips default sources)
-- **📊 Rich Output Formats**: Beautiful HTML, RSS, and JSON outputs
-- **🔧 Environment-Based Config**: Secure dotenv configuration for easy deployment
+- **AI-Powered Source Discovery**: Five-tier progressive discovery strategy with intelligent subreddit matching
+- **Multi-Source Aggregation**: RSS, Twitter/X, Reddit (with smart time filtering for 24h top posts)
+- **Smart Content Processing**: Duplicate detection, sentiment analysis, keyword extraction
+- **Performance Optimized**: Pre-filters articles before LLM summarization (saves ~90% of LLM time!)
+- **AI Summarization**: Local LLM-powered summarization via open-agent-sdk
+- **Personalized Curation**: Discovery-only mode when interests provided (skips default sources)
+- **Rich Output Formats**: Beautiful HTML, RSS, and JSON outputs
+- **Environment-Based Config**: Secure dotenv configuration for easy deployment
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Setup the project
 
@@ -71,7 +71,7 @@ Your news digest will be generated in multiple formats:
 
 Configure which formats to generate in `.env` with `OUTPUT_FORMATS=html,rss,json`
 
-## 🎯 AI Source Discovery
+## AI Source Discovery
 
 News Llama uses a **five-tier progressive discovery strategy** with intelligent LLM-powered matching:
 
@@ -100,7 +100,7 @@ News Llama uses a **five-tier progressive discovery strategy** with intelligent 
 - **Reddit**: r/rust, r/learnrust, r/rust_gamedev
 - **RSS**: This Week in Rust
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 news-llama/
@@ -126,7 +126,7 @@ news-llama/
 └── setup.py               # Automated setup script
 ```
 
-## ⚡ Performance
+## Performance
 
 News Llama is optimized for speed with **intelligent pre-filtering**:
 
@@ -135,12 +135,12 @@ News Llama is optimized for speed with **intelligent pre-filtering**:
 **10 interests** (AI, rust, LocalLLM, boxoffice, television, movies, etc.):
 
 ```
-📊 Collection:    678 total articles
-🔍 Deduplication: 661 unique articles
-⚡ Pre-filtering: 100 articles (10 per category)
-🤖 Summarized:    100 articles
-✅ Valid output:  78 articles
-⏱️  LLM time:     ~21 minutes
+Collection:    678 total articles
+Deduplication: 661 unique articles
+Pre-filtering: 100 articles (10 per category)
+Summarized:    100 articles
+Valid output:  78 articles
+LLM time:     ~21 minutes
 ```
 
 **Without pre-filtering**: Would have taken ~2 hours to summarize all 661 articles!
@@ -152,7 +152,7 @@ News Llama is optimized for speed with **intelligent pre-filtering**:
 3. **LLM Efficiency**: Only summarizes articles that will be displayed
 4. **Result**: ~90% reduction in LLM processing time
 
-## ⚙️ Configuration
+## Configuration
 
 ### Key Environment Variables
 
@@ -195,6 +195,232 @@ interests = [
 news_llama = NewsLlama(user_interests=interests)
 ```
 
+## Web Application
+
+News Llama includes a modern web interface for managing multiple user profiles, interests, and personalized newsletters.
+
+### Features
+
+- **Multi-User Profiles**: Create and manage multiple users with individual interests
+- **Newsletter Calendar**: View all your newsletters organized by month
+- **Interest Management**: Add/remove interests with instant newsletter regeneration
+- **Background Scheduler**: Automatic daily newsletter generation at configured time
+- **Performance Optimized**: Database indexes, rate limiting, and LRU file caching
+- **Beautiful UI**: Responsive design with warm coral accents and smooth interactions
+
+### Quick Start
+
+#### 1. Install Dependencies
+
+```bash
+# Install all dependencies including web requirements
+pip install -r requirements.txt
+```
+
+#### 2. Initialize Database
+
+```bash
+# Run Alembic migrations to create database schema
+TESTING=true ./venv/bin/alembic upgrade head
+```
+
+#### 3. Configure Environment
+
+Add web-specific settings to your `.env` file:
+
+```bash
+# Scheduler Configuration
+SCHEDULER_ENABLED=true
+SCHEDULER_HOUR=6              # Generate at 6 AM
+SCHEDULER_MINUTE=0
+SCHEDULER_TIMEZONE=America/Los_Angeles
+
+# Database
+DATABASE_URL=sqlite:///./news_llama.db
+
+# Web Server (optional, defaults shown)
+# HOST=127.0.0.1
+# PORT=8000
+```
+
+#### 4. Start the Server
+
+```bash
+# Production mode
+./venv/bin/uvicorn src.web.app:app --host 0.0.0.0 --port 8000
+
+# Development mode (auto-reload)
+./venv/bin/uvicorn src.web.app:app --reload --port 8000
+```
+
+#### 5. Open in Browser
+
+Navigate to `http://localhost:8000` to access the web interface.
+
+### Usage Guide
+
+#### Creating Your Profile
+
+1. **Visit Homepage**: Select "Create New Profile"
+2. **Enter Name**: Provide your first name
+3. **Select Interests**: Choose from predefined interests or add custom ones
+4. **Submit**: Your first newsletter will be queued for generation (takes 10-15 minutes)
+
+#### Managing Interests
+
+1. **Access Settings**: Click your profile icon → "Profile Settings"
+2. **Add Interests**: Type or select from available interests
+3. **Remove Interests**: Click the × on any interest tag
+4. **Auto-Regeneration**: Today's newsletter automatically regenerates when interests change
+
+#### Viewing Newsletters
+
+1. **Calendar View**: See all newsletters organized by month
+2. **Status Indicators**:
+   - 🟢 **Completed**: Ready to view
+   - 🟡 **Generating**: Processing (may take 10-15 minutes)
+   - 🔴 **Failed**: Click to retry
+3. **Click Date**: View the newsletter for that day
+4. **Generate New**: Click any empty date to queue a newsletter
+
+#### Background Automation
+
+The scheduler automatically generates newsletters daily at your configured time:
+
+- **Default**: 6:00 AM Pacific Time
+- **Configurable**: Set `SCHEDULER_HOUR`, `SCHEDULER_MINUTE`, `SCHEDULER_TIMEZONE` in `.env`
+- **Per-User**: Generates for all users with interests
+- **Retry Logic**: Automatically retries failed generations (max 3 attempts)
+
+Check scheduler status: `http://localhost:8000/health/scheduler`
+
+### Architecture
+
+#### Technology Stack
+
+- **[FastAPI](https://fastapi.tiangolo.com/)**: Modern async web framework
+- **[SQLAlchemy](https://www.sqlalchemy.org/)**: ORM with relationship management
+- **[SQLite](https://www.sqlite.org/)**: Lightweight database with WAL mode
+- **[Alembic](https://alembic.sqlalchemy.org/)**: Database migration management
+- **[APScheduler](https://apscheduler.readthedocs.io/)**: Background job scheduler
+- **[Jinja2](https://jinja.palletsprojects.com/)**: HTML template rendering
+- **[Pydantic](https://docs.pydantic.dev/)**: Request/response validation
+
+#### Database Schema
+
+**Users**: Store user profiles
+- `id`, `first_name`, `avatar_path`, `created_at`
+
+**UserInterests**: User interest preferences (many-to-many)
+- `id`, `user_id`, `interest_name`, `is_predefined`, `added_at`
+
+**Newsletters**: Newsletter generation tracking
+- `id`, `user_id`, `date`, `guid`, `file_path`, `status`, `generated_at`, `retry_count`
+
+**Indexes**: Optimized for fast queries
+- `idx_newsletters_user_id`: User's newsletters
+- `idx_newsletters_date`: Date-based lookups
+- `idx_newsletters_status`: Status filtering
+- `idx_newsletters_user_date`: Composite lookup (unique constraint)
+- `idx_user_interests_user_id`: User's interests
+
+#### Service Layer
+
+**user_service**: User CRUD operations
+- `create_user()`, `get_user()`, `update_user()`, `delete_user()`, `get_all_users()`
+
+**interest_service**: Interest management
+- `add_user_interest()`, `remove_user_interest()`, `get_user_interests()`, `get_predefined_interests()`
+
+**newsletter_service**: Newsletter CRUD and retrieval
+- `create_newsletter()`, `get_newsletter_by_guid()`, `get_newsletters_by_month()`, `update_newsletter_status()`, `retry_newsletter()`
+
+**generation_service**: Newsletter generation orchestration
+- `queue_newsletter_generation()`, `process_newsletter()`, `requeue_newsletter_for_today()`
+- Integrates with `NewsLlama` class to run full aggregation/summarization pipeline
+
+**scheduler_service**: Background job management
+- `start_scheduler()`, `stop_scheduler()`, `schedule_daily_generation()`, `queue_immediate_generation()`
+
+#### Performance Optimizations
+
+**Database Indexes**: O(log n) lookups instead of O(n) table scans
+- Query times: <100ms for monthly newsletter queries with realistic data
+
+**Rate Limiting**: Sliding window algorithm (10 requests per 60 seconds per user)
+- Prevents abuse of newsletter generation endpoint
+- In-memory tracking (consider Redis for production)
+
+**File Caching**: LRU cache for newsletter HTML files (maxsize=100)
+- Reduces disk I/O for frequently accessed newsletters
+- ~10MB max memory usage (100 newsletters × 100KB avg)
+
+**Eager Loading**: SQLAlchemy `joinedload()` to avoid N+1 queries
+- Fetches user interests in single query instead of per-user queries
+
+#### API Endpoints
+
+**Authentication**: Cookie-based sessions with `user_id`
+
+**Pages** (HTML):
+- `GET /`: Profile selection
+- `GET /profile/new`: Create profile form
+- `GET /calendar`: Newsletter calendar
+- `GET /profile/settings`: Profile settings
+- `GET /newsletters/{guid}`: View newsletter
+
+**API** (JSON):
+- `POST /profile/create`: Create new user profile
+- `POST /profile/settings`: Update profile settings
+- `POST /profile/settings/interests/add`: Add interest
+- `POST /profile/settings/interests/remove`: Remove interest
+- `POST /newsletters/generate`: Queue newsletter generation (rate limited)
+- `POST /newsletters/{guid}/retry`: Retry failed newsletter
+- `GET /health/scheduler`: Scheduler status
+- `GET /health/generation`: Generation metrics
+
+#### Error Handling
+
+User-friendly error messages for all scenarios:
+- User not found → Redirect to profile selection
+- Newsletter already exists → "Check your calendar!"
+- Generation failed → "We'll retry automatically"
+- Rate limit exceeded → "Try again in 60 seconds"
+
+No stack traces exposed to end users (logged server-side only).
+
+### Configuration Reference
+
+#### Web-Specific Environment Variables
+
+```bash
+# Database
+DATABASE_URL=sqlite:///./news_llama.db
+
+# Scheduler
+SCHEDULER_ENABLED=true          # Enable/disable background scheduler
+SCHEDULER_HOUR=6                # Hour for daily generation (0-23)
+SCHEDULER_MINUTE=0              # Minute for daily generation (0-59)
+SCHEDULER_TIMEZONE=America/Los_Angeles  # Timezone for scheduler
+
+# Server (optional, passed to uvicorn)
+# HOST=127.0.0.0
+# PORT=8000
+
+# Testing (disable scheduler during tests)
+TESTING=false
+```
+
+All CLI configuration options (LLM, social media, processing) still apply to web mode.
+
+### Deployment
+
+For production deployment (systemd, nginx, backups), see [docs/deployment.md](docs/deployment.md).
+
+For end-user documentation, see [docs/user-guide.md](docs/user-guide.md).
+
+For technical architecture details, see [docs/architecture.md](docs/architecture.md).
+
 ## 🔧 Development
 
 ### Development Commands
@@ -221,16 +447,55 @@ news_llama = NewsLlama(user_interests=interests)
 
 ### Testing
 
-```bash
-# Run all tests
-pytest
+#### CLI Tests
 
-# Run with coverage
-pytest --cov=src --cov-report=html
+```bash
+# Run CLI/batch mode tests
+pytest tests/unit/
 
 # Run specific test
-pytest tests/test_models.py
+pytest tests/unit/test_models.py
 ```
+
+#### Web Tests
+
+```bash
+# Run all web tests
+TESTING=true PYTHONPATH=. pytest tests/web/unit/
+
+# Run with coverage
+TESTING=true PYTHONPATH=. pytest tests/web/unit/ --cov=src/web --cov-report=html
+
+# Run specific test file
+TESTING=true PYTHONPATH=. pytest tests/web/unit/test_services.py
+```
+
+**Note**: Set `TESTING=true` to disable background scheduler during tests.
+
+#### Test Structure
+
+```
+tests/
+├── unit/                      # CLI/batch mode tests
+│   ├── test_models.py
+│   ├── test_content_processor.py
+│   ├── test_duplicate_detector.py
+│   ├── test_security.py
+│   └── test_integration.py
+└── web/
+    └── unit/                  # Web application tests
+        ├── conftest.py        # Shared fixtures
+        ├── test_models.py     # SQLAlchemy models
+        ├── test_database.py   # Database setup
+        ├── test_services.py   # Service layer (5 test classes)
+        ├── test_routes.py     # API endpoints (6 test classes)
+        ├── test_performance.py  # Indexes, rate limiting, caching
+        ├── test_error_handlers.py  # Error handling
+        ├── test_ui_states.py  # Empty states, loading, validation
+        └── test_generation_service.py  # Newsletter generation
+```
+
+**Coverage Target**: 80%+ for src/web/ (currently 256/258 tests passing)
 
 ## 📊 Output Examples
 
@@ -252,7 +517,7 @@ pytest tests/test_models.py
 - **Source attribution**: Shows original source + discovery reasoning
 - **Quality indicators**: Reddit scores, upvote ratios for social content
 
-## 🤖 LLM Integration
+## LLM Integration
 
 News Llama uses the **open-agent-sdk** for local LLM integration:
 
@@ -351,21 +616,21 @@ async for block in client.receive_messages():
 await client.close()
 ```
 
-## 🔒 Security & Privacy
+## Security & Privacy
 
 - **Local Processing**: All processing happens locally
 - **No Data Sharing**: Your interests and reading habits stay private
 - **Environment Variables**: Secure API key management
 - **Open Source**: Transparent and auditable code
 
-## ⚠️ Known Limitations
+## Known Limitations
 
 - **Failed Content Extraction**: ~20-25% of articles fail extraction (paywalls, dead links, image-only posts). These are automatically filtered out.
 - **RSS Feed Errors**: Some discovered RSS feeds may return 404s (sites change URLs over time). This is normal and logged as warnings.
 - **Reddit Time Window**: Uses 24-hour `time_filter='day'` for top posts. Very low-activity subreddits may return 0 posts.
 - **No NSFW Support**: Intentionally excluded due to Reddit API limitations on restricted/quarantined subreddit access.
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -381,11 +646,11 @@ await client.close()
 3. Implement `collect()` and `_is_valid_article()`
 4. Add to the main aggregation loop
 
-## 📝 License
+## License
 
 This project is open source. See LICENSE file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **open-agent-sdk**: Local LLM integration with tool use
 - **asyncpraw**: Async Reddit API client
