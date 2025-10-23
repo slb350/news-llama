@@ -5,15 +5,15 @@ Revises: 912ab51a9dcd
 Create Date: 2025-10-22 12:49:45.789136
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '06cd333f221c'
-down_revision: Union[str, Sequence[str], None] = '912ab51a9dcd'
+revision: str = "06cd333f221c"
+down_revision: Union[str, Sequence[str], None] = "912ab51a9dcd"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -36,7 +36,9 @@ def upgrade() -> None:
     """)
 
     # Create indexes for performance
-    op.execute("CREATE INDEX idx_newsletters_user_date ON newsletters(user_id, date DESC)")
+    op.execute(
+        "CREATE INDEX idx_newsletters_user_date ON newsletters(user_id, date DESC)"
+    )
     op.execute("CREATE INDEX idx_newsletters_status ON newsletters(status)")
 
 

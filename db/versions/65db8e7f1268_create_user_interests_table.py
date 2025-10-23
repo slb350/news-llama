@@ -5,15 +5,15 @@ Revises: 06cd333f221c
 Create Date: 2025-10-22 12:50:14.039250
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '65db8e7f1268'
-down_revision: Union[str, Sequence[str], None] = '06cd333f221c'
+revision: str = "65db8e7f1268"
+down_revision: Union[str, Sequence[str], None] = "06cd333f221c"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -32,7 +32,9 @@ def upgrade() -> None:
     """)
 
     # Unique constraint: each user can only have each interest once
-    op.execute("CREATE UNIQUE INDEX idx_user_interests ON user_interests(user_id, interest_name)")
+    op.execute(
+        "CREATE UNIQUE INDEX idx_user_interests ON user_interests(user_id, interest_name)"
+    )
 
 
 def downgrade() -> None:

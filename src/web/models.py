@@ -11,6 +11,7 @@ from sqlalchemy import (
     ForeignKey,
     CheckConstraint,
     UniqueConstraint,
+    Index,
 )
 from sqlalchemy.orm import relationship, declarative_base
 
@@ -55,12 +56,17 @@ class Newsletter(Base):
     generated_at = Column(String, nullable=True)
     retry_count = Column(Integer, nullable=False, server_default="0")
 
-    # Status constraint
+    # Status constraint and indexes
     __table_args__ = (
         CheckConstraint(
             "status IN ('pending', 'generating', 'completed', 'failed')",
             name="check_newsletter_status",
         ),
+        # Performance indexes for common query patterns
+        Index("idx_newsletters_user_id", "user_id"),
+        Index("idx_newsletters_date", "date"),
+        Index("idx_newsletters_status", "status"),
+        Index("idx_newsletters_user_date", "user_id", "date"),  # Composite index
     )
 
     # Relationships
@@ -83,9 +89,11 @@ class UserInterest(Base):
     is_predefined = Column(Boolean, nullable=False, server_default="0")
     added_at = Column(String, nullable=False, server_default="(datetime('now'))")
 
-    # Unique constraint: user can't have duplicate interests
+    # Unique constraint and performance indexes
     __table_args__ = (
         UniqueConstraint("user_id", "interest_name", name="idx_user_interests"),
+        # Performance index for user interests lookups
+        Index("idx_user_interests_user_id", "user_id"),
     )
 
     # Relationships
