@@ -350,9 +350,11 @@ async def calendar_view(
     if not user:
         return RedirectResponse(url="/", status_code=303)
 
-    # Default to October 2025 (matches mockup)
-    year = 2025
-    month = 10
+    # Default to current month/year
+    from datetime import date
+    today = date.today()
+    year = today.year
+    month = today.month
     month_names = [
         "",
         "January",
@@ -375,10 +377,6 @@ async def calendar_view(
 
     # Check if any newsletters are pending/generating
     has_active = any(n.status in ["pending", "generating"] for n in newsletters)
-
-    # Get today's date for highlighting in calendar
-    from datetime import date
-    today = date.today()
 
     return templates.TemplateResponse(
         request,
