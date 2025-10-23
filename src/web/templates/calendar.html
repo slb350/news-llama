@@ -182,10 +182,13 @@
                 <span class="text-sm font-semibold">31</span>
             </div>
 
-            <!-- October days -->
-            {% set days_in_october = 31 %}
-            {% for day in range(1, days_in_october + 1) %}
-                {% set date_str = "2025-10-" ~ ("%02d"|format(day)) %}
+            <!-- Calendar days -->
+            {% set days_in_month = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month] %}
+            {% if month == 2 and (year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)) %}
+                {% set days_in_month = 29 %}
+            {% endif %}
+            {% for day in range(1, days_in_month + 1) %}
+                {% set date_str = "%04d-%02d-%02d"|format(year, month, day) %}
                 {% set has_newsletter = newsletters|selectattr('date', 'equalto', date_str)|list|length > 0 %}
                 {% set newsletter = newsletters|selectattr('date', 'equalto', date_str)|first if has_newsletter else none %}
                 {% set is_today = (today.year == year and today.month == month and today.day == day) %}

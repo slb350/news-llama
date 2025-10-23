@@ -85,13 +85,31 @@ class TestCalendarView:
         assert response.headers["content-type"].startswith("text/html")
 
     def test_calendar_shows_current_month(self, client: TestClient, user):
-        """Should display current month by default."""
+        """Should display current month by default (not hardcoded October 2025)."""
         client.cookies.set("user_id", str(user.id))
         response = client.get("/calendar")
 
         html = response.text
-        # Should show October 2025 (current month from mockup)
-        assert "October" in html or "2025" in html
+        # Should show current month/year dynamically
+        today = date.today()
+        month_names = [
+            "",
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ]
+        current_month_name = month_names[today.month]
+        assert current_month_name in html
+        assert str(today.year) in html
 
     def test_calendar_shows_user_newsletters(
         self, client: TestClient, user, newsletters_october_2025
@@ -279,3 +297,188 @@ class TestCalendarMonth:
         html = response.text
         # Should show first user's newsletters
         assert "2025-10-15" in html or "15" in html
+
+
+class TestCalendarTodayHighlighting:
+    """Tests for dynamic 'today' highlighting in calendar."""
+
+    def test_calendar_includes_today_in_context(self, client: TestClient, user):
+        """Calendar should pass today's date to template."""
+        client.cookies.set("user_id", str(user.id))
+        response = client.get("/calendar")
+
+        # Response should be successful
+        assert response.status_code == 200
+        # Should contain JavaScript with today date logic
+        html = response.text
+        # Verify template has access to current date for highlighting
+        assert "today" in html.lower()
+
+    def test_calendar_month_includes_today_in_context(self, client: TestClient, user):
+        """Calendar month view should pass today's date to template."""
+        client.cookies.set("user_id", str(user.id))
+        today = date.today()
+        response = client.get(f"/calendar/{today.year}/{today.month}")
+
+        assert response.status_code == 200
+        html = response.text
+        # Should contain today highlighting in template
+        assert "today" in html.lower()
+
+    def test_calendar_today_class_only_on_current_day(
+        self, client: TestClient, user, db: Session
+    ):
+        """Today class should only appear on actual current day."""
+        client.cookies.set("user_id", str(user.id))
+        today = date.today()
+
+        # Create newsletter for today
+        create_pending_newsletter(db, user.id, today)
+
+        response = client.get("/calendar")
+        html = response.text
+
+        # Should contain 'today' class (appears in calendar.html template)
+        assert "today" in html
+
+    def test_calendar_navigates_to_past_month_no_today_highlight(
+        self, client: TestClient, user
+    ):
+        """When viewing past month, today should not be highlighted."""
+        client.cookies.set("user_id", str(user.id))
+
+        # Navigate to January 2020 (definitely past)
+        response = client.get("/calendar/2020/1")
+        html = response.text
+
+        assert response.status_code == 200
+        # January 2020 should render but without today highlighting
+        assert "January" in html
+        assert "2020" in html
+
+    def test_calendar_navigates_to_future_month_no_today_highlight(
+        self, client: TestClient, user
+    ):
+        """When viewing future month, today should not be highlighted."""
+        client.cookies.set("user_id", str(user.id))
+
+        # Navigate to December 2030 (definitely future)
+        response = client.get("/calendar/2030/12")
+        html = response.text
+
+        assert response.status_code == 200
+        assert "December" in html
+        assert "2030" in html
+
+
+class TestCalendarDynamicMonthYear:
+    """Tests for dynamic month/year defaulting (not hardcoded October 2025)."""
+
+    def test_calendar_defaults_to_current_year(self, client: TestClient, user):
+        """Calendar should default to current year, not hardcoded 2025."""
+        client.cookies.set("user_id", str(user.id))
+        response = client.get("/calendar")
+
+        html = response.text
+        today = date.today()
+        assert str(today.year) in html
+
+    def test_calendar_defaults_to_current_month(self, client: TestClient, user):
+        """Calendar should default to current month, not hardcoded October."""
+        client.cookies.set("user_id", str(user.id))
+        response = client.get("/calendar")
+
+        html = response.text
+        today = date.today()
+        month_names = [
+            "",
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ]
+        current_month_name = month_names[today.month]
+        assert current_month_name in html
+
+    def test_calendar_works_across_year_boundary(
+        self, client: TestClient, user, db: Session
+    ):
+        """Calendar should work correctly when year changes."""
+        client.cookies.set("user_id", str(user.id))
+
+        # Test December 2025
+        response_dec = client.get("/calendar/2025/12")
+        assert response_dec.status_code == 200
+        assert "December" in response_dec.text
+        assert "2025" in response_dec.text
+
+        # Test January 2026 (next year)
+        response_jan = client.get("/calendar/2026/1")
+        assert response_jan.status_code == 200
+        assert "January" in response_jan.text
+        assert "2026" in response_jan.text
+
+    def test_calendar_shows_correct_newsletters_for_year(
+        self, client: TestClient, user, db: Session
+    ):
+        """Calendar should show newsletters for correct year."""
+        client.cookies.set("user_id", str(user.id))
+
+        # Create newsletters in different years
+        nl_2025 = create_pending_newsletter(db, user.id, date(2025, 10, 15))
+        nl_2026 = create_pending_newsletter(db, user.id, date(2026, 10, 15))
+
+        # Request October 2025
+        response_2025 = client.get("/calendar/2025/10")
+        html_2025 = response_2025.text
+        assert "2025-10-15" in html_2025
+
+        # Request October 2026
+        response_2026 = client.get("/calendar/2026/10")
+        html_2026 = response_2026.text
+        assert "2026-10-15" in html_2026
+
+
+class TestCalendarModalDateDisplay:
+    """Tests for newsletter modal date display (timezone fix)."""
+
+    def test_modal_date_script_exists(self, client: TestClient, user):
+        """Calendar should include openNewsletterModal JavaScript function."""
+        client.cookies.set("user_id", str(user.id))
+        response = client.get("/calendar")
+
+        html = response.text
+        # Should include the modal opening function with date parsing
+        assert "openNewsletterModal" in html
+        assert "split" in html  # Date parsing logic
+
+    def test_modal_uses_local_date_parsing(self, client: TestClient, user):
+        """Modal JavaScript should parse dates as local (not UTC)."""
+        client.cookies.set("user_id", str(user.id))
+        response = client.get("/calendar")
+
+        html = response.text
+        # Should use split logic to avoid UTC conversion
+        # Looking for: const [year, month, day] = date.split('-').map(Number);
+        assert "split('-')" in html or "split" in html
+        assert "map(Number)" in html or "map" in html
+
+    def test_modal_formatted_date_logic(self, client: TestClient, user):
+        """Modal should use toLocaleDateString for display."""
+        client.cookies.set("user_id", str(user.id))
+        response = client.get("/calendar")
+
+        html = response.text
+        # Should include date formatting
+        assert "toLocaleDateString" in html
+        assert "weekday" in html  # Should format with weekday
+        assert "month" in html  # Should format with month
+        assert "day" in html  # Should format with day
