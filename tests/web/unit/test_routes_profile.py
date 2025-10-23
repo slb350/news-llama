@@ -8,8 +8,10 @@ Tests profile selection, creation, and user session management:
 """
 
 import pytest
+from datetime import date
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+from unittest.mock import patch, MagicMock
 
 from src.web.app import app
 from src.web.database import get_test_db, get_db
@@ -315,3 +317,36 @@ class TestProfileCreatePost:
         # Should be convertible to int
         user_id = int(user_id_str)
         assert user_id > 0
+
+    @patch("src.web.services.generation_service.queue_newsletter_generation")
+    def test_create_profile_triggers_newsletter_generation(
+        self, mock_queue, client: TestClient, db: Session
+    ):
+        """Should trigger newsletter generation after profile creation."""
+        # Mock newsletter creation to return a realistic newsletter object
+        mock_newsletter = MagicMock()
+        mock_newsletter.id = 1
+        mock_newsletter.user_id = 1
+        mock_newsletter.date = date.today().isoformat()
+        mock_newsletter.guid = "test-guid-12345"
+        mock_newsletter.status = "pending"
+        mock_newsletter.file_path = None
+        mock_newsletter.generated_at = None
+        mock_newsletter.retry_count = 0
+        mock_queue.return_value = mock_newsletter
+
+        response = client.post(
+            "/profile/create",
+            json={"first_name": "NewsUser", "interests": ["AI", "rust"]},
+            follow_redirects=False,
+        )
+
+        assert response.status_code == 303
+        user_id = int(response.cookies["user_id"])
+
+        # Verify generation was queued with correct arguments
+        mock_queue.assert_called_once()
+        call_args = mock_queue.call_args[0]  # Positional args
+        assert call_args[0] == db  # db session
+        assert call_args[1] == user_id  # user_id argument
+        assert call_args[2] == date.today()  # newsletter_date argument

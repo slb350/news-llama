@@ -139,6 +139,17 @@ async def profile_create(
             is_predefined=is_predefined,
         )
 
+    # Queue newsletter generation for today
+    try:
+        generation_service.queue_newsletter_generation(db, user.id, date.today())
+    except generation_service.NewsletterAlreadyExistsError:
+        # Newsletter already exists for today - this is fine, continue
+        pass
+    except Exception:
+        # Log error but don't block profile creation
+        # Newsletter generation failures shouldn't prevent user onboarding
+        pass
+
     # Set user_id cookie and redirect
     redirect = RedirectResponse(url="/calendar", status_code=303)
     redirect.set_cookie(key="user_id", value=str(user.id))
