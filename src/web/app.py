@@ -4,8 +4,15 @@ Phase 6: Background scheduler integration.
 """
 
 import os
+import sys
 import logging
 from contextlib import asynccontextmanager
+
+# Fix libmagic path on macOS (python-magic needs help finding Homebrew's libmagic)
+if sys.platform == "darwin":  # macOS
+    os.environ.setdefault("DYLD_LIBRARY_PATH", "/opt/homebrew/lib")
+
+import magic
 from fastapi import FastAPI, Request, Depends, Response, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -37,6 +44,7 @@ from src.web.error_handlers import (
     validation_exception_handler,
     get_friendly_message,
 )
+from src.web import file_cache
 
 logger = logging.getLogger(__name__)
 
@@ -229,6 +237,21 @@ async def upload_avatar(
     contents = await avatar.read()
     if len(contents) > 500 * 1024:
         raise HTTPException(status_code=400, detail="File size must be less than 500KB")
+
+    # Validate actual file content (magic bytes) to prevent spoofing
+    try:
+        mime_type = magic.from_buffer(contents, mime=True)
+        if not mime_type.startswith('image/'):
+            raise HTTPException(
+                status_code=400,
+                detail=f"File must be an image (detected: {mime_type})"
+            )
+    except Exception as e:
+        logger.error(f"Magic byte validation failed: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail="Unable to validate file type. Please upload a valid image."
+        )
 
     # Validate file extension against whitelist
     ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
@@ -510,9 +533,10 @@ async def view_newsletter(guid: str, db: Session = Depends(get_db)):
 
         # If newsletter is completed and file exists, serve the file
         if newsletter.status == "completed" and newsletter.file_path:
-            file_path = Path(newsletter.file_path)
-            if file_path.exists():
-                return FileResponse(file_path, media_type="text/html")
+            # Use cached file reading to reduce disk I/O
+            content = file_cache.read_newsletter_file(newsletter.file_path)
+            if content is not None:
+                return Response(content=content, media_type="text/html")
             else:
                 # File missing despite completed status
                 raise HTTPException(

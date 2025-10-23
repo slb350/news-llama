@@ -8,17 +8,24 @@ requiring Redis or Celery.
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
+from concurrent.futures import ThreadPoolExecutor
 import logging
 from datetime import date
 
 from src.web.database import SessionLocal
 from src.web.services import user_service, generation_service
 from src.web.models import Newsletter
+from src.web.rate_limiter import newsletter_rate_limiter
 
 logger = logging.getLogger(__name__)
 
 # Global scheduler instance
 scheduler = AsyncIOScheduler()
+
+# Thread pool for long-running newsletter generation
+# Max 3 concurrent generations for family-sized deployment
+executor = ThreadPoolExecutor(max_workers=3, thread_name_prefix="newsletter_gen")
 
 
 def schedule_daily_generation(
@@ -40,8 +47,9 @@ def schedule_daily_generation(
         """Generate newsletters for all users at scheduled time."""
         logger.info("Starting daily newsletter generation")
 
-        db = SessionLocal()
+        db = None
         try:
+            db = SessionLocal()
             users = user_service.get_all_users(db)
             today = date.today()
 
@@ -72,8 +80,17 @@ def schedule_daily_generation(
                 f"Daily generation complete: {success_count} queued, {error_count} errors"
             )
 
+        except Exception as e:
+            # Log any critical errors that prevent the entire job from running
+            logger.error(f"Critical error in daily newsletter generation: {e}", exc_info=True)
+            # Could add alerting here (email admin, send to monitoring service, etc.)
+
         finally:
-            db.close()
+            if db:
+                try:
+                    db.close()
+                except Exception as e:
+                    logger.error(f"Failed to close database session: {e}")
 
     # Add scheduled job
     scheduler.add_job(
@@ -113,9 +130,19 @@ def queue_immediate_generation(newsletter_id: int):
         finally:
             db.close()
 
-    # Add immediate job
+    def _schedule_in_thread_pool():
+        """Run generation in thread pool to prevent blocking scheduler."""
+        future = executor.submit(_process_with_db)
+        # Log completion status when done
+        future.add_done_callback(
+            lambda f: logger.debug(
+                f"Newsletter {newsletter_id} thread pool execution complete"
+            )
+        )
+
+    # Add immediate job that submits to thread pool
     scheduler.add_job(
-        func=_process_with_db,
+        func=_schedule_in_thread_pool,
         id=f"newsletter_{newsletter_id}",
         replace_existing=True,
         misfire_grace_time=3600,  # Allow 1 hour grace period if scheduler is busy
@@ -176,6 +203,14 @@ def start_scheduler(config: dict):
 
     # Schedule daily generation
     schedule_daily_generation(hour, minute, timezone)
+
+    # Schedule hourly rate limiter cleanup to prevent memory leaks
+    scheduler.add_job(
+        func=newsletter_rate_limiter.cleanup_old_entries,
+        trigger=IntervalTrigger(hours=1),
+        id="rate_limiter_cleanup",
+        replace_existing=True,
+    )
 
     # Start scheduler
     scheduler.start()

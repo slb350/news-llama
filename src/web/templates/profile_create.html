@@ -268,11 +268,25 @@
                 body: formData
             });
 
-            if (!response.ok) {
-                console.error('Avatar upload failed');
+            if (response.ok) {
+                // Success - profile_create doesn't have status element, will show on calendar page
+                return;
+            } else {
+                // Parse error message from backend
+                let errorMessage = 'Upload failed. Please try again.';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.detail || errorMessage;
+                } catch {
+                    // Response wasn't JSON
+                }
+                console.error('Avatar upload failed:', errorMessage);
+                NewsLlama.showToast(errorMessage, 'error');
             }
         } catch (error) {
-            console.error('Avatar upload error:', error);
+            console.error('Avatar upload error:', error.message);
+            const errorMessage = 'Network error. Please check your connection.';
+            NewsLlama.showToast(errorMessage, 'error');
         }
     }
 

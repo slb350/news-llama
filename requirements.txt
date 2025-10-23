@@ -27,6 +27,7 @@ python-dateutil>=2.8.2
 schedule>=1.2.0
 rich>=13.0.0
 loguru>=0.7.0
+python-magic>=0.4.27
 
 # Web framework
 fastapi[all]>=0.104.1

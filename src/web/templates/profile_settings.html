@@ -258,13 +258,24 @@
                 statusEl.textContent = 'Avatar uploaded successfully!';
                 statusEl.className = 'text-xs mt-1 text-green-600';
             } else {
-                statusEl.textContent = 'Upload failed. Please try again.';
+                // Parse error message from backend
+                let errorMessage = 'Upload failed. Please try again.';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.detail || errorMessage;
+                } catch {
+                    // Response wasn't JSON
+                }
+                statusEl.textContent = errorMessage;
                 statusEl.className = 'text-xs mt-1 text-red-600';
+                NewsLlama.showToast(errorMessage, 'error');
             }
         } catch (error) {
-            console.error('Avatar upload error:', error);
-            statusEl.textContent = 'Upload failed. Please try again.';
+            console.error('Avatar upload error:', error.message);
+            const errorMessage = 'Network error. Please check your connection.';
+            statusEl.textContent = errorMessage;
             statusEl.className = 'text-xs mt-1 text-red-600';
+            NewsLlama.showToast(errorMessage, 'error');
         }
     }
 
