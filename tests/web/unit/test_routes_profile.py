@@ -105,11 +105,10 @@ class TestProfileCreate:
         response = client.get("/profile/new")
 
         html = response.text
-        # Check for some known predefined interests
-        assert "AI" in html
-        assert "python" in html
-        assert "rust" in html
-        assert "machine learning" in html
+        # Check for some known predefined interests (HTML-escaped)
+        assert "AI &amp; Machine Learning" in html
+        assert "Python" in html
+        assert "Rust" in html
 
     def test_profile_create_has_form(self, client: TestClient):
         """Should include profile creation form."""
@@ -127,7 +126,7 @@ class TestProfileCreatePost:
         """Should create user, add interests, and redirect."""
         response = client.post(
             "/profile/create",
-            json={"first_name": "Diana", "interests": ["AI", "rust", "python"]},
+            json={"first_name": "Diana", "interests": ["AI & Machine Learning", "Rust", "Python"]},
             follow_redirects=False,
         )
 
@@ -154,9 +153,9 @@ class TestProfileCreatePost:
         interests = get_user_interests(db, user_id)
         assert len(interests) == 3
         interest_names = [i.interest_name for i in interests]
-        assert "AI" in interest_names
-        assert "rust" in interest_names
-        assert "python" in interest_names
+        assert "AI & Machine Learning" in interest_names
+        assert "Rust" in interest_names
+        assert "Python" in interest_names
 
     def test_create_profile_without_interests(self, client: TestClient, db: Session):
         """Should create user with no interests."""
@@ -216,7 +215,7 @@ class TestProfileCreatePost:
         """Should mark interests as predefined if from standard list."""
         response = client.post(
             "/profile/create",
-            json={"first_name": "Grace", "interests": ["AI", "databases"]},
+            json={"first_name": "Diana", "interests": ["AI & Machine Learning", "Open Source"]},
             follow_redirects=False,
         )
 
@@ -240,7 +239,7 @@ class TestProfileCreatePost:
             "/profile/create",
             json={
                 "first_name": "Henry",
-                "interests": ["AI", "mycustomtopic"],  # AI predefined, other custom
+                "interests": ["AI & Machine Learning", "mycustomtopic"],  # AI predefined, other custom
             },
             follow_redirects=False,
         )
@@ -255,12 +254,12 @@ class TestProfileCreatePost:
         interests = get_user_interests(db, user_id)
         interest_map = {i.interest_name: i.is_predefined for i in interests}
 
-        assert interest_map["AI"] is True  # Predefined
+        assert interest_map["AI & Machine Learning"] is True  # Predefined
         assert interest_map["mycustomtopic"] is False  # Custom
 
     def test_create_profile_requires_first_name(self, client: TestClient):
         """Should require first_name field."""
-        response = client.post("/profile/create", json={"interests": ["AI"]})
+        response = client.post("/profile/create", json={"interests": ["AI & Machine Learning"]})
 
         assert response.status_code == 422  # Validation error
 
@@ -300,7 +299,7 @@ class TestProfileCreatePost:
             "/profile/create",
             json={
                 "first_name": "Ivy",
-                "interests": ["AI", "python", "AI"],  # Duplicate AI
+                "interests": ["AI & Machine Learning", "Python", "AI & Machine Learning"],  # Duplicate AI
             },
             follow_redirects=False,
         )
@@ -316,7 +315,7 @@ class TestProfileCreatePost:
         # Should only have 2 interests (AI deduplicated)
         assert len(interests) == 2
         interest_names = [i.interest_name for i in interests]
-        assert interest_names.count("AI") == 1
+        assert interest_names.count("AI & Machine Learning") == 1
 
     def test_create_profile_cookie_is_valid_int(self, client: TestClient):
         """Should set user_id cookie as valid integer."""
@@ -355,7 +354,7 @@ class TestProfileCreatePost:
 
         response = client.post(
             "/profile/create",
-            json={"first_name": "NewsUser", "interests": ["AI", "rust"]},
+            json={"first_name": "Diana", "interests": ["AI & Machine Learning", "Rust"]},
             follow_redirects=False,
         )
 
@@ -421,8 +420,8 @@ class TestProfileDelete:
         # Create user with interests
         user = create_user(db, first_name="CascadeTest")
         user_id = user.id
-        add_user_interest(db, user_id, "AI", is_predefined=True)
-        add_user_interest(db, user_id, "rust", is_predefined=True)
+        add_user_interest(db, user_id, "AI & Machine Learning", is_predefined=True)
+        add_user_interest(db, user_id, "Rust", is_predefined=True)
 
         # Verify interests exist
         interests_before = get_user_interests(db, user_id)

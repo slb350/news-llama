@@ -42,9 +42,9 @@ def client(db: Session):
 def user_with_interests(db: Session):
     """Create test user with interests."""
     user = create_user(db, first_name="SettingsUser")
-    add_user_interest(db, user.id, "AI", is_predefined=True)
-    add_user_interest(db, user.id, "rust", is_predefined=True)
-    add_user_interest(db, user.id, "python", is_predefined=True)
+    add_user_interest(db, user.id, "AI & Machine Learning", is_predefined=True)
+    add_user_interest(db, user.id, "Rust", is_predefined=True)
+    add_user_interest(db, user.id, "Python", is_predefined=True)
     return user
 
 
@@ -88,9 +88,9 @@ class TestProfileSettingsGet:
         response = client.get("/profile/settings")
 
         html = response.text
-        assert "AI" in html
-        assert "rust" in html
-        assert "python" in html
+        assert "AI &amp; Machine Learning" in html
+        assert "Rust" in html
+        assert "Python" in html
 
     def test_settings_shows_available_interests(
         self, client: TestClient, user_with_interests
@@ -101,7 +101,7 @@ class TestProfileSettingsGet:
 
         html = response.text
         # Check for some predefined interests not already selected
-        assert "databases" in html or "machine learning" in html
+        assert "Open Source" in html or "AI & Machine Learning" in html
 
     def test_settings_with_invalid_cookie(self, client: TestClient):
         """Should redirect if user_id cookie is invalid."""
@@ -193,7 +193,7 @@ class TestProfileSettingsPost:
 
         response = client.post(
             "/profile/settings/interests/add",
-            json={"interest_name": "databases", "is_predefined": True},
+            json={"interest_name": "Open Source", "is_predefined": True},
         )
 
         assert response.status_code == 200
@@ -203,7 +203,7 @@ class TestProfileSettingsPost:
 
         interests = get_user_interests(db, user_with_interests.id)
         interest_names = [i.interest_name for i in interests]
-        assert "databases" in interest_names
+        assert "Open Source" in interest_names
 
     def test_add_custom_interest(
         self, client: TestClient, user_with_interests, db: Session
@@ -231,10 +231,10 @@ class TestProfileSettingsPost:
         """Should prevent adding duplicate interest."""
         client.cookies.set("user_id", str(user_with_interests.id))
 
-        # Try to add "AI" which already exists
+        # Try to add "AI & Machine Learning" which already exists
         response = client.post(
             "/profile/settings/interests/add",
-            json={"interest_name": "AI", "is_predefined": True},
+            json={"interest_name": "AI & Machine Learning", "is_predefined": True},
         )
 
         # Should return error (409 Conflict or 400 Bad Request)
@@ -248,7 +248,7 @@ class TestProfileSettingsPost:
 
         response = client.post(
             "/profile/settings/interests/remove",
-            json={"interest_name": "rust"},
+            json={"interest_name": "Rust"},
         )
 
         assert response.status_code == 200
@@ -258,10 +258,10 @@ class TestProfileSettingsPost:
 
         interests = get_user_interests(db, user_with_interests.id)
         interest_names = [i.interest_name for i in interests]
-        assert "rust" not in interest_names
+        assert "Rust" not in interest_names
         # Other interests should still be there
-        assert "AI" in interest_names
-        assert "python" in interest_names
+        assert "AI & Machine Learning" in interest_names
+        assert "Python" in interest_names
 
     def test_remove_nonexistent_interest(self, client: TestClient, user_with_interests):
         """Should return error when removing non-existent interest."""
@@ -290,7 +290,7 @@ class TestProfileSettingsPost:
         """Should require user session to add interests."""
         response = client.post(
             "/profile/settings/interests/add",
-            json={"interest_name": "AI", "is_predefined": True},
+            json={"interest_name": "AI & Machine Learning", "is_predefined": True},
         )
 
         # Should redirect or return 401
@@ -300,7 +300,7 @@ class TestProfileSettingsPost:
         """Should require user session to remove interests."""
         response = client.post(
             "/profile/settings/interests/remove",
-            json={"interest_name": "AI"},
+            json={"interest_name": "AI & Machine Learning"},
         )
 
         # Should redirect or return 401
@@ -320,7 +320,7 @@ class TestInterestUpdateNewsletterRegeneration:
         # Add an interest
         response = client.post(
             "/profile/settings/interests/add",
-            json={"interest_name": "databases", "is_predefined": True},
+            json={"interest_name": "Open Source", "is_predefined": True},
         )
 
         assert response.status_code == 200
@@ -342,7 +342,7 @@ class TestInterestUpdateNewsletterRegeneration:
         # Remove an interest
         response = client.post(
             "/profile/settings/interests/remove",
-            json={"interest_name": "rust"},
+            json={"interest_name": "Rust"},
         )
 
         assert response.status_code == 200
@@ -367,7 +367,7 @@ class TestInterestUpdateNewsletterRegeneration:
         # Add an interest
         response = client.post(
             "/profile/settings/interests/add",
-            json={"interest_name": "databases", "is_predefined": True},
+            json={"interest_name": "Open Source", "is_predefined": True},
         )
 
         assert response.status_code == 200
@@ -389,7 +389,7 @@ class TestInterestUpdateNewsletterRegeneration:
 
         response = client.post(
             "/profile/settings/interests/add",
-            json={"interest_name": "databases", "is_predefined": True},
+            json={"interest_name": "Open Source", "is_predefined": True},
         )
 
         assert response.status_code == 200
@@ -411,9 +411,9 @@ class TestInterestUpdateNewsletterRegeneration:
             json={
                 "first_name": user_with_interests.first_name,
                 "interests": [
-                    "AI",
+                    "AI & Machine Learning",
                     "LocalLLM",
-                    "databases",
+                    "Open Source",
                 ],  # Added databases, removed rust
             },
         )
@@ -440,9 +440,9 @@ class TestInterestUpdateNewsletterRegeneration:
             json={
                 "first_name": user_with_interests.first_name,
                 "interests": [
-                    "AI",
-                    "rust",
-                    "python",
+                    "AI & Machine Learning",
+                    "Rust",
+                    "Python",
                 ],  # Same as existing, different order OK
             },
         )

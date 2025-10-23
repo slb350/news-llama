@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from src.web.services.interest_service import (
     get_predefined_interests,
+    get_predefined_interests_grouped,
     search_interests,
     add_user_interest,
     remove_user_interest,
@@ -73,15 +74,15 @@ class TestGetPredefinedInterests:
         assert all(isinstance(i, str) for i in interests)
 
     def test_get_predefined_interests_includes_expected(self, db: Session):
-        """Should include expected interests from mockup."""
+        """Should include expected interests from grouped categories."""
         interests = get_predefined_interests()
 
-        # Check that key interests from mockup are present
-        assert "AI" in interests
-        assert "rust" in interests
-        assert "LocalLLM" in interests
-        assert "startups" in interests
-        assert "technology" in interests
+        # Check that key interests from groups are present
+        assert "AI & Machine Learning" in interests
+        assert "Rust" in interests
+        assert "Python" in interests
+        assert "Pets & Animals" in interests
+        assert "Gardening" in interests
 
     def test_get_predefined_interests_alphabetically_sorted(self, db: Session):
         """Should return interests in alphabetical order."""
@@ -95,27 +96,28 @@ class TestSearchInterests:
 
     def test_search_interests_exact_match(self, db: Session):
         """Should find exact match."""
-        results = search_interests("AI")
+        results = search_interests("Rust")
 
-        assert "AI" in results
+        assert "Rust" in results
 
     def test_search_interests_case_insensitive(self, db: Session):
         """Should match regardless of case."""
-        results_lower = search_interests("ai")
-        results_upper = search_interests("AI")
-        results_mixed = search_interests("Ai")
+        results_lower = search_interests("rust")
+        results_upper = search_interests("RUST")
+        results_mixed = search_interests("Rust")
 
-        assert "AI" in results_lower
-        assert "AI" in results_upper
-        assert "AI" in results_mixed
+        assert "Rust" in results_lower
+        assert "Rust" in results_upper
+        assert "Rust" in results_mixed
 
     def test_search_interests_partial_match(self, db: Session):
         """Should find partial matches."""
-        results = search_interests("prog")
+        results = search_interests("python")
 
-        # Should match "programming" and "systems programming"
-        matching = [i for i in results if "prog" in i.lower()]
+        # Should match "Python"
+        matching = [i for i in results if "python" in i.lower()]
         assert len(matching) > 0
+        assert "Python" in results
 
     def test_search_interests_empty_query(self, db: Session):
         """Should return all interests for empty query."""
@@ -134,8 +136,8 @@ class TestSearchInterests:
         """Should handle multi-word queries."""
         results = search_interests("machine learn")
 
-        # Should match "machine learning"
-        assert any("machine learning" in i.lower() for i in results)
+        # Should match "AI & Machine Learning"
+        assert any("machine learn" in i.lower() for i in results)
 
 
 class TestAddUserInterest:
@@ -325,3 +327,84 @@ class TestGetUserInterests:
         assert hasattr(interest, "is_predefined")
         assert hasattr(interest, "added_at")
         assert interest.is_predefined is True
+
+
+class TestGetPredefinedInterestsGrouped:
+    """Tests for get_predefined_interests_grouped function."""
+
+    def test_returns_dictionary(self, db: Session):
+        """Should return dictionary of grouped interests."""
+        grouped = get_predefined_interests_grouped()
+
+        assert isinstance(grouped, dict)
+        assert len(grouped) > 0
+
+    def test_has_expected_groups(self, db: Session):
+        """Should have all expected category groups."""
+        grouped = get_predefined_interests_grouped()
+
+        assert "tech" in grouped
+        assert "creative" in grouped
+        assert "home" in grouped
+        assert "gaming" in grouped
+        assert "lifestyle" in grouped
+        assert "learning" in grouped
+
+    def test_group_structure(self, db: Session):
+        """Each group should have name, emoji, and interests."""
+        grouped = get_predefined_interests_grouped()
+
+        for group_key, group_data in grouped.items():
+            assert "name" in group_data
+            assert "emoji" in group_data
+            assert "interests" in group_data
+            assert isinstance(group_data["name"], str)
+            assert isinstance(group_data["emoji"], str)
+            assert isinstance(group_data["interests"], list)
+            assert len(group_data["interests"]) > 0
+
+    def test_tech_group_contents(self, db: Session):
+        """Tech & Development group should have expected interests."""
+        grouped = get_predefined_interests_grouped()
+        tech_interests = grouped["tech"]["interests"]
+
+        assert "AI & Machine Learning" in tech_interests
+        assert "Rust" in tech_interests
+        assert "Python" in tech_interests
+        assert "Self-Hosting" in tech_interests
+
+    def test_creative_group_contents(self, db: Session):
+        """Creative Arts group should have expected interests."""
+        grouped = get_predefined_interests_grouped()
+        creative_interests = grouped["creative"]["interests"]
+
+        assert "Digital Art & Procreate" in creative_interests
+        assert "Photography" in creative_interests
+
+    def test_lifestyle_group_contents(self, db: Session):
+        """Lifestyle group should have family-friendly interests."""
+        grouped = get_predefined_interests_grouped()
+        lifestyle_interests = grouped["lifestyle"]["interests"]
+
+        assert "Pets & Animals" in lifestyle_interests
+        assert "Fashion & Style" in lifestyle_interests
+
+    def test_total_interest_count(self, db: Session):
+        """Should have 30 total interests across all groups."""
+        grouped = get_predefined_interests_grouped()
+
+        total_count = sum(len(group["interests"]) for group in grouped.values())
+        assert total_count == 30
+
+    def test_flattened_matches_grouped(self, db: Session):
+        """Flattened list should match all interests from groups."""
+        grouped = get_predefined_interests_grouped()
+        flattened = get_predefined_interests()
+
+        # Collect all interests from groups
+        all_grouped_interests = []
+        for group_data in grouped.values():
+            all_grouped_interests.extend(group_data["interests"])
+
+        # Should have same interests (flattened is sorted)
+        assert sorted(all_grouped_interests) == flattened

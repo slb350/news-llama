@@ -3,6 +3,20 @@
 {% block title %}Profile Settings - News Llama{% endblock %}
 
 {% block content %}
+<style>
+    /* Rotate chevron when details is open */
+    details.interest-group[open] summary .chevron {
+        transform: rotate(180deg);
+    }
+
+    /* Hide default details marker */
+    details.interest-group summary {
+        list-style: none;
+    }
+    details.interest-group summary::-webkit-details-marker {
+        display: none;
+    }
+</style>
 <div class="card-static shadow-lg p-8">
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
@@ -129,21 +143,39 @@
                 <div id="custom-interest-error" class="text-xs text-red-600 mt-1" role="alert" aria-live="polite"></div>
             </div>
 
-            <!-- Available Interests -->
+            <!-- Available Interests (Grouped & Collapsible) -->
             <div class="mb-2">
                 <div class="text-xs text-gray-600 uppercase tracking-wide font-semibold mb-2">
                     Pre-configured Categories (click to add)
                 </div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                {% for interest in available_interests %}
-                <button
-                    type="button"
-                    class="interest-tag text-center {% if interest in user_interests %}selected{% endif %}"
-                    data-interest="{{ interest }}"
-                >
-                    {{ interest }}
-                </button>
+            <div class="space-y-2">
+                {% for group_key, group_data in interests_grouped.items() %}
+                <details class="interest-group" open>
+                    <summary class="cursor-pointer select-none p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">{{ group_data.emoji }}</span>
+                                <span class="text-sm font-semibold text-gray-900">{{ group_data.name }}</span>
+                                <span class="text-xs text-gray-500">({{ group_data.interests|length }})</span>
+                            </div>
+                            <svg class="chevron w-5 h-5 text-gray-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </summary>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 p-3 pt-2">
+                        {% for interest in group_data.interests %}
+                        <button
+                            type="button"
+                            class="interest-tag text-center {% if interest in user_interests %}selected{% endif %}"
+                            data-interest="{{ interest }}"
+                        >
+                            {{ interest }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </details>
                 {% endfor %}
             </div>
         </div>

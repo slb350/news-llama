@@ -35,38 +35,101 @@ class DuplicateInterestError(InterestServiceError):
     pass
 
 
-# Predefined interests matching mockup
-PREDEFINED_INTERESTS = [
-    "AI",
-    "databases",
-    "devops",
-    "go",
-    "javascript",
-    "LocalLlama",
-    "LocalLLM",
-    "machine learning",
-    "programming",
-    "python",
-    "rust",
-    "security",
-    "startups",
-    "strix halo",
-    "systems programming",
-    "technology",
-    "web development",
-]
+# Predefined interests organized into family-friendly groups
+# Balanced for tech/developer audience (40%) + family/general (60%)
+PREDEFINED_INTERESTS_GROUPED = {
+    "tech": {
+        "name": "Tech & Development",
+        "emoji": "🔧",
+        "interests": [
+            "AI & Machine Learning",
+            "Rust",
+            "Python",
+            "JavaScript & Web Dev",
+            "Linux",
+            "Self-Hosting",
+            "Homelab",
+            "3D Printing",
+            "Mechanical Keyboards",
+            "Open Source",
+            "Docker & Containers",
+            "Raspberry Pi",
+        ],
+    },
+    "creative": {
+        "name": "Creative Arts",
+        "emoji": "🎨",
+        "interests": [
+            "Digital Art & Procreate",
+            "Photography",
+            "Music Production",
+            "Writing & Storytelling",
+        ],
+    },
+    "home": {
+        "name": "Home & Living",
+        "emoji": "🏡",
+        "interests": [
+            "Gardening",
+            "Interior Design & Aesthetics",
+            "Cooking & Recipes",
+            "DIY & Home Improvement",
+        ],
+    },
+    "gaming": {
+        "name": "Gaming",
+        "emoji": "🎮",
+        "interests": [
+            "Minecraft",
+            "Roblox",
+            "Indie Games",
+        ],
+    },
+    "lifestyle": {
+        "name": "Lifestyle",
+        "emoji": "💫",
+        "interests": [
+            "Fashion & Style",
+            "Pets & Animals",
+            "Fitness & Wellness",
+            "Coffee & Tea Culture",
+        ],
+    },
+    "learning": {
+        "name": "Learning & Discovery",
+        "emoji": "📚",
+        "interests": [
+            "Science & Space",
+            "History",
+            "Today I Learned",
+        ],
+    },
+}
+
+
+def get_predefined_interests_grouped() -> dict:
+    """
+    Get predefined interests organized by category groups.
+
+    Returns:
+        Dictionary with group keys containing name, emoji, and interests list
+    """
+    return PREDEFINED_INTERESTS_GROUPED
 
 
 def get_predefined_interests() -> list[str]:
     """
-    Get list of predefined interest categories.
+    Get flat list of all predefined interest categories.
 
-    Returns alphabetically sorted list matching mockup interests.
+    Flattens grouped interests into alphabetically sorted list for backward compatibility.
 
     Returns:
         List of predefined interest strings
     """
-    return sorted(PREDEFINED_INTERESTS)
+    all_interests = []
+    for group_data in PREDEFINED_INTERESTS_GROUPED.values():
+        all_interests.extend(group_data["interests"])
+    return sorted(all_interests)
 
 
 def search_interests(query: str) -> list[str]:
@@ -86,9 +149,8 @@ def search_interests(query: str) -> list[str]:
         return get_predefined_interests()
 
     query_lower = query.lower()
-    matches = [
-        interest for interest in PREDEFINED_INTERESTS if query_lower in interest.lower()
-    ]
+    all_interests = get_predefined_interests()
+    matches = [interest for interest in all_interests if query_lower in interest.lower()]
 
     return sorted(matches)
 

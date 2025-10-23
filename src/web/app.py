@@ -156,10 +156,10 @@ async def profile_select(request: Request, db: Session = Depends(get_db)):
 
 @app.get("/profile/new", response_class=HTMLResponse)
 async def profile_create_page(request: Request):
-    """Profile creation page with predefined interests."""
-    interests = interest_service.get_predefined_interests()
+    """Profile creation page with grouped interests."""
+    interests_grouped = interest_service.get_predefined_interests_grouped()
     return templates.TemplateResponse(
-        request, "profile_create.html", {"interests": interests}
+        request, "profile_create.html", {"interests_grouped": interests_grouped}
     )
 
 
@@ -408,8 +408,8 @@ async def profile_settings(
     user_interests_objs = interest_service.get_user_interests(db, user.id)
     user_interests = [i.interest_name for i in user_interests_objs]
 
-    # Get available predefined interests
-    available_interests = interest_service.get_predefined_interests()
+    # Get grouped predefined interests
+    interests_grouped = interest_service.get_predefined_interests_grouped()
 
     # Calculate real stats
     today = date.today()
@@ -438,7 +438,7 @@ async def profile_settings(
         {
             "user": user,
             "user_interests": user_interests,
-            "available_interests": available_interests,
+            "interests_grouped": interests_grouped,
             "stats": stats,
         },
     )
