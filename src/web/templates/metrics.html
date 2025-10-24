@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Discovery System Metrics - News Llama{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="mb-8">
+    <h1 class="text-4xl font-bold text-gray-900 mb-2">Discovery System Metrics</h1>
+    <p class="text-gray-600">Autonomous source discovery and curation performance</p>
+</div>
+
+<!-- Summary Stats Bar -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="card-static shadow-sm p-4 text-center">
+        <div class="text-3xl font-bold coral-accent">{{ metrics.tier1.total }}</div>
+        <div class="text-sm text-gray-600 mt-1">Tier 1 Sources</div>
+    </div>
+    <div class="card-static shadow-sm p-4 text-center">
+        <div class="text-3xl font-bold text-green-600">
+            {% if metrics.tier1.total > 0 %}
+                {{ "%.1f"|format((metrics.tier1.healthy / metrics.tier1.total * 100)) }}%
+            {% else %}
+                0%
+            {% endif %}
+        </div>
+        <div class="text-sm text-gray-600 mt-1">Health Rate</div>
+    </div>
+    <div class="card-static shadow-sm p-4 text-center">
+        <div class="text-3xl font-bold text-yellow-600">{{ metrics.blacklist.total }}</div>
+        <div class="text-sm text-gray-600 mt-1">Blacklisted</div>
+    </div>
+    <div class="card-static shadow-sm p-4 text-center">
+        <div class="text-3xl font-bold text-blue-600">{{ "%.1f"|format(metrics.discovered.promotion_rate) }}%</div>
+        <div class="text-sm text-gray-600 mt-1">Promotion Rate</div>
+    </div>
+</div>
+
+<!-- Main Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Tier 1 Sources Card -->
+    <div class="card-static shadow-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-gray-900">Tier 1 Sources</h2>
+            <span class="coral-bg text-white px-3 py-1 rounded-full text-xs font-semibold">ACTIVE</span>
+        </div>
+
+        <div class="space-y-4">
+            <!-- Total & Healthy -->
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm text-gray-600">Total Sources</span>
+                    <span class="text-lg font-bold">{{ metrics.tier1.total }}</span>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm text-gray-600">Healthy</span>
+                    <span class="text-lg font-bold text-green-600">{{ metrics.tier1.healthy }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Unhealthy</span>
+                    <span class="text-lg font-bold text-red-600">{{ metrics.tier1.total - metrics.tier1.healthy }}</span>
+                </div>
+            </div>
+
+            <hr class="border-gray-200">
+
+            <!-- By Type -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">By Source Type</h3>
+                <div class="space-y-2">
+                    {% for source_type, count in metrics.tier1.by_type.items() %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">{{ source_type|capitalize }}</span>
+                        <div class="flex items-center">
+                            <div class="w-20 h-2 bg-gray-200 rounded-full mr-2">
+                                {% if metrics.tier1.total > 0 %}
+                                    <div class="h-2 coral-bg rounded-full" style="width: {{ (count / metrics.tier1.total * 100)|int }}%"></div>
+                                {% endif %}
+                            </div>
+                            <span class="text-sm font-semibold">{{ count }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <hr class="border-gray-200">
+
+            <!-- Quality Score -->
+            <div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Avg Quality Score</span>
+                    <span class="text-lg font-bold coral-accent">{{ "%.2f"|format(metrics.tier1.avg_quality_score) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blacklist Card -->
+    <div class="card-static shadow-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-gray-900">Blacklisted Sources</h2>
+            <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">{{ metrics.blacklist.total }} BLOCKED</span>
+        </div>
+
+        <div class="space-y-4">
+            <!-- By Error Type -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">By Error Type</h3>
+                <div class="space-y-2">
+                    {% for reason, count in metrics.blacklist.by_reason.items() %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">{{ reason }}</span>
+                        <span class="text-sm font-semibold">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                    {% if not metrics.blacklist.by_reason %}
+                    <div class="text-sm text-gray-500 italic">No blacklisted sources</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <hr class="border-gray-200">
+
+            <!-- By Source Type -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">By Source Type</h3>
+                <div class="space-y-2">
+                    {% for source_type, count in metrics.blacklist.by_type.items() %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">{{ source_type|capitalize }}</span>
+                        <div class="flex items-center">
+                            <div class="w-20 h-2 bg-gray-200 rounded-full mr-2">
+                                {% if metrics.blacklist.total > 0 %}
+                                    <div class="h-2 bg-yellow-500 rounded-full" style="width: {{ (count / metrics.blacklist.total * 100)|int }}%"></div>
+                                {% endif %}
+                            </div>
+                            <span class="text-sm font-semibold">{{ count }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% if not metrics.blacklist.by_type %}
+                    <div class="text-sm text-gray-500 italic">No blacklisted sources</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discovery Performance Card -->
+    <div class="card-static shadow-lg p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-gray-900">Discovery Performance</h2>
+            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">LEARNING</span>
+        </div>
+
+        <div class="space-y-4">
+            <!-- Main Stats -->
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm text-gray-600">Total Discovered</span>
+                    <span class="text-lg font-bold">{{ metrics.discovered.total }}</span>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm text-gray-600">Auto-Promoted</span>
+                    <span class="text-lg font-bold text-green-600">{{ metrics.discovered.promoted }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Promotion Rate</span>
+                    <span class="text-lg font-bold coral-accent">{{ "%.1f"|format(metrics.discovered.promotion_rate) }}%</span>
+                </div>
+            </div>
+
+            <hr class="border-gray-200">
+
+            <!-- By Discovery Method -->
+            <div>
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">By Discovery Method</h3>
+                <div class="space-y-2">
+                    {% for method, count in metrics.discovered.by_method.items() %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">{{ method|replace("_", " ")|title }}</span>
+                        <span class="text-sm font-semibold">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                    {% if not metrics.discovered.by_method %}
+                    <div class="text-sm text-gray-500 italic">No discovered sources yet</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="mt-8 text-center">
+    <p class="text-sm text-gray-500 mb-2">Metrics calculated from database state</p>
+    <a href="/" class="coral-accent hover:underline text-sm font-semibold">← Back to Dashboard</a>
+</div>
+{% endblock %}

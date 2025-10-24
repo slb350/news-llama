@@ -10,8 +10,7 @@ from contextlib import asynccontextmanager
 
 # Configure logging to show INFO level messages
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(levelname)s:     %(name)s - %(message)s'
+    level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s"
 )
 
 # Fix libmagic path on macOS (python-magic needs help finding Homebrew's libmagic)
@@ -358,6 +357,7 @@ async def calendar_view(
 
     # Default to current month/year
     from datetime import date
+
     today = date.today()
     year = today.year
     month = today.month
@@ -509,7 +509,9 @@ async def profile_settings_update(
             )
             generation_service.requeue_newsletter_for_today(db, user.id)
         else:
-            logger.info(f"No interest changes for user {user.id}, skipping regeneration")
+            logger.info(
+                f"No interest changes for user {user.id}, skipping regeneration"
+            )
 
     return {"status": "success"}
 
@@ -756,6 +758,7 @@ async def calendar_month(
 
     # Get today's date for highlighting in calendar
     from datetime import date
+
     today = date.today()
 
     return templates.TemplateResponse(
@@ -771,6 +774,20 @@ async def calendar_month(
             "today": today,
         },
     )
+
+
+@app.get("/metrics", response_class=HTMLResponse)
+async def metrics_page(request: Request, db: Session = Depends(get_db)):
+    """
+    Public metrics page - no authentication required.
+
+    Shows discovery system performance stats.
+    """
+    from src.web.services.discovery_metrics_service import get_all_metrics
+
+    metrics = get_all_metrics(db)
+
+    return templates.TemplateResponse(request, "metrics.html", {"metrics": metrics})
 
 
 @app.get("/health/scheduler")
