@@ -14,7 +14,11 @@ import logging
 from datetime import date
 
 from src.web.database import SessionLocal
-from src.web.services import user_service, generation_service
+from src.web.services import (
+    user_service,
+    generation_service,
+    autonomous_discovery_service,
+)
 from src.web.models import Newsletter
 from src.web.rate_limiter import newsletter_rate_limiter
 
@@ -184,6 +188,58 @@ def process_pending_newsletters():
         db.close()
 
 
+def schedule_weekly_discovery(
+    day_of_week: str = "sun",
+    hour: int = 3,
+    minute: int = 0,
+    timezone: str = "America/Los_Angeles",
+):
+    """
+    Schedule weekly discovery job.
+
+    Runs autonomous source discovery to populate Tier 1 sources.
+    Default: Sunday 3 AM Pacific Time.
+
+    Args:
+        day_of_week: Day to run (mon-sun), default "sun"
+        hour: Hour to run (0-23), default 3 AM
+        minute: Minute to run (0-59), default 0
+        timezone: Timezone string, default "America/Los_Angeles"
+    """
+
+    def _run_discovery_job():
+        """Run weekly discovery (called by scheduler)."""
+        logger.info("Starting weekly autonomous discovery job")
+        db = None
+        try:
+            db = SessionLocal()
+            import asyncio
+
+            stats = asyncio.run(autonomous_discovery_service.run_weekly_discovery(db))
+            logger.info(f"Weekly discovery completed successfully: {stats}")
+        except Exception as e:
+            logger.error(f"Weekly discovery job failed: {e}", exc_info=True)
+        finally:
+            if db:
+                try:
+                    db.close()
+                except Exception as e:
+                    logger.error(f"Failed to close database session: {e}")
+
+    # Add scheduled job
+    scheduler.add_job(
+        func=_run_discovery_job,
+        trigger=CronTrigger(
+            day_of_week=day_of_week, hour=hour, minute=minute, timezone=timezone
+        ),
+        id="weekly_discovery",
+        replace_existing=True,
+    )
+    logger.info(
+        f"Scheduled weekly discovery job ({day_of_week} {hour:02d}:{minute:02d} {timezone})"
+    )
+
+
 def start_scheduler(config: dict):
     """
     Start scheduler with configuration.
@@ -205,6 +261,9 @@ def start_scheduler(config: dict):
 
     # Schedule daily generation
     schedule_daily_generation(hour, minute, timezone)
+
+    # Schedule weekly discovery (Sunday 3 AM)
+    schedule_weekly_discovery()
 
     # Schedule hourly rate limiter cleanup to prevent memory leaks
     scheduler.add_job(
