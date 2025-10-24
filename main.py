@@ -34,6 +34,7 @@ class NewsLlama:
         config_path: str = None,
         user_interests: List[str] = None,
         pre_discovered_sources: List = None,
+        output_filename: str = None,
     ):
         # Skip default sources if user interests or pre-discovered sources are specified
         skip_defaults = bool(user_interests or pre_discovered_sources)
@@ -41,6 +42,9 @@ class NewsLlama:
         self.user_interests = user_interests or []
         # Propagate to config so generators can read it
         self.config.user_interests = self.user_interests
+
+        # Store custom output filename (for multi-user web app isolation)
+        self.output_filename = output_filename
 
         # Store pre-discovered sources if provided
         if pre_discovered_sources:
@@ -355,7 +359,11 @@ class NewsLlama:
             for format_name, generator in self.generators.items():
                 if format_name in self.config.output.formats:
                     logger.info(f"Generating {format_name} output")
-                    generator.generate(valid_articles)
+                    # Pass custom filename to HTML generator if provided
+                    if format_name == "html" and self.output_filename:
+                        generator.generate(valid_articles, output_filename=self.output_filename)
+                    else:
+                        generator.generate(valid_articles)
 
             logger.info("News curation completed successfully")
 

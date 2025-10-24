@@ -24,15 +24,22 @@ class HTMLGenerator:
             autoescape=True
         )
     
-    def generate(self, articles: List[SummarizedArticle]) -> None:
-        """Generate HTML output"""
+    def generate(self, articles: List[SummarizedArticle], output_filename: str = None) -> None:
+        """
+        Generate HTML output
+
+        Args:
+            articles: List of summarized articles to include
+            output_filename: Optional custom output filename (without path).
+                           If not provided, defaults to news-YYYY-MM-DD.html
+        """
         if not articles:
             logger.warning("No articles to generate HTML for")
             return
-        
+
         # Group articles by category
         articles_by_category = self._group_by_category(articles)
-        
+
         # Sort articles within each category by importance
         for category in articles_by_category:
             articles_by_category[category].sort(
@@ -40,7 +47,7 @@ class HTMLGenerator:
                 reverse=True
             )
             # Note: No limit here - pre-filtering happens before summarization in main.py
-        
+
         # Create news digest
         digest = NewsDigest(
             date=datetime.now(),
@@ -51,9 +58,9 @@ class HTMLGenerator:
             discovered_sources_count=len(getattr(self.config, 'discovered_sources', [])),
             user_interests=getattr(self.config, 'user_interests', [])
         )
-        
+
         # Generate HTML file
-        self._generate_html_page(digest)
+        self._generate_html_page(digest, output_filename=output_filename)
         
         total_categories = len(articles_by_category)
         total_articles = sum(len(articles) for articles in articles_by_category.values())
@@ -69,8 +76,15 @@ class HTMLGenerator:
             grouped[category].append(article)
         return grouped
     
-    def _generate_html_page(self, digest: NewsDigest) -> None:
-        """Generate the main HTML page"""
+    def _generate_html_page(self, digest: NewsDigest, output_filename: str = None) -> None:
+        """
+        Generate the main HTML page
+
+        Args:
+            digest: NewsDigest containing articles and metadata
+            output_filename: Optional custom filename (without path).
+                           If not provided, defaults to news-YYYY-MM-DD.html
+        """
         # Create default template if it doesn't exist
         self._ensure_template_exists()
 
@@ -95,8 +109,15 @@ class HTMLGenerator:
             has_logo=has_logo
         )
 
+        # Determine output filename
+        if output_filename:
+            # Use custom filename (already includes date and guid)
+            output_file = self.output_dir / output_filename
+        else:
+            # Use default filename format
+            output_file = self.output_dir / f"news-{digest.date.strftime('%Y-%m-%d')}.html"
+
         # Write to file
-        output_file = self.output_dir / f"news-{digest.date.strftime('%Y-%m-%d')}.html"
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(html_content)
 

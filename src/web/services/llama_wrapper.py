@@ -170,9 +170,14 @@ def generate_newsletter_with_tier1(
                     f"Hybrid path: Coverage {coverage:.1f}% < 90%, using LLM discovery"
                 )
 
+        # Extract just the filename from the full path for NewsLlama
+        output_filename_only = Path(output_file).name
+
         # Create NewsLlama with or without pre-discovered sources
         news_llama = NewsLlama(
-            user_interests=interests, pre_discovered_sources=pre_discovered
+            user_interests=interests,
+            pre_discovered_sources=pre_discovered,
+            output_filename=output_filename_only,
         )
 
         # Run generation
