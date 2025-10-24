@@ -13,9 +13,7 @@ import time
 
 from src.web.services import user_service, interest_service, newsletter_service
 from src.web.models import Newsletter
-from src.web.services.llama_wrapper import (
-    generate_newsletter_for_interests as generate_news_digest,
-)
+from src.web.services.llama_wrapper import generate_newsletter_with_tier1
 
 logger = logging.getLogger(__name__)
 
@@ -108,9 +106,15 @@ def process_newsletter_generation(db: Session, newsletter_id: int):
         interests_objs = interest_service.get_user_interests(db, newsletter.user_id)
         interests = [i.interest_name for i in interests_objs]
 
-        # Generate newsletter using NewsLlama engine
+        # Generate newsletter using NewsLlama engine with Tier 1 integration
         output_date = date.fromisoformat(newsletter.date)
-        file_path = generate_news_digest(interests=interests, output_date=output_date)
+        file_path = generate_newsletter_with_tier1(
+            interests=interests,
+            output_date=output_date,
+            newsletter_id=newsletter_id,
+            db=db,
+            guid=newsletter.guid,  # Ensures unique filename per user
+        )
 
         # Mark as completed
         updated_newsletter = newsletter_service.mark_newsletter_completed(

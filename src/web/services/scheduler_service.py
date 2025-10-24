@@ -240,6 +240,61 @@ def schedule_weekly_discovery(
     )
 
 
+def schedule_weekly_vacuum(
+    day_of_week: str = "thu",
+    hour: int = 23,
+    minute: int = 0,
+    timezone: str = "America/Los_Angeles",
+):
+    """
+    Schedule weekly database VACUUM job.
+
+    VACUUM reclaims space from deleted records. Requires exclusive lock
+    (blocks all database access during execution).
+
+    Args:
+        day_of_week: Day to run (mon-sun), default "thu"
+        hour: Hour to run (0-23), default 23 (11 PM)
+        minute: Minute to run (0-59), default 0
+        timezone: Timezone string, default "America/Los_Angeles"
+    """
+
+    def _run_vacuum():
+        """Run weekly VACUUM (called by scheduler)."""
+        from sqlalchemy import text
+
+        logger.info("Starting weekly database VACUUM")
+        db = None
+        try:
+            db = SessionLocal()
+            # VACUUM requires exclusive lock - will block all database access
+            logger.info("Executing VACUUM (this may take a few seconds)...")
+            db.execute(text("VACUUM"))
+            db.commit()
+            logger.info("VACUUM completed successfully")
+        except Exception as e:
+            logger.error(f"VACUUM failed: {e}", exc_info=True)
+        finally:
+            if db:
+                try:
+                    db.close()
+                except Exception as e:
+                    logger.error(f"Failed to close database session: {e}")
+
+    # Add scheduled job
+    scheduler.add_job(
+        func=_run_vacuum,
+        trigger=CronTrigger(
+            day_of_week=day_of_week, hour=hour, minute=minute, timezone=timezone
+        ),
+        id="weekly_vacuum",
+        replace_existing=True,
+    )
+    logger.info(
+        f"Scheduled weekly VACUUM job ({day_of_week} {hour:02d}:{minute:02d} {timezone})"
+    )
+
+
 def start_scheduler(config: dict):
     """
     Start scheduler with configuration.
@@ -264,6 +319,9 @@ def start_scheduler(config: dict):
 
     # Schedule weekly discovery (Sunday 3 AM)
     schedule_weekly_discovery()
+
+    # Schedule weekly database VACUUM (Thursday 11 PM)
+    schedule_weekly_vacuum()
 
     # Schedule hourly rate limiter cleanup to prevent memory leaks
     scheduler.add_job(

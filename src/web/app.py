@@ -99,6 +99,13 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 static_path = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
+# Favicon shortcut route (browsers request /favicon.ico directly)
+@app.get("/favicon.ico")
+async def favicon():
+    """Serve favicon from static directory."""
+    from fastapi.responses import FileResponse
+    return FileResponse(static_path / "favicon.ico")
+
 # Output path reference (for file serving via routes, not static mount)
 output_path = Path(__file__).parent.parent.parent / "output"
 
@@ -781,13 +788,63 @@ async def metrics_page(request: Request, db: Session = Depends(get_db)):
     """
     Public metrics page - no authentication required.
 
-    Shows discovery system performance stats.
+    Shows discovery system performance stats and scheduler status.
     """
     from src.web.services.discovery_metrics_service import get_all_metrics
+    from datetime import datetime, timezone
 
     metrics = get_all_metrics(db)
 
-    return templates.TemplateResponse(request, "metrics.html", {"metrics": metrics})
+    # Get scheduler status
+    scheduler_info = {
+        "running": scheduler_service.scheduler.running,
+        "jobs": []
+    }
+
+    if scheduler_service.scheduler.running:
+        for job in scheduler_service.scheduler.get_jobs():
+            job_info = {
+                "id": job.id,
+                "function": job.func.__name__,
+                "next_run": None,
+                "next_run_formatted": None,
+                "hours_until": None
+            }
+
+            if job.next_run_time:
+                # Get timezone if available (APScheduler stores timezone object)
+                if hasattr(job.trigger, "timezone"):
+                    tz = job.trigger.timezone
+                    next_run_local = job.next_run_time.astimezone(tz)
+                    tz_name = str(tz)
+                else:
+                    next_run_local = job.next_run_time.astimezone(timezone.utc)
+                    tz_name = "UTC"
+
+                job_info["next_run"] = next_run_local.isoformat()
+                job_info["next_run_formatted"] = next_run_local.strftime("%Y-%m-%d %I:%M %p %Z")
+
+                # Calculate hours until
+                now = datetime.now(timezone.utc)
+                time_until = next_run_local - now
+                job_info["hours_until"] = time_until.total_seconds() / 3600
+
+                # Get schedule description
+                if job.id == "daily_generation" and hasattr(job.trigger, "hour"):
+                    job_info["schedule"] = f"Daily at {job.trigger.hour:02d}:{job.trigger.minute:02d} {tz_name}"
+                elif job.id == "weekly_discovery" and hasattr(job.trigger, "day_of_week"):
+                    job_info["schedule"] = f"Weekly on {job.trigger.day_of_week} at {job.trigger.hour:02d}:{job.trigger.minute:02d} {tz_name}"
+                elif job.id == "rate_limiter_cleanup" and hasattr(job.trigger, "interval"):
+                    job_info["schedule"] = f"Every {job.trigger.interval}"
+                else:
+                    job_info["schedule"] = "Custom schedule"
+
+            scheduler_info["jobs"].append(job_info)
+
+    return templates.TemplateResponse(request, "metrics.html", {
+        "metrics": metrics,
+        "scheduler": scheduler_info
+    })
 
 
 @app.get("/health/scheduler")

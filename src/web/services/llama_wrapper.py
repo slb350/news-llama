@@ -120,6 +120,7 @@ def generate_newsletter_with_tier1(
     output_date: date,
     newsletter_id: int = None,
     db: Session = None,
+    guid: str = None,
 ) -> str:
     """
     Generate newsletter using Tier 1 sources when available.
@@ -132,6 +133,7 @@ def generate_newsletter_with_tier1(
         output_date: Date for newsletter
         newsletter_id: Optional newsletter ID for tracking contributions
         db: Optional database session for Tier 1 access
+        guid: Optional GUID for unique filename (prevents multi-user collisions)
 
     Returns:
         Path to generated HTML file
@@ -142,7 +144,7 @@ def generate_newsletter_with_tier1(
     import asyncio
 
     try:
-        output_file = get_output_file_path(output_date)
+        output_file = get_output_file_path(output_date, guid=guid)
         ensure_output_directory(str(Path(output_file).parent))
 
         # Check Tier 1 coverage

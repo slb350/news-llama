@@ -9,6 +9,74 @@
     <p class="text-gray-600">Autonomous source discovery and curation performance</p>
 </div>
 
+<!-- Scheduler Status Section -->
+<div class="card-static shadow-lg p-6 mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold text-gray-900">Scheduler Status</h2>
+        {% if scheduler.running %}
+            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">✓ RUNNING</span>
+        {% else %}
+            <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">✕ NOT RUNNING</span>
+        {% endif %}
+    </div>
+
+    {% if scheduler.running %}
+        {% if scheduler.jobs %}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {% for job in scheduler.jobs %}
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-coral transition-colors">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-gray-900">
+                            {% if job.id == "daily_generation" %}📰 Daily Generation
+                            {% elif job.id == "weekly_discovery" %}🔍 Weekly Discovery
+                            {% elif job.id == "weekly_vacuum" %}💾 Database VACUUM
+                            {% elif job.id == "rate_limiter_cleanup" %}🧹 Cleanup
+                            {% else %}{{ job.id }}{% endif %}
+                        </h3>
+                        {% if job.hours_until is not none %}
+                            {% if job.hours_until < 1 %}
+                                <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Soon</span>
+                            {% elif job.hours_until < 24 %}
+                                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Today</span>
+                            {% else %}
+                                <span class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">Scheduled</span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+
+                    {% if job.schedule %}
+                        <div class="text-sm text-gray-600 mb-2">{{ job.schedule }}</div>
+                    {% endif %}
+
+                    {% if job.next_run_formatted %}
+                        <div class="text-xs text-gray-500 mb-1">Next run: {{ job.next_run_formatted }}</div>
+                        {% if job.hours_until is not none %}
+                            <div class="text-xs text-gray-500">
+                                {% if job.hours_until < 24 %}
+                                    In {{ "%.1f"|format(job.hours_until) }} hours
+                                {% else %}
+                                    In {{ "%.1f"|format(job.hours_until / 24) }} days
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-xs text-gray-400 italic">Not scheduled</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-sm text-gray-500 italic">No scheduled jobs</div>
+        {% endif %}
+    {% else %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p class="text-sm text-yellow-800">
+                <strong>Note:</strong> Scheduler is not running. This is expected if <code>TESTING=true</code> or if the application is in development mode.
+            </p>
+        </div>
+    {% endif %}
+</div>
+
 <!-- Summary Stats Bar -->
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
     <div class="card-static shadow-sm p-4 text-center">
