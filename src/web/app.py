@@ -19,6 +19,7 @@ if sys.platform == "darwin":  # macOS
 
 import magic
 import io
+from typing import Optional
 from PIL import Image
 from fastapi import FastAPI, Request, Depends, Response, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
@@ -354,10 +355,22 @@ async def upload_avatar(
 @app.get("/calendar", response_class=HTMLResponse)
 async def calendar_view(
     request: Request,
+    user_id: Optional[int] = None,  # Query parameter for profile selection
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Calendar view page with user session check."""
+    # If user_id provided in query param, set cookie and redirect
+    if user_id is not None:
+        # Validate user exists
+        selected_user = db.query(User).filter(User.id == user_id).first()
+        if selected_user:
+            response = RedirectResponse(url="/calendar", status_code=303)
+            response.set_cookie(key="user_id", value=str(user_id))
+            return response
+        # Invalid user_id, redirect to home
+        return RedirectResponse(url="/", status_code=303)
+
     # Redirect to profile select if no user session
     if not user:
         return RedirectResponse(url="/", status_code=303)
