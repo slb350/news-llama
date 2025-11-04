@@ -1,6 +1,7 @@
 """
-LLM-based summarizer using open-agent-sdk
+LLM-based summarizer using open-agent-sdk with cache-optimized prompts
 """
+
 import asyncio
 import json
 from typing import List
@@ -12,51 +13,53 @@ from open_agent import client as oa_client  # type: ignore
 
 from src.utils.models import ProcessedArticle, SummarizedArticle
 from src.utils.logger import logger
+from src.utils.llm_prompts import LLMPrompts
 
 
 class LLMSummarizer:
     """Generates AI-powered summaries using local LLM"""
-    
+
     def __init__(self, config):
         self.config = config
         self.llm_config = config.llm
-        
-    async def summarize_batch(self, articles: List[ProcessedArticle]) -> List[SummarizedArticle]:
+
+    async def summarize_batch(
+        self, articles: List[ProcessedArticle]
+    ) -> List[SummarizedArticle]:
         """Summarize a batch of articles"""
         if not articles:
             return []
-        
+
         logger.info(f"Starting LLM summarization for {len(articles)} articles")
-        
+
         # Process articles in batches to avoid overwhelming the LLM
         batch_size = 5
         summarized_articles = []
-        
+
         for i in range(0, len(articles), batch_size):
-            batch = articles[i:i + batch_size]
-            
+            batch = articles[i : i + batch_size]
+
             # Process batch concurrently
             tasks = [self.summarize_article(article) for article in batch]
             batch_results = await asyncio.gather(*tasks, return_exceptions=True)
-            
+
             for result in batch_results:
                 if isinstance(result, SummarizedArticle):
                     summarized_articles.append(result)
                 elif isinstance(result, Exception):
                     logger.error(f"Error in batch summarization: {result}")
-        
+
         logger.info(f"Generated summaries for {len(summarized_articles)} articles")
         return summarized_articles
-    
+
     async def summarize_article(self, article: ProcessedArticle) -> SummarizedArticle:
-        """Generate summary for a single article"""
+        """Generate summary for a single article using cache-optimized prompts"""
         try:
-            # Create summarization prompt
-            prompt = self._create_summarization_prompt(article)
-            
-            # Call LLM via open-agent-sdk and parse JSON response
-            summary, key_points, importance_score = await self._summarize_via_llm(prompt)
-            
+            # Call LLM via open-agent-sdk with cache-optimized prompts
+            summary, key_points, importance_score = await self._summarize_via_llm(
+                article
+            )
+
             return SummarizedArticle(
                 title=article.title,
                 content=article.content,
@@ -77,9 +80,9 @@ class LLMSummarizer:
                 duplicate_similarity=article.duplicate_similarity,
                 ai_summary=summary,
                 key_points=key_points,
-                importance_score=importance_score
+                importance_score=importance_score,
             )
-            
+
         except Exception as e:
             logger.error(f"Error summarizing article '{article.title}': {e}")
             # Return article with basic summary if LLM fails
@@ -87,49 +90,31 @@ class LLMSummarizer:
                 **article.dict(),
                 ai_summary=f"Summary unavailable: {str(e)}",
                 key_points=[],
-                importance_score=0.0
+                importance_score=0.0,
             )
-    
-    def _create_summarization_prompt(self, article: ProcessedArticle) -> str:
-        """Create a prompt for LLM summarization"""
-        prompt = f"""
-Please analyze and summarize the following news article:
 
-Title: {article.title}
-Source: {article.source}
-Category: {article.category}
-Published: {article.published_at}
+    async def _summarize_via_llm(self, article: ProcessedArticle) -> tuple:
+        """
+        Call open-agent-sdk with cache-optimized prompts.
 
-Content:
-{article.content[:20000]}
+        Uses LLMPrompts utility to construct:
+        - Static system prompt (100% cacheable, ~250 tokens)
+        - Dynamic user prompt (article-specific data only)
 
-Please provide:
-1. A concise summary (max 300 words)
-2. 3-5 key bullet points
-3. An importance score (0.1-1.0) based on relevance and impact
+        This structure enables prompt caching for 95%+ of tokens after first call.
+        """
+        # Get cache-optimized prompts from LLMPrompts utility
+        system_prompt = LLMPrompts.get_article_summary_system_prompt()
+        user_prompt = LLMPrompts.get_article_summary_user_prompt(article)
 
-Format your response as JSON:
-{{
-    "summary": "Your summary here",
-    "key_points": ["Point 1", "Point 2", "Point 3"],
-    "importance_score": 0.7
-}}
-"""
-        return prompt
-    
-    async def _summarize_via_llm(self, prompt: str) -> tuple:
-        """Call open-agent-sdk and parse JSON with summary, key_points, importance_score"""
         options = AgentOptions(
-            system_prompt=(
-                "You are a precise news summarization assistant. "
-                "Always return valid JSON exactly matching the requested schema and nothing else."
-            ),
+            system_prompt=system_prompt,
             model=self.llm_config.model,
             base_url=self.llm_config.api_url,
             temperature=self.llm_config.temperature,
             max_tokens=self.llm_config.max_tokens,
             api_key="not-needed",
-            timeout=self.llm_config.timeout
+            timeout=self.llm_config.timeout,
         )
 
         text_parts: List[str] = []
@@ -137,12 +122,14 @@ Format your response as JSON:
         # Wrap with asyncio timeout for additional safety
         try:
             async with asyncio.timeout(self.llm_config.timeout):
-                async for msg in oa_client.query(prompt, options):
+                async for msg in oa_client.query(user_prompt, options):
                     for block in msg.content:
                         if isinstance(block, TextBlock):
                             text_parts.append(block.text)
         except asyncio.TimeoutError:
-            logger.warning(f"LLM summarization timed out after {self.llm_config.timeout}s")
+            logger.warning(
+                f"LLM summarization timed out after {self.llm_config.timeout}s"
+            )
             return "Summary timed out", [], 0.0
 
         raw_text = "".join(text_parts).strip()
