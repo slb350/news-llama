@@ -1,5 +1,5 @@
 """
-Direct search service for News Llama.
+Direct search service for News Llama with cache-optimized prompts.
 
 Uses LLM with web search to discover sources for any interest.
 """
@@ -13,6 +13,8 @@ from urllib.parse import urlparse
 
 from open_agent import TextBlock, Client  # type: ignore
 from open_agent.types import AgentOptions  # type: ignore
+
+from src.utils.llm_prompts import LLMPrompts
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +94,13 @@ async def search_for_interests(interests: List[str]) -> List[Dict]:
 
 async def _call_llm_search(interest: str) -> Dict:
     """
-    Call LLM with web search tool to find sources.
+    Call LLM with cache-optimized prompts to find sources.
+
+    Uses LLMPrompts utility to construct:
+    - Static system prompt (100% cacheable, ~300 tokens)
+    - Dynamic user prompt (interest only, ~5-20 tokens)
+
+    This structure enables prompt caching for 95%+ of tokens after first call.
 
     Args:
         interest: Interest name
@@ -107,47 +115,12 @@ async def _call_llm_search(interest: str) -> Dict:
     llm_max_tokens = int(os.getenv("LLM_MAX_TOKENS", "2000"))
     llm_timeout = int(os.getenv("LLM_TIMEOUT", "300"))
 
-    prompt = f"""Find the best sources (Reddit communities, RSS feeds, news sites) for the topic: {interest}
-
-Return a JSON object with a "sources" array containing:
-- type: "reddit", "rss", or "website"
-- name: Human-readable name
-- For reddit: include "subreddit" field (just name, no r/)
-- For rss: include "url" field with full RSS URL
-- confidence: 0.0-1.0 score (how confident you are this source is relevant)
-- reasoning: Why this source is relevant
-
-Only include high-quality, active sources.
-
-CRITICAL: Return ONLY valid JSON. No explanations, no markdown, just JSON.
-
-Format:
-{{
-    "sources": [
-        {{
-            "type": "reddit",
-            "name": "r/example",
-            "subreddit": "example",
-            "confidence": 0.9,
-            "reasoning": "Primary community for this topic"
-        }},
-        {{
-            "type": "rss",
-            "name": "Example Feed",
-            "url": "https://example.com/feed.xml",
-            "confidence": 0.8,
-            "reasoning": "Official news feed"
-        }}
-    ]
-}}
-
-Topic: {interest}"""
+    # Get cache-optimized prompts from LLMPrompts utility
+    system_prompt = LLMPrompts.get_multi_source_discovery_system_prompt()
+    user_prompt = LLMPrompts.get_multi_source_discovery_user_prompt(interest)
 
     options = AgentOptions(
-        system_prompt=(
-            "You are an expert source discovery assistant. "
-            "You MUST respond ONLY with valid JSON. No other text, no explanations."
-        ),
+        system_prompt=system_prompt,
         model=llm_model,
         base_url=llm_api_url,
         temperature=llm_temperature,
@@ -164,7 +137,7 @@ Topic: {interest}"""
     try:
         async with asyncio.timeout(llm_timeout):
             client = Client(options)
-            await client.query(prompt)
+            await client.query(user_prompt)
 
             async for block in client.receive_messages():
                 if isinstance(block, TextBlock):
