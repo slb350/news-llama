@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
 scheduler = AsyncIOScheduler()
 
 # Thread pool for long-running newsletter generation
-# Max 3 concurrent generations for family-sized deployment
-executor = ThreadPoolExecutor(max_workers=3, thread_name_prefix="newsletter_gen")
+# Max 1 concurrent generation to avoid OOM on local LLM server
+executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="newsletter_gen")
 
 
 def schedule_daily_generation(

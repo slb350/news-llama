@@ -33,7 +33,7 @@ class LLMSummarizer:
         logger.info(f"Starting LLM summarization for {len(articles)} articles")
 
         # Process articles in batches to avoid overwhelming the LLM
-        batch_size = 5
+        batch_size = 2
         summarized_articles = []
 
         for i in range(0, len(articles), batch_size):
