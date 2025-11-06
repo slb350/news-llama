@@ -1,7 +1,9 @@
 """
-Tests for LLMSummarizer prompt caching optimization.
+Tests for LLMSummarizer prompt structure.
 
-Verifies that LLMSummarizer uses cache-optimized prompts from LLMPrompts utility.
+NOTE: Cache-optimized prompts disabled due to ROCm/AMD GPU memory issues.
+Verifies that LLMSummarizer uses short system prompts to avoid triggering
+prompt caching issues on the LLM server.
 """
 
 import pytest
@@ -46,14 +48,13 @@ def test_article():
 
 
 class TestLLMSummarizerCacheOptimization:
-    """Test that LLMSummarizer uses cache-optimized prompts"""
+    """Test that LLMSummarizer uses short system prompts to avoid caching issues"""
 
     def test_uses_llm_prompts_utility(self, mock_config, test_article):
-        """Summarizer should use LLMPrompts utility for prompt construction"""
+        """LLMPrompts utility exists but is not used due to ROCm issues"""
         summarizer = LLMSummarizer(mock_config)
 
-        # Verify that the summarizer has access to LLMPrompts
-        # (It will use it in the refactored version)
+        # LLMPrompts utility still exists but is not used in production code
         assert hasattr(LLMPrompts, "get_article_summary_system_prompt")
         assert hasattr(LLMPrompts, "get_article_summary_user_prompt")
 
@@ -138,7 +139,7 @@ class TestLLMSummarizerCacheOptimization:
     async def test_user_prompt_no_instructions(
         self, mock_query, mock_config, test_article
     ):
-        """User prompt should not contain static instructions"""
+        """User prompt should contain instructions (reverted from cache-optimized)"""
         summarizer = LLMSummarizer(mock_config)
 
         # Mock LLM response
@@ -157,17 +158,16 @@ class TestLLMSummarizerCacheOptimization:
         # Get the user prompt from the call
         user_prompt = mock_query.call_args[0][0]
 
-        # User prompt should NOT contain instructions
-        assert "Please analyze" not in user_prompt
-        assert "Format your response" not in user_prompt
-        assert "Return ONLY" not in user_prompt.upper() or len(user_prompt) < 50
+        # User prompt SHOULD contain instructions (reverted approach)
+        assert "Please" in user_prompt or "provide" in user_prompt
+        assert "CRITICAL REQUIREMENTS:" in user_prompt or "Return ONLY" in user_prompt
 
     @patch("src.summarizers.llm_summarizer.oa_client.query")
     @pytest.mark.asyncio
     async def test_system_prompt_contains_json_schema(
         self, mock_query, mock_config, test_article
     ):
-        """System prompt should contain JSON schema"""
+        """System prompt should be short to avoid ROCm caching issues"""
         summarizer = LLMSummarizer(mock_config)
 
         # Mock LLM response
@@ -187,18 +187,21 @@ class TestLLMSummarizerCacheOptimization:
         call_options = mock_query.call_args[0][1]
         system_prompt = call_options.system_prompt
 
-        # System prompt should contain schema
-        assert "summary" in system_prompt
-        assert "key_points" in system_prompt
-        assert "importance_score" in system_prompt
-        assert "JSON" in system_prompt or "json" in system_prompt
+        # System prompt should be SHORT (< 100 tokens) to avoid caching issues
+        assert len(system_prompt) < 500  # ~100 tokens
+        assert "JSON" in system_prompt
+        assert (
+            "summarization" in system_prompt
+            or "news" in system_prompt
+            or "json" in system_prompt
+        )
 
     @patch("src.summarizers.llm_summarizer.oa_client.query")
     @pytest.mark.asyncio
     async def test_matches_llm_prompts_utility(
         self, mock_query, mock_config, test_article
     ):
-        """Prompts should match those from LLMPrompts utility"""
+        """Prompts should NOT match LLMPrompts utility (reverted due to ROCm issues)"""
         summarizer = LLMSummarizer(mock_config)
 
         # Mock LLM response
@@ -223,9 +226,14 @@ class TestLLMSummarizerCacheOptimization:
         expected_system = LLMPrompts.get_article_summary_system_prompt()
         expected_user = LLMPrompts.get_article_summary_user_prompt(test_article)
 
-        # Should match exactly
-        assert system_prompt == expected_system
-        assert user_prompt == expected_user
+        # Should NOT match (we reverted to old approach to fix ROCm issues)
+        assert system_prompt != expected_system
+        assert user_prompt != expected_user
+
+        # But both prompts should still be functional
+        assert len(system_prompt) > 0
+        assert len(user_prompt) > 0
+        assert test_article.title in user_prompt
 
     @patch("src.summarizers.llm_summarizer.oa_client.query")
     @pytest.mark.asyncio

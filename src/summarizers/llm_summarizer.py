@@ -13,7 +13,6 @@ from open_agent import client as oa_client  # type: ignore
 
 from src.utils.models import ProcessedArticle, SummarizedArticle
 from src.utils.logger import logger
-from src.utils.llm_prompts import LLMPrompts
 
 
 class LLMSummarizer:
@@ -95,17 +94,44 @@ class LLMSummarizer:
 
     async def _summarize_via_llm(self, article: ProcessedArticle) -> tuple:
         """
-        Call open-agent-sdk with cache-optimized prompts.
+        Call open-agent-sdk with short system prompt to avoid ROCm caching issues.
 
-        Uses LLMPrompts utility to construct:
-        - Static system prompt (100% cacheable, ~250 tokens)
-        - Dynamic user prompt (article-specific data only)
-
-        This structure enables prompt caching for 95%+ of tokens after first call.
+        NOTE: Reverted from cache-optimized prompts due to ROCm/AMD GPU memory issues.
+        Long system prompts trigger prompt caching which causes memory allocation errors.
         """
-        # Get cache-optimized prompts from LLMPrompts utility
-        system_prompt = LLMPrompts.get_article_summary_system_prompt()
-        user_prompt = LLMPrompts.get_article_summary_user_prompt(article)
+        # Short system prompt to avoid triggering prompt caching issues
+        system_prompt = (
+            "You are a precise news summarization assistant. "
+            "Always return valid JSON exactly matching the requested schema and nothing else."
+        )
+
+        # Create user prompt with all instructions embedded
+        user_prompt = f"""Please analyze and summarize the following news article:
+
+Title: {article.title}
+Source: {article.source}
+Category: {article.category}
+Published: {article.published_at}
+
+Content:
+{article.content[:20000]}
+
+Please provide:
+1. A concise summary (max 300 words) that captures the main points and key information
+2. 3-5 key bullet points highlighting the most important information
+3. An importance score (0.1-1.0) based on relevance and impact, where:
+   - 0.1-0.3: Minor news, low relevance
+   - 0.4-0.6: Moderate importance, worth reading
+   - 0.7-0.9: Significant news, high importance
+   - 0.9-1.0: Major breaking news, critical importance
+
+CRITICAL REQUIREMENTS:
+- Return ONLY valid JSON with this exact format:
+{{"summary": "Your concise summary here", "key_points": ["Point 1", "Point 2", "Point 3"], "importance_score": 0.7}}
+- No markdown code blocks (no ```json```)
+- No explanations before or after the JSON
+- Ensure valid JSON syntax (properly escaped quotes, no trailing commas)
+"""
 
         options = AgentOptions(
             system_prompt=system_prompt,

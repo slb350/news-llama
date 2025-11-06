@@ -13,7 +13,6 @@ from open_agent.tools import Tool  # type: ignore
 
 from src.utils.config import Config, DiscoveredSource
 from src.utils.logger import logger
-from src.utils.llm_prompts import LLMPrompts
 
 
 class SourceDiscoveryEngine:
@@ -303,18 +302,61 @@ class SourceDiscoveryEngine:
 
     async def _llm_discover_subreddits(self, interest: str) -> List[DiscoveredSource]:
         """
-        Use LLM to discover relevant subreddit names with cache-optimized prompts.
+        Use LLM to discover relevant subreddit names with short system prompt.
 
-        Uses LLMPrompts utility to construct:
-        - Static system prompt (100% cacheable, ~400 tokens)
-        - Dynamic user prompt (interest only, ~5-20 tokens)
-
-        This structure enables prompt caching for 95%+ of tokens after first call.
+        NOTE: Reverted from cache-optimized prompts due to ROCm/AMD GPU memory issues.
+        Long system prompts trigger prompt caching which causes memory allocation errors.
         """
         try:
-            # Get cache-optimized prompts from LLMPrompts utility
-            system_prompt = LLMPrompts.get_subreddit_discovery_system_prompt()
-            user_prompt = LLMPrompts.get_subreddit_discovery_user_prompt(interest)
+            # Short system prompt to avoid triggering prompt caching issues
+            system_prompt = (
+                "You are an expert Reddit source discovery assistant. "
+                "You MUST respond ONLY with valid JSON. No other text, no explanations."
+            )
+
+            # User prompt with all instructions embedded
+            user_prompt = f"""For the interest "{interest}", suggest 3-7 highly relevant Reddit subreddit names. Consider:
+
+1. **Exact name match**: e.g., "rust" → r/rust
+2. **Capitalization variants**: e.g., "ai" → r/MachineLearning, r/ArtificialIntelligence
+3. **Learning-focused variants**: e.g., "python" → r/learnpython
+4. **Specialized communities**: e.g., "rust" → r/rust_gamedev, r/learnrust
+5. **News/discussion subs**: e.g., "technology" → r/technews, r/tech
+
+IMPORTANT GUIDELINES:
+- AVOID unrelated subs with similar names (e.g., "rust" should NOT suggest r/RustBelt or r/rust_irl)
+- Focus on active, content-rich communities
+- Include both general and specialized subreddits
+- Prioritize quality over quantity
+- Consider niche communities for specific interests
+
+Return ONLY valid JSON. No markdown code blocks, no explanations.
+
+Required JSON format:
+{{
+    "subreddits": [
+        {{
+            "name": "r/rust",
+            "subreddit": "rust",
+            "reason": "Main Rust programming community with active discussions",
+            "confidence_score": 0.95
+        }},
+        {{
+            "name": "r/learnrust",
+            "subreddit": "learnrust",
+            "reason": "Learning-focused Rust community for beginners and intermediate users",
+            "confidence_score": 0.85
+        }}
+    ]
+}}
+
+CRITICAL REQUIREMENTS:
+- Return ONLY the JSON object
+- No text before or after the JSON
+- No markdown (no ```json```)
+- Each subreddit must have: name, subreddit (without r/), reason, confidence_score
+- confidence_score must be a number between 0.0 and 1.0
+- Suggest 3-7 subreddits (quality over quantity)"""
 
             options = AgentOptions(
                 system_prompt=system_prompt,
@@ -433,18 +475,73 @@ class SourceDiscoveryEngine:
 
     async def _llm_discovery(self, interest: str) -> List[DiscoveredSource]:
         """
-        Use LLM to discover sources with cache-optimized prompts.
+        Use LLM to discover sources with short system prompt.
 
-        Uses LLMPrompts utility to construct:
-        - Static system prompt (100% cacheable, ~300 tokens)
-        - Dynamic user prompt (interest only, ~5-20 tokens)
-
-        This structure enables prompt caching for 95%+ of tokens after first call.
+        NOTE: Reverted from cache-optimized prompts due to ROCm/AMD GPU memory issues.
+        Long system prompts trigger prompt caching which causes memory allocation errors.
         """
         try:
-            # Get cache-optimized prompts from LLMPrompts utility
-            system_prompt = LLMPrompts.get_multi_source_discovery_system_prompt()
-            user_prompt = LLMPrompts.get_multi_source_discovery_user_prompt(interest)
+            # Short system prompt to avoid triggering prompt caching issues
+            system_prompt = (
+                "You are an expert source discovery assistant. "
+                "You MUST respond ONLY with valid JSON. No other text, no explanations."
+            )
+
+            # User prompt with all instructions embedded
+            user_prompt = f"""For the interest "{interest}", find 5-8 popular sources across multiple platforms:
+- **Reddit communities** (subreddits)
+- **RSS feeds** from authoritative sites
+- **Twitter accounts** (if applicable)
+
+Return a JSON object with a "sources" array containing:
+
+**Required fields for ALL sources:**
+- type: Must be "reddit", "rss", or "twitter"
+- name: Human-readable name
+- confidence: Number between 0.0-1.0 (how confident you are this source is relevant)
+- reasoning: Brief explanation of why this source is relevant
+
+**Type-specific fields:**
+- For reddit: include "subreddit" field (just name, no r/ prefix)
+- For rss: include "url" field with full RSS feed URL
+- For twitter: include "username" field (no @ symbol)
+
+CRITICAL REQUIREMENTS:
+- Return ONLY valid JSON, no other text
+- No markdown code blocks (no ```json```)
+- Only include high-quality, active sources
+- Prioritize authoritative and well-known sources
+- Aim for 5-8 sources total (balanced across types)
+- After any tool use, return ONLY the JSON (no explanations about what you found)
+
+Required JSON format:
+{{
+    "sources": [
+        {{
+            "type": "reddit",
+            "name": "r/example",
+            "subreddit": "example",
+            "confidence": 0.9,
+            "reasoning": "Primary community for this topic with 500K+ subscribers"
+        }},
+        {{
+            "type": "rss",
+            "name": "Example News Feed",
+            "url": "https://example.com/feed.xml",
+            "confidence": 0.8,
+            "reasoning": "Official news feed from authoritative source"
+        }},
+        {{
+            "type": "twitter",
+            "name": "Example Expert",
+            "username": "example_expert",
+            "confidence": 0.7,
+            "reasoning": "Leading voice in the field with regular updates"
+        }}
+    ]
+}}
+
+IMPORTANT: Even if you use web search or other tools, return ONLY the final JSON object with no additional commentary."""
 
             # Define a simple web_search tool to showcase tool-use
             async def web_search_handler(params: Dict[str, Any]) -> Any:
