@@ -271,19 +271,26 @@ class NewsLlama:
         - Summary contains failure messages
         """
         valid_articles = []
+        filter_stats = {
+            "low_importance": 0,
+            "empty_key_points": 0,
+            "failed_extraction": 0,
+        }
 
         for article in articles:
             # Check importance score
             if hasattr(article, "importance_score") and article.importance_score < 0.6:
-                logger.debug(
-                    f"Filtering out article with low importance score: {article.title[:50]}..."
+                filter_stats["low_importance"] += 1
+                logger.info(
+                    f"Filtered (low importance {article.importance_score:.2f}): {article.title[:80]}"
                 )
                 continue
 
             # Check for empty key points
             if hasattr(article, "key_points") and not article.key_points:
-                logger.debug(
-                    f"Filtering out article with empty key points: {article.title[:50]}..."
+                filter_stats["empty_key_points"] += 1
+                logger.info(
+                    f"Filtered (empty key_points): {article.title[:80]}"
                 )
                 continue
 
@@ -301,13 +308,19 @@ class NewsLlama:
                     indicator in article.ai_summary.lower()
                     for indicator in failure_indicators
                 ):
-                    logger.debug(
-                        f"Filtering out article with failed extraction: {article.title[:50]}..."
+                    filter_stats["failed_extraction"] += 1
+                    logger.info(
+                        f"Filtered (failed extraction): {article.title[:80]}"
                     )
                     continue
 
             valid_articles.append(article)
 
+        logger.info(
+            f"Filter stats - Low importance: {filter_stats['low_importance']}, "
+            f"Empty key_points: {filter_stats['empty_key_points']}, "
+            f"Failed extraction: {filter_stats['failed_extraction']}"
+        )
         return valid_articles
 
     async def run(self) -> None:

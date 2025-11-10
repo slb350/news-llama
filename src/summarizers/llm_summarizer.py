@@ -106,7 +106,7 @@ class LLMSummarizer:
         )
 
         # Create user prompt with all instructions embedded
-        user_prompt = f"""Please analyze and summarize the following news article:
+        user_prompt = f"""Summarize this news article and return ONLY valid JSON.
 
 Title: {article.title}
 Source: {article.source}
@@ -116,21 +116,34 @@ Published: {article.published_at}
 Content:
 {article.content[:20000]}
 
-Please provide:
-1. A concise summary (max 300 words) that captures the main points and key information
-2. 3-5 key bullet points highlighting the most important information
-3. An importance score (0.1-1.0) based on relevance and impact, where:
-   - 0.1-0.3: Minor news, low relevance
-   - 0.4-0.6: Moderate importance, worth reading
-   - 0.7-0.9: Significant news, high importance
-   - 0.9-1.0: Major breaking news, critical importance
+REQUIRED OUTPUT FORMAT (respond with ONLY this JSON, nothing else):
+{{
+  "summary": "Your 2-3 sentence summary here",
+  "key_points": [
+    "First key point",
+    "Second key point",
+    "Third key point"
+  ],
+  "importance_score": 0.7
+}}
 
-CRITICAL REQUIREMENTS:
-- Return ONLY valid JSON with this exact format:
-{{"summary": "Your concise summary here", "key_points": ["Point 1", "Point 2", "Point 3"], "importance_score": 0.7}}
-- No markdown code blocks (no ```json```)
-- No explanations before or after the JSON
-- Ensure valid JSON syntax (properly escaped quotes, no trailing commas)
+REQUIREMENTS:
+- summary: 2-3 sentences capturing the main story (max 300 words)
+- key_points: EXACTLY 3-5 bullet points (REQUIRED - must not be empty)
+- importance_score: number between 0.1-1.0 where:
+  * 0.1-0.3 = Minor news, low relevance
+  * 0.4-0.6 = Moderate importance, worth reading
+  * 0.7-0.9 = Significant news, high importance
+  * 0.9-1.0 = Major breaking news, critical
+
+CRITICAL:
+- Return ONLY the JSON object, no other text
+- NO markdown code fences (no ```json``` tags)
+- NO explanations before or after the JSON
+- ALL three fields (summary, key_points, importance_score) are REQUIRED
+- key_points must be an array with 3-5 strings, NEVER empty
+- Ensure proper JSON syntax: escaped quotes, no trailing commas
+- Complete the entire JSON object before hitting token limit
 """
 
         options = AgentOptions(
@@ -164,8 +177,20 @@ CRITICAL REQUIREMENTS:
             summary = data.get("summary") or raw_text
             key_points = data.get("key_points") or []
             importance = data.get("importance_score") or 0.5
-        except json.JSONDecodeError:
-            # Fallback: use raw text as summary
+
+            # Validate that we got the required fields
+            if not summary or not key_points or importance == 0.5:
+                logger.warning(
+                    f"LLM response missing fields for '{article.title[:50]}': "
+                    f"summary={bool(summary)}, key_points={len(key_points)}, importance={importance}"
+                )
+        except json.JSONDecodeError as e:
+            # Log the parsing error with context
+            logger.warning(
+                f"JSON parse error for '{article.title[:50]}': {e}. "
+                f"Raw response: {raw_text[:200]}..."
+            )
+            # Fallback: use raw text as summary with empty key_points (will be filtered)
             summary, key_points, importance = raw_text, [], 0.5
 
         return summary, key_points, float(importance)
