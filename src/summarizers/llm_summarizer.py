@@ -118,18 +118,20 @@ Content:
 
 REQUIRED OUTPUT FORMAT (respond with ONLY this JSON, nothing else):
 {{
-  "summary": "Your 2-3 sentence summary here",
+  "summary": "Your 4-6 sentence detailed summary here",
   "key_points": [
-    "First key point",
-    "Second key point",
-    "Third key point"
+    "First detailed key point with context",
+    "Second detailed key point with context",
+    "Third detailed key point with context",
+    "Fourth detailed key point with context",
+    "Fifth detailed key point with context"
   ],
   "importance_score": 0.7
 }}
 
 REQUIREMENTS:
-- summary: 2-3 sentences capturing the main story (max 300 words)
-- key_points: EXACTLY 3-5 bullet points (REQUIRED - must not be empty)
+- summary: 4-6 sentences capturing the main story with important context and details (150-300 words minimum)
+- key_points: EXACTLY 5-7 detailed bullet points (REQUIRED - must not be empty). Each point should be 1-2 sentences providing specific details, not just brief phrases.
 - importance_score: number between 0.1-1.0 where:
   * 0.1-0.3 = Minor news, low relevance
   * 0.4-0.6 = Moderate importance, worth reading
