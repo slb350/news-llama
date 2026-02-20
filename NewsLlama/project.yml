@@ -1,0 +1,51 @@
+name: News Llama
+options:
+  bundleIdPrefix: com.news-llama
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.2"
+  createIntermediateGroups: true
+
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.6.0"
+
+targets:
+  News Llama:
+    type: application
+    platform: macOS
+    sources:
+      - path: "News Llama"
+    settings:
+      base:
+        PRODUCT_NAME: "News Llama"
+        PRODUCT_BUNDLE_IDENTIFIER: com.news-llama.macos
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        SWIFT_VERSION: "5.9"
+        INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.news"
+        INFOPLIST_KEY_CFBundleDisplayName: "News Llama"
+        CODE_SIGN_ENTITLEMENTS: "News Llama/News_Llama.entitlements"
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - package: Sparkle
+    entitlements:
+      path: "News Llama/News_Llama.entitlements"
+      properties:
+        com.apple.security.app-sandbox: false
+        com.apple.security.network.client: true
+
+  News LlamaTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: "News LlamaTests"
+    dependencies:
+      - target: "News Llama"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.news-llama.macos.tests
+        SWIFT_VERSION: "5.9"
+        GENERATE_INFOPLIST_FILE: YES

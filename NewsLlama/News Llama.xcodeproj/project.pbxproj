@@ -1,0 +1,624 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		182A0331553F795FFAFA275D /* NewsLlamaAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB4258AA0ECE69EA9D2E6C44 /* NewsLlamaAPI.swift */; };
+		231FB6BA57679E31C319C8F6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F45E34761F6629B00EB1384 /* SettingsView.swift */; };
+		261651EF30981ACDD2FAAAB1 /* MockNewsLlamaAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9526A951AB382766384D4FDE /* MockNewsLlamaAPI.swift */; };
+		3399CD02987F36FFC97F88CF /* Newsletter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AA990669CE04B9E199D93C2 /* Newsletter.swift */; };
+		408411A193EE704E1595A798 /* InterestViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BE73B71563557F43803EF3A /* InterestViewModel.swift */; };
+		49B408600CB30A63182FE914 /* News_LlamaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1DA493D7CDBD4C428D61841 /* News_LlamaApp.swift */; };
+		4D04AEF47B0AEEF2F8EC884E /* ProfileCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3464613F8E0FD939582AA86D /* ProfileCard.swift */; };
+		582D0852CF19BE97F639D7C7 /* CheckForUpdatesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DE06C123E64FA41F0ABCF7C /* CheckForUpdatesViewModel.swift */; };
+		59F03775D4F88AD3061BBA45 /* InterestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07E7026AC3DCAF0E81FB29F9 /* InterestTests.swift */; };
+		5BB92E625517D905DE37B35A /* NewsletterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF4B52DC6E822BD3157A619 /* NewsletterViewModel.swift */; };
+		5BEFF52C90256108A97D5B43 /* NewsletterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A160BD26AC807B314658F23 /* NewsletterTests.swift */; };
+		5C5203D3AF2DA2739AD3E739 /* NewsletterDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AA0D61CD19465518261A995 /* NewsletterDetailView.swift */; };
+		5FE021AA832B7302B6D6F28E /* CalendarDayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE9B1C3605F60BCF337762FD /* CalendarDayView.swift */; };
+		655A2E7A6D5F105DCB285A9A /* BrandColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D25B9F449FC6B0F012E86B /* BrandColors.swift */; };
+		69F030D6A6B561903D763053 /* ProfileSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8B695E83AAED564B5FD3A5E /* ProfileSelectionView.swift */; };
+		8AE11B872BDBAED1C5DAC469 /* AppViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67079B18E27772119571A913 /* AppViewModelTests.swift */; };
+		8EF5A4BBE3FDC807E30EDAB1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 898A273829D02F36E1703E69 /* Assets.xcassets */; };
+		921D7359BCF7CA5C8C37A4FD /* AppViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C3B0BA9CFAD13D9D4E97223 /* AppViewModel.swift */; };
+		9AA67C41D77E2844FD980398 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D87951B6D5F966A31A1AEA6 /* User.swift */; };
+		9B09E3C8EE676EC60497E50E /* ProfileCreateResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07B8640A52E6DC5185F7256B /* ProfileCreateResponse.swift */; };
+		9FFD042AC8A17E97E0E05B55 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D8891E43648C058DAC77073 /* SidebarView.swift */; };
+		A5D7D5D6633F39B4B4505F5A /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 784D6EF9B1E0D2AF7800F20F /* Sparkle */; };
+		AD0684257E95901851B5F0F0 /* Interest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18FF2585D12B862E13997DFF /* Interest.swift */; };
+		B3DEB2EABC99601A1479CF91 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81AD52E27DA3BE8B6B67B583 /* MainView.swift */; };
+		B85B33141145EBE6831654E2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDCB3A0B62B56F8030C1B532 /* ContentView.swift */; };
+		BE21D74427C340755511B2F0 /* NewsLlamaAPIProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDC6F625F094C49A48B4AE81 /* NewsLlamaAPIProtocol.swift */; };
+		C125913554DF4BD27C0713A7 /* InterestViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD1E7C2818FDCF2D96B25642 /* InterestViewModelTests.swift */; };
+		C1DF13787922DFB2810DDCA2 /* NewsletterWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C71FB03A70F074D37D2ADD24 /* NewsletterWebView.swift */; };
+		C67F4BC2A4AF322AFE259C52 /* ProfileCreationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27D199527239B5E07650C502 /* ProfileCreationView.swift */; };
+		CAACD1CBEDFC47D6B6871DF8 /* NewsLlamaAPITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82BF66ECAD5B015A2AA8E7BE /* NewsLlamaAPITests.swift */; };
+		E2C492905B159E0742C86857 /* UserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4C5E948EB5793C0C5130C2A /* UserTests.swift */; };
+		EA2BC5DDFCDF33D631A61222 /* NewsletterViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D291536BB68CF946F0164379 /* NewsletterViewModelTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		BA7CA689641C46BA314F1788 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 916D8C50565F072A3E22D129 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7D3A7190251BD9289C4DDC59;
+			remoteInfo = "News Llama";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		07B8640A52E6DC5185F7256B /* ProfileCreateResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileCreateResponse.swift; sourceTree = "<group>"; };
+		07E7026AC3DCAF0E81FB29F9 /* InterestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterestTests.swift; sourceTree = "<group>"; };
+		18FF2585D12B862E13997DFF /* Interest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Interest.swift; sourceTree = "<group>"; };
+		1AA990669CE04B9E199D93C2 /* Newsletter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Newsletter.swift; sourceTree = "<group>"; };
+		27D199527239B5E07650C502 /* ProfileCreationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileCreationView.swift; sourceTree = "<group>"; };
+		2F45E34761F6629B00EB1384 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		3464613F8E0FD939582AA86D /* ProfileCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileCard.swift; sourceTree = "<group>"; };
+		3D87951B6D5F966A31A1AEA6 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		4C3B0BA9CFAD13D9D4E97223 /* AppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModel.swift; sourceTree = "<group>"; };
+		5A160BD26AC807B314658F23 /* NewsletterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsletterTests.swift; sourceTree = "<group>"; };
+		5AA0D61CD19465518261A995 /* NewsletterDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsletterDetailView.swift; sourceTree = "<group>"; };
+		5D8891E43648C058DAC77073 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		67079B18E27772119571A913 /* AppViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppViewModelTests.swift; sourceTree = "<group>"; };
+		7DE06C123E64FA41F0ABCF7C /* CheckForUpdatesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckForUpdatesViewModel.swift; sourceTree = "<group>"; };
+		7DF4B52DC6E822BD3157A619 /* NewsletterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsletterViewModel.swift; sourceTree = "<group>"; };
+		81AD52E27DA3BE8B6B67B583 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		82BF66ECAD5B015A2AA8E7BE /* NewsLlamaAPITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsLlamaAPITests.swift; sourceTree = "<group>"; };
+		898A273829D02F36E1703E69 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8BE73B71563557F43803EF3A /* InterestViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterestViewModel.swift; sourceTree = "<group>"; };
+		9526A951AB382766384D4FDE /* MockNewsLlamaAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockNewsLlamaAPI.swift; sourceTree = "<group>"; };
+		981E3C1D30846FA742EB52C1 /* News Llama.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "News Llama.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A6D25B9F449FC6B0F012E86B /* BrandColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandColors.swift; sourceTree = "<group>"; };
+		B1DA493D7CDBD4C428D61841 /* News_LlamaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = News_LlamaApp.swift; sourceTree = "<group>"; };
+		B85ACD0875279DF9AC07166B /* News LlamaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "News LlamaTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C4C5E948EB5793C0C5130C2A /* UserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserTests.swift; sourceTree = "<group>"; };
+		C71FB03A70F074D37D2ADD24 /* NewsletterWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsletterWebView.swift; sourceTree = "<group>"; };
+		D291536BB68CF946F0164379 /* NewsletterViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsletterViewModelTests.swift; sourceTree = "<group>"; };
+		DB4258AA0ECE69EA9D2E6C44 /* NewsLlamaAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsLlamaAPI.swift; sourceTree = "<group>"; };
+		DD1E7C2818FDCF2D96B25642 /* InterestViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterestViewModelTests.swift; sourceTree = "<group>"; };
+		DF0A80238F4E124341260246 /* News_Llama.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = News_Llama.entitlements; sourceTree = "<group>"; };
+		E8B695E83AAED564B5FD3A5E /* ProfileSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSelectionView.swift; sourceTree = "<group>"; };
+		EDC6F625F094C49A48B4AE81 /* NewsLlamaAPIProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsLlamaAPIProtocol.swift; sourceTree = "<group>"; };
+		EE9B1C3605F60BCF337762FD /* CalendarDayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarDayView.swift; sourceTree = "<group>"; };
+		FDCB3A0B62B56F8030C1B532 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0242F930F6A6CD2839BA444B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A5D7D5D6633F39B4B4505F5A /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		298D23E99F8F4386222F9780 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				4C3B0BA9CFAD13D9D4E97223 /* AppViewModel.swift */,
+				7DE06C123E64FA41F0ABCF7C /* CheckForUpdatesViewModel.swift */,
+				8BE73B71563557F43803EF3A /* InterestViewModel.swift */,
+				7DF4B52DC6E822BD3157A619 /* NewsletterViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		30FE5692FD094AE6E90E3641 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				981E3C1D30846FA742EB52C1 /* News Llama.app */,
+				B85ACD0875279DF9AC07166B /* News LlamaTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		49653191206B3CDBA697D18D /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				DB4258AA0ECE69EA9D2E6C44 /* NewsLlamaAPI.swift */,
+				EDC6F625F094C49A48B4AE81 /* NewsLlamaAPIProtocol.swift */,
+				07B8640A52E6DC5185F7256B /* ProfileCreateResponse.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		59BFB448A0F4587EE64EFC61 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				07E7026AC3DCAF0E81FB29F9 /* InterestTests.swift */,
+				5A160BD26AC807B314658F23 /* NewsletterTests.swift */,
+				C4C5E948EB5793C0C5130C2A /* UserTests.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		5EED5B72BA166C64A8F82814 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				A6D25B9F449FC6B0F012E86B /* BrandColors.swift */,
+				EE9B1C3605F60BCF337762FD /* CalendarDayView.swift */,
+				3464613F8E0FD939582AA86D /* ProfileCard.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		8A2BB44B009E64E7A2CEA7A9 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				9526A951AB382766384D4FDE /* MockNewsLlamaAPI.swift */,
+				82BF66ECAD5B015A2AA8E7BE /* NewsLlamaAPITests.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		9AEAA2C9F0C45F2A0AD68616 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				FDCB3A0B62B56F8030C1B532 /* ContentView.swift */,
+				81AD52E27DA3BE8B6B67B583 /* MainView.swift */,
+				5AA0D61CD19465518261A995 /* NewsletterDetailView.swift */,
+				C71FB03A70F074D37D2ADD24 /* NewsletterWebView.swift */,
+				27D199527239B5E07650C502 /* ProfileCreationView.swift */,
+				E8B695E83AAED564B5FD3A5E /* ProfileSelectionView.swift */,
+				2F45E34761F6629B00EB1384 /* SettingsView.swift */,
+				5D8891E43648C058DAC77073 /* SidebarView.swift */,
+				5EED5B72BA166C64A8F82814 /* Components */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A075200DDF922C89F55FC020 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				18FF2585D12B862E13997DFF /* Interest.swift */,
+				1AA990669CE04B9E199D93C2 /* Newsletter.swift */,
+				3D87951B6D5F966A31A1AEA6 /* User.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A7DC557282E1C2B4833D8108 /* News Llama */ = {
+			isa = PBXGroup;
+			children = (
+				898A273829D02F36E1703E69 /* Assets.xcassets */,
+				DF0A80238F4E124341260246 /* News_Llama.entitlements */,
+				B1DA493D7CDBD4C428D61841 /* News_LlamaApp.swift */,
+				A075200DDF922C89F55FC020 /* Models */,
+				49653191206B3CDBA697D18D /* Services */,
+				298D23E99F8F4386222F9780 /* ViewModels */,
+				9AEAA2C9F0C45F2A0AD68616 /* Views */,
+			);
+			path = "News Llama";
+			sourceTree = "<group>";
+		};
+		B001885691FFB573119288A1 /* News LlamaTests */ = {
+			isa = PBXGroup;
+			children = (
+				59BFB448A0F4587EE64EFC61 /* Models */,
+				8A2BB44B009E64E7A2CEA7A9 /* Services */,
+				B6654E9BD177DFED926D29EC /* ViewModels */,
+			);
+			path = "News LlamaTests";
+			sourceTree = "<group>";
+		};
+		B6654E9BD177DFED926D29EC /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				67079B18E27772119571A913 /* AppViewModelTests.swift */,
+				DD1E7C2818FDCF2D96B25642 /* InterestViewModelTests.swift */,
+				D291536BB68CF946F0164379 /* NewsletterViewModelTests.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		EB18BF00FB582F9C504CE672 = {
+			isa = PBXGroup;
+			children = (
+				A7DC557282E1C2B4833D8108 /* News Llama */,
+				B001885691FFB573119288A1 /* News LlamaTests */,
+				30FE5692FD094AE6E90E3641 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3F0BB587034AD5FD00E99670 /* News LlamaTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C8A9F7050F2D2ACD4CED02F4 /* Build configuration list for PBXNativeTarget "News LlamaTests" */;
+			buildPhases = (
+				82F9C34D61E2F79C7C22F50C /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4B1A56F003327BF33E043510 /* PBXTargetDependency */,
+			);
+			name = "News LlamaTests";
+			packageProductDependencies = (
+			);
+			productName = "News LlamaTests";
+			productReference = B85ACD0875279DF9AC07166B /* News LlamaTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		7D3A7190251BD9289C4DDC59 /* News Llama */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1695722CE76B11399DAA4771 /* Build configuration list for PBXNativeTarget "News Llama" */;
+			buildPhases = (
+				9848405CAF39BF9A91E1523E /* Sources */,
+				8F211A1B4236069E67B73B7E /* Resources */,
+				0242F930F6A6CD2839BA444B /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "News Llama";
+			packageProductDependencies = (
+				784D6EF9B1E0D2AF7800F20F /* Sparkle */,
+			);
+			productName = "News Llama";
+			productReference = 981E3C1D30846FA742EB52C1 /* News Llama.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		916D8C50565F072A3E22D129 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1620;
+			};
+			buildConfigurationList = 045A95D3FD65E89A10FBE781 /* Build configuration list for PBXProject "News Llama" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = EB18BF00FB582F9C504CE672;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				35A378EB544C91830B52BBD3 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				7D3A7190251BD9289C4DDC59 /* News Llama */,
+				3F0BB587034AD5FD00E99670 /* News LlamaTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8F211A1B4236069E67B73B7E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8EF5A4BBE3FDC807E30EDAB1 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		82F9C34D61E2F79C7C22F50C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8AE11B872BDBAED1C5DAC469 /* AppViewModelTests.swift in Sources */,
+				59F03775D4F88AD3061BBA45 /* InterestTests.swift in Sources */,
+				C125913554DF4BD27C0713A7 /* InterestViewModelTests.swift in Sources */,
+				261651EF30981ACDD2FAAAB1 /* MockNewsLlamaAPI.swift in Sources */,
+				CAACD1CBEDFC47D6B6871DF8 /* NewsLlamaAPITests.swift in Sources */,
+				5BEFF52C90256108A97D5B43 /* NewsletterTests.swift in Sources */,
+				EA2BC5DDFCDF33D631A61222 /* NewsletterViewModelTests.swift in Sources */,
+				E2C492905B159E0742C86857 /* UserTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9848405CAF39BF9A91E1523E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				921D7359BCF7CA5C8C37A4FD /* AppViewModel.swift in Sources */,
+				655A2E7A6D5F105DCB285A9A /* BrandColors.swift in Sources */,
+				5FE021AA832B7302B6D6F28E /* CalendarDayView.swift in Sources */,
+				582D0852CF19BE97F639D7C7 /* CheckForUpdatesViewModel.swift in Sources */,
+				B85B33141145EBE6831654E2 /* ContentView.swift in Sources */,
+				AD0684257E95901851B5F0F0 /* Interest.swift in Sources */,
+				408411A193EE704E1595A798 /* InterestViewModel.swift in Sources */,
+				B3DEB2EABC99601A1479CF91 /* MainView.swift in Sources */,
+				182A0331553F795FFAFA275D /* NewsLlamaAPI.swift in Sources */,
+				BE21D74427C340755511B2F0 /* NewsLlamaAPIProtocol.swift in Sources */,
+				49B408600CB30A63182FE914 /* News_LlamaApp.swift in Sources */,
+				3399CD02987F36FFC97F88CF /* Newsletter.swift in Sources */,
+				5C5203D3AF2DA2739AD3E739 /* NewsletterDetailView.swift in Sources */,
+				5BB92E625517D905DE37B35A /* NewsletterViewModel.swift in Sources */,
+				C1DF13787922DFB2810DDCA2 /* NewsletterWebView.swift in Sources */,
+				4D04AEF47B0AEEF2F8EC884E /* ProfileCard.swift in Sources */,
+				9B09E3C8EE676EC60497E50E /* ProfileCreateResponse.swift in Sources */,
+				C67F4BC2A4AF322AFE259C52 /* ProfileCreationView.swift in Sources */,
+				69F030D6A6B561903D763053 /* ProfileSelectionView.swift in Sources */,
+				231FB6BA57679E31C319C8F6 /* SettingsView.swift in Sources */,
+				9FFD042AC8A17E97E0E05B55 /* SidebarView.swift in Sources */,
+				9AA67C41D77E2844FD980398 /* User.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4B1A56F003327BF33E043510 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7D3A7190251BD9289C4DDC59 /* News Llama */;
+			targetProxy = BA7CA689641C46BA314F1788 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		3D97451822CF8919D1006E57 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "News Llama/News_Llama.entitlements";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "News Llama";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.news";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.news-llama.macos";
+				PRODUCT_NAME = "News Llama";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		67461F0CC40DC00656EFACB6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		698B2ACAB744F10E45E34290 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "News Llama/News_Llama.entitlements";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "News Llama";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.news";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.news-llama.macos";
+				PRODUCT_NAME = "News Llama";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		A8D8E4EB4EE36427DD806C2A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B6DA137C11F922C9DB5D2455 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.news-llama.macos.tests";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/News Llama.app/Contents/MacOS/News Llama";
+			};
+			name = Debug;
+		};
+		D61A20F9484CA35AEEB2510D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.news-llama.macos.tests";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/News Llama.app/Contents/MacOS/News Llama";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		045A95D3FD65E89A10FBE781 /* Build configuration list for PBXProject "News Llama" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A8D8E4EB4EE36427DD806C2A /* Debug */,
+				67461F0CC40DC00656EFACB6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		1695722CE76B11399DAA4771 /* Build configuration list for PBXNativeTarget "News Llama" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				698B2ACAB744F10E45E34290 /* Debug */,
+				3D97451822CF8919D1006E57 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C8A9F7050F2D2ACD4CED02F4 /* Build configuration list for PBXNativeTarget "News LlamaTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B6DA137C11F922C9DB5D2455 /* Debug */,
+				D61A20F9484CA35AEEB2510D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		35A378EB544C91830B52BBD3 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		784D6EF9B1E0D2AF7800F20F /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 35A378EB544C91830B52BBD3 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 916D8C50565F072A3E22D129 /* Project object */;
+}
