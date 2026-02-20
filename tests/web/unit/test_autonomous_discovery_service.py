@@ -5,13 +5,12 @@ Tests weekly discovery orchestration.
 """
 
 import pytest
-from datetime import datetime
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
 from sqlalchemy.orm import Session
 
 from src.web.database import get_test_db
-from src.web.services import autonomous_discovery_service, tier1_service
-from src.web.models import Tier1Source, DiscoveredSource, SourceBlacklist
+from src.web.services import autonomous_discovery_service
+from src.web.models import Tier1Source, DiscoveredSource
 
 
 @pytest.fixture

@@ -5,13 +5,11 @@ Tests metrics tracking and public metrics page.
 """
 
 import pytest
-from datetime import datetime
 from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
 
 from src.web.database import get_test_db
 from src.web.services import discovery_metrics_service, tier1_service, blacklist_service
-from src.web.models import Tier1Source, SourceBlacklist, DiscoveredSource
 
 
 @pytest.fixture

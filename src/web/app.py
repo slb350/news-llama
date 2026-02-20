@@ -17,42 +17,42 @@ logging.basicConfig(
 if sys.platform == "darwin":  # macOS
     os.environ.setdefault("DYLD_LIBRARY_PATH", "/opt/homebrew/lib")
 
-import magic
-import io
-from typing import Optional
-from PIL import Image
-from fastapi import FastAPI, Request, Depends, Response, HTTPException, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from fastapi.exceptions import RequestValidationError
-from sqlalchemy.orm import Session
-from pathlib import Path
-from datetime import date
+import magic  # noqa: E402
+import io  # noqa: E402
+from typing import Optional  # noqa: E402
+from PIL import Image  # noqa: E402
+from fastapi import FastAPI, Request, Depends, Response, HTTPException, UploadFile, File  # noqa: E402
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse  # noqa: E402
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+from fastapi.templating import Jinja2Templates  # noqa: E402
+from fastapi.exceptions import RequestValidationError  # noqa: E402
+from sqlalchemy.orm import Session  # noqa: E402
+from pathlib import Path  # noqa: E402
+from datetime import date  # noqa: E402
 
-from src.web.database import get_db
-from src.web.dependencies import get_current_user, require_user
-from src.web.schemas import (
+from src.web.database import get_db  # noqa: E402
+from src.web.dependencies import get_current_user, require_user  # noqa: E402
+from src.web.schemas import (  # noqa: E402
     ProfileCreateRequest,
     ProfileUpdateRequest,
     InterestAdd,
     NewsletterCreate,
     NewsletterResponse,
 )
-from src.web.models import User
-from src.web.services import (
+from src.web.models import User  # noqa: E402
+from src.web.services import (  # noqa: E402
     user_service,
     interest_service,
     newsletter_service,
     generation_service,
     scheduler_service,
 )
-from src.web.error_handlers import (
+from src.web.error_handlers import (  # noqa: E402
     global_exception_handler,
     validation_exception_handler,
     get_friendly_message,
 )
-from src.web import file_cache
+from src.web import file_cache  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -96,16 +96,24 @@ app = FastAPI(title="News Llama", lifespan=lifespan)
 app.add_exception_handler(Exception, global_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
+# Register JSON API router for native client
+from src.web.api.v1 import api_router  # noqa: E402
+
+app.include_router(api_router)
+
 # Mount static files
 static_path = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
+
 
 # Favicon shortcut route (browsers request /favicon.ico directly)
 @app.get("/favicon.ico")
 async def favicon():
     """Serve favicon from static directory."""
     from fastapi.responses import FileResponse
+
     return FileResponse(static_path / "favicon.ico")
+
 
 # Output path reference (for file serving via routes, not static mount)
 output_path = Path(__file__).parent.parent.parent / "output"
@@ -809,10 +817,7 @@ async def metrics_page(request: Request, db: Session = Depends(get_db)):
     metrics = get_all_metrics(db)
 
     # Get scheduler status
-    scheduler_info = {
-        "running": scheduler_service.scheduler.running,
-        "jobs": []
-    }
+    scheduler_info = {"running": scheduler_service.scheduler.running, "jobs": []}
 
     if scheduler_service.scheduler.running:
         for job in scheduler_service.scheduler.get_jobs():
@@ -821,7 +826,7 @@ async def metrics_page(request: Request, db: Session = Depends(get_db)):
                 "function": job.func.__name__,
                 "next_run": None,
                 "next_run_formatted": None,
-                "hours_until": None
+                "hours_until": None,
             }
 
             if job.next_run_time:
@@ -835,7 +840,9 @@ async def metrics_page(request: Request, db: Session = Depends(get_db)):
                     tz_name = "UTC"
 
                 job_info["next_run"] = next_run_local.isoformat()
-                job_info["next_run_formatted"] = next_run_local.strftime("%Y-%m-%d %I:%M %p %Z")
+                job_info["next_run_formatted"] = next_run_local.strftime(
+                    "%Y-%m-%d %I:%M %p %Z"
+                )
 
                 # Calculate hours until
                 now = datetime.now(timezone.utc)
@@ -844,20 +851,27 @@ async def metrics_page(request: Request, db: Session = Depends(get_db)):
 
                 # Get schedule description
                 if job.id == "daily_generation" and hasattr(job.trigger, "hour"):
-                    job_info["schedule"] = f"Daily at {job.trigger.hour:02d}:{job.trigger.minute:02d} {tz_name}"
-                elif job.id == "weekly_discovery" and hasattr(job.trigger, "day_of_week"):
-                    job_info["schedule"] = f"Weekly on {job.trigger.day_of_week} at {job.trigger.hour:02d}:{job.trigger.minute:02d} {tz_name}"
-                elif job.id == "rate_limiter_cleanup" and hasattr(job.trigger, "interval"):
+                    job_info["schedule"] = (
+                        f"Daily at {job.trigger.hour:02d}:{job.trigger.minute:02d} {tz_name}"
+                    )
+                elif job.id == "weekly_discovery" and hasattr(
+                    job.trigger, "day_of_week"
+                ):
+                    job_info["schedule"] = (
+                        f"Weekly on {job.trigger.day_of_week} at {job.trigger.hour:02d}:{job.trigger.minute:02d} {tz_name}"
+                    )
+                elif job.id == "rate_limiter_cleanup" and hasattr(
+                    job.trigger, "interval"
+                ):
                     job_info["schedule"] = f"Every {job.trigger.interval}"
                 else:
                     job_info["schedule"] = "Custom schedule"
 
             scheduler_info["jobs"].append(job_info)
 
-    return templates.TemplateResponse(request, "metrics.html", {
-        "metrics": metrics,
-        "scheduler": scheduler_info
-    })
+    return templates.TemplateResponse(
+        request, "metrics.html", {"metrics": metrics, "scheduler": scheduler_info}
+    )
 
 
 @app.get("/health/scheduler")

@@ -6,7 +6,6 @@ Tests Tier 1 source management: add, query, coverage, health updates.
 
 import pytest
 import json
-from datetime import datetime
 from sqlalchemy.orm import Session
 
 from src.web.database import get_test_db

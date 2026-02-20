@@ -7,7 +7,6 @@ Uses mocked HTTP requests to avoid external dependencies.
 
 import pytest
 from unittest.mock import patch, AsyncMock
-from sqlalchemy.orm import Session
 
 from src.web.database import get_test_db
 from src.web.services import list_mining_service

@@ -126,7 +126,10 @@ class TestProfileCreatePost:
         """Should create user, add interests, and redirect."""
         response = client.post(
             "/profile/create",
-            json={"first_name": "Diana", "interests": ["AI & Machine Learning", "Rust", "Python"]},
+            json={
+                "first_name": "Diana",
+                "interests": ["AI & Machine Learning", "Rust", "Python"],
+            },
             follow_redirects=False,
         )
 
@@ -215,7 +218,10 @@ class TestProfileCreatePost:
         """Should mark interests as predefined if from standard list."""
         response = client.post(
             "/profile/create",
-            json={"first_name": "Diana", "interests": ["AI & Machine Learning", "Open Source"]},
+            json={
+                "first_name": "Diana",
+                "interests": ["AI & Machine Learning", "Open Source"],
+            },
             follow_redirects=False,
         )
 
@@ -239,7 +245,10 @@ class TestProfileCreatePost:
             "/profile/create",
             json={
                 "first_name": "Henry",
-                "interests": ["AI & Machine Learning", "mycustomtopic"],  # AI predefined, other custom
+                "interests": [
+                    "AI & Machine Learning",
+                    "mycustomtopic",
+                ],  # AI predefined, other custom
             },
             follow_redirects=False,
         )
@@ -259,7 +268,9 @@ class TestProfileCreatePost:
 
     def test_create_profile_requires_first_name(self, client: TestClient):
         """Should require first_name field."""
-        response = client.post("/profile/create", json={"interests": ["AI & Machine Learning"]})
+        response = client.post(
+            "/profile/create", json={"interests": ["AI & Machine Learning"]}
+        )
 
         assert response.status_code == 422  # Validation error
 
@@ -299,7 +310,11 @@ class TestProfileCreatePost:
             "/profile/create",
             json={
                 "first_name": "Ivy",
-                "interests": ["AI & Machine Learning", "Python", "AI & Machine Learning"],  # Duplicate AI
+                "interests": [
+                    "AI & Machine Learning",
+                    "Python",
+                    "AI & Machine Learning",
+                ],  # Duplicate AI
             },
             follow_redirects=False,
         )
@@ -354,7 +369,10 @@ class TestProfileCreatePost:
 
         response = client.post(
             "/profile/create",
-            json={"first_name": "Diana", "interests": ["AI & Machine Learning", "Rust"]},
+            json={
+                "first_name": "Diana",
+                "interests": ["AI & Machine Learning", "Rust"],
+            },
             follow_redirects=False,
         )
 

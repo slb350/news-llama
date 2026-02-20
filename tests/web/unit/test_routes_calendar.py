@@ -433,8 +433,8 @@ class TestCalendarDynamicMonthYear:
         client.cookies.set("user_id", str(user.id))
 
         # Create newsletters in different years
-        nl_2025 = create_pending_newsletter(db, user.id, date(2025, 10, 15))
-        nl_2026 = create_pending_newsletter(db, user.id, date(2026, 10, 15))
+        create_pending_newsletter(db, user.id, date(2025, 10, 15))
+        create_pending_newsletter(db, user.id, date(2026, 10, 15))
 
         # Request October 2025
         response_2025 = client.get("/calendar/2025/10")

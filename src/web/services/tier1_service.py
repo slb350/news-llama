@@ -115,7 +115,7 @@ def get_sources_for_interests(
     query = db.query(Tier1Source)
 
     if only_healthy:
-        query = query.filter(Tier1Source.is_healthy == True)
+        query = query.filter(Tier1Source.is_healthy.is_(True))
 
     all_sources = query.all()
 
@@ -193,7 +193,7 @@ def get_all_tier1_sources(db: Session, only_healthy: bool = False) -> List[Tier1
     """Get all Tier 1 sources."""
     query = db.query(Tier1Source)
     if only_healthy:
-        query = query.filter(Tier1Source.is_healthy == True)
+        query = query.filter(Tier1Source.is_healthy.is_(True))
     return query.all()
 
 

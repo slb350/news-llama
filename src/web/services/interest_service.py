@@ -150,7 +150,9 @@ def search_interests(query: str) -> list[str]:
 
     query_lower = query.lower()
     all_interests = get_predefined_interests()
-    matches = [interest for interest in all_interests if query_lower in interest.lower()]
+    matches = [
+        interest for interest in all_interests if query_lower in interest.lower()
+    ]
 
     return sorted(matches)
 

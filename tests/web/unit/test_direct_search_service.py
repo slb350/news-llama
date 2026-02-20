@@ -6,7 +6,7 @@ Uses mocked LLM responses to avoid external dependencies.
 """
 
 import pytest
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
 from sqlalchemy.orm import Session
 
 from src.web.database import get_test_db

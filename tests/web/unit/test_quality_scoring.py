@@ -4,11 +4,9 @@ Unit tests for quality scoring - TDD RED phase.
 Tests quality score calculation based on multiple signals.
 """
 
-import pytest
 from src.web.services.quality_scoring import (
     calculate_quality_score,
     should_auto_add,
-    AUTO_ADD_THRESHOLD,
 )
 
 

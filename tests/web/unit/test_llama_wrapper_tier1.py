@@ -113,7 +113,7 @@ class TestTier1FastPath:
 
         with patch("src.web.services.llama_wrapper.Path.exists", return_value=True):
             # Generate with Tier 1
-            result = generate_newsletter_with_tier1(
+            generate_newsletter_with_tier1(
                 interests=["Rust", "Python"], output_date=date.today(), db=db
             )
 
@@ -148,7 +148,7 @@ class TestTier1FastPath:
         mock_instance.run = AsyncMock()
 
         with patch("src.web.services.llama_wrapper.Path.exists", return_value=True):
-            result = generate_newsletter_with_tier1(
+            generate_newsletter_with_tier1(
                 interests=["Rust", "Python", "Go"],  # Only Rust covered
                 output_date=date.today(),
                 db=db,

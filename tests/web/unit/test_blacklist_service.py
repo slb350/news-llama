@@ -5,7 +5,6 @@ Tests blacklist management: add, check, resurrect, filter.
 """
 
 import pytest
-from datetime import datetime
 from sqlalchemy.orm import Session
 
 from src.web.database import get_test_db

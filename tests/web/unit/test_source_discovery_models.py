@@ -16,8 +16,6 @@ from src.web.models import (
     DiscoveredSource,
     SourceHealth,
     SourceContribution,
-    Newsletter,
-    User,
 )
 
 

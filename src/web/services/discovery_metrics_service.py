@@ -21,7 +21,7 @@ def get_tier1_stats(db: Session) -> Dict:
         Dictionary with total, healthy, by_type, and avg_quality_score
     """
     total = db.query(Tier1Source).count()
-    healthy = db.query(Tier1Source).filter(Tier1Source.is_healthy == True).count()
+    healthy = db.query(Tier1Source).filter(Tier1Source.is_healthy.is_(True)).count()
 
     # By type
     by_type = {}
@@ -87,7 +87,7 @@ def get_discovery_stats(db: Session) -> Dict:
     total = db.query(DiscoveredSource).count()
     promoted = (
         db.query(DiscoveredSource)
-        .filter(DiscoveredSource.promoted_to_tier1 == True)
+        .filter(DiscoveredSource.promoted_to_tier1.is_(True))
         .count()
     )
 
