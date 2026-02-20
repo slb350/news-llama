@@ -27,6 +27,10 @@ class Article(BaseModel):
     published_at: datetime
     metadata: Dict[str, Any] = Field(default_factory=dict)
     image_url: Optional[HttpUrl] = None
+    local_image_path: Optional[str] = None  # Cached image path (e.g., /static/article-images/abc.jpg)
+    is_gallery: bool = False  # True if post has multiple images
+    gallery_count: int = 0  # Number of images in gallery
+    is_video: bool = False  # True if post links to video (redgifs, etc.)
     summary: Optional[str] = None
     sentiment_score: Optional[float] = None
     relevance_score: Optional[float] = None

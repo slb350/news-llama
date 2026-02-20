@@ -117,6 +117,7 @@ data/
 
 # Web application generated files
 src/web/static/avatars/
+src/web/static/article-images/
 templates/news.html
 
 # Compiled files

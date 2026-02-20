@@ -3,12 +3,13 @@ Reddit aggregator using asyncpraw
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import List
+from typing import List, Optional, Tuple
 import asyncpraw
 
 from src.aggregators.base import BaseAggregator
 from src.utils.models import Article, SourceType
 from src.utils.logger import logger
+from src.utils.image_cache import is_image_url, is_video_url, download_and_cache_image
 
 
 class RedditAggregator(BaseAggregator):
@@ -191,12 +192,13 @@ class RedditAggregator(BaseAggregator):
         # Extract content (self-text or external URL)
         content = submission.selftext if submission.is_self else (submission.url or "")
 
-        # Extract image URL if available
-        image_url = None
-        if hasattr(submission, "preview") and submission.preview:
-            images = submission.preview.get("images", [])
-            if images:
-                image_url = images[0]["source"]["url"]
+        # Extract image/media info
+        image_url, is_gallery, gallery_count, is_video = await self._extract_media_info(submission)
+
+        # Cache the image locally if we have one
+        local_image_path = None
+        if image_url and not is_video:
+            local_image_path = await download_and_cache_image(image_url)
 
         return Article(
             title=submission.title,
@@ -208,6 +210,10 @@ class RedditAggregator(BaseAggregator):
             author=str(submission.author) if submission.author else "deleted",
             published_at=post_time,
             image_url=image_url,
+            local_image_path=local_image_path,
+            is_gallery=is_gallery,
+            gallery_count=gallery_count,
+            is_video=is_video,
             metadata={
                 "score": submission.score,
                 "num_comments": submission.num_comments,
@@ -216,6 +222,66 @@ class RedditAggregator(BaseAggregator):
                 "flair": submission.link_flair_text,
             },
         )
+
+    async def _extract_media_info(
+        self, submission
+    ) -> Tuple[Optional[str], bool, int, bool]:
+        """
+        Extract media information from a Reddit submission.
+
+        Returns: (image_url, is_gallery, gallery_count, is_video)
+        """
+        image_url = None
+        is_gallery = False
+        gallery_count = 0
+        is_video = False
+
+        # Check if it's a video link (redgifs, v.redd.it, etc.)
+        if hasattr(submission, "url") and submission.url:
+            if is_video_url(submission.url):
+                is_video = True
+                return (submission.url, False, 0, True)
+
+        # Check for Reddit galleries (multiple images)
+        if getattr(submission, "is_gallery", False):
+            is_gallery = True
+            # Get gallery data
+            gallery_data = getattr(submission, "gallery_data", None)
+            media_metadata = getattr(submission, "media_metadata", None)
+
+            if gallery_data and media_metadata:
+                items = gallery_data.get("items", [])
+                gallery_count = len(items)
+
+                # Get first image from gallery
+                if items:
+                    first_id = items[0].get("media_id")
+                    if first_id and first_id in media_metadata:
+                        media = media_metadata[first_id]
+                        # Try to get the best quality source
+                        if "s" in media:
+                            source = media["s"]
+                            image_url = source.get("u") or source.get("gif")
+                            if image_url:
+                                # Clean up URL (Reddit uses HTML entities)
+                                image_url = image_url.replace("&amp;", "&")
+
+        # Check for direct image URL (i.redd.it, imgur, etc.)
+        if not image_url and hasattr(submission, "url") and submission.url:
+            if is_image_url(submission.url):
+                image_url = submission.url
+
+        # Fall back to preview images
+        if not image_url:
+            if hasattr(submission, "preview") and submission.preview:
+                images = submission.preview.get("images", [])
+                if images:
+                    source = images[0].get("source", {})
+                    image_url = source.get("url")
+                    if image_url:
+                        image_url = image_url.replace("&amp;", "&")
+
+        return (image_url, is_gallery, gallery_count, is_video)
 
     def _is_valid_article(self, article: Article) -> bool:
         """Validate Reddit post meets quality criteria"""
