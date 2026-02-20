@@ -27,15 +27,10 @@ targets:
         SWIFT_VERSION: "5.9"
         INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.news"
         INFOPLIST_KEY_CFBundleDisplayName: "News Llama"
-        CODE_SIGN_ENTITLEMENTS: "News Llama/News_Llama.entitlements"
+        CODE_SIGN_ENTITLEMENTS: "News_Llama.entitlements"
         GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - package: Sparkle
-    entitlements:
-      path: "News Llama/News_Llama.entitlements"
-      properties:
-        com.apple.security.app-sandbox: false
-        com.apple.security.network.client: true
 
   News LlamaTests:
     type: bundle.unit-test

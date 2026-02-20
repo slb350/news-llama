@@ -81,7 +81,6 @@
 		D291536BB68CF946F0164379 /* NewsletterViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsletterViewModelTests.swift; sourceTree = "<group>"; };
 		DB4258AA0ECE69EA9D2E6C44 /* NewsLlamaAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsLlamaAPI.swift; sourceTree = "<group>"; };
 		DD1E7C2818FDCF2D96B25642 /* InterestViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterestViewModelTests.swift; sourceTree = "<group>"; };
-		DF0A80238F4E124341260246 /* News_Llama.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = News_Llama.entitlements; sourceTree = "<group>"; };
 		E8B695E83AAED564B5FD3A5E /* ProfileSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSelectionView.swift; sourceTree = "<group>"; };
 		EDC6F625F094C49A48B4AE81 /* NewsLlamaAPIProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsLlamaAPIProtocol.swift; sourceTree = "<group>"; };
 		EE9B1C3605F60BCF337762FD /* CalendarDayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarDayView.swift; sourceTree = "<group>"; };
@@ -189,7 +188,6 @@
 			isa = PBXGroup;
 			children = (
 				898A273829D02F36E1703E69 /* Assets.xcassets */,
-				DF0A80238F4E124341260246 /* News_Llama.entitlements */,
 				B1DA493D7CDBD4C428D61841 /* News_LlamaApp.swift */,
 				A075200DDF922C89F55FC020 /* Models */,
 				49653191206B3CDBA697D18D /* Services */,
@@ -372,7 +370,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = "News Llama/News_Llama.entitlements";
+				CODE_SIGN_ENTITLEMENTS = News_Llama.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -451,7 +449,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = "News Llama/News_Llama.entitlements";
+				CODE_SIGN_ENTITLEMENTS = News_Llama.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;

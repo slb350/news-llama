@@ -6,7 +6,7 @@ final class NewsLlamaAPI: NewsLlamaAPIProtocol, @unchecked Sendable {
     var currentUserId: Int?
 
     init(baseURL: URL? = nil, session: URLSession = .shared) {
-        let savedURL = UserDefaults.standard.string(forKey: "serverURL") ?? "http://localhost:8000"
+        let savedURL = UserDefaults.standard.string(forKey: "serverURL") ?? "https://news.localbrandonfamily.com"
         self.baseURL = baseURL ?? URL(string: savedURL)!
         self.session = session
     }

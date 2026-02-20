@@ -10,6 +10,9 @@ final class AppViewModel {
 
     private let api: any NewsLlamaAPIProtocol
 
+    /// The server base URL from the API client, used by views that need to resolve relative URLs.
+    var serverBaseURL: URL { api.baseURL }
+
     init(api: any NewsLlamaAPIProtocol = NewsLlamaAPI()) {
         self.api = api
     }

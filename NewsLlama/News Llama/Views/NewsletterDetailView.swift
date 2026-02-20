@@ -9,20 +9,11 @@ struct NewsletterDetailView: View {
             if let content = newsletterViewModel.selectedNewsletterContent {
                 switch content.status {
                 case "completed":
-                    if let html = content.htmlContent {
-                        NewsletterWebView(
-                            htmlContent: html,
-                            baseURL: (appViewModel.selectedUser != nil)
-                                ? URL(string: UserDefaults.standard.string(forKey: "serverURL") ?? "http://localhost:8000")
-                                : nil
-                        )
-                    } else {
-                        ContentUnavailableView(
-                            "Newsletter File Missing",
-                            systemImage: "doc.questionmark",
-                            description: Text("The newsletter was generated but the file could not be found.")
-                        )
-                    }
+                    let renderURL = appViewModel.serverBaseURL
+                        .appendingPathComponent("api/v1/newsletters")
+                        .appendingPathComponent(content.guid)
+                        .appendingPathComponent("render")
+                    NewsletterWebView(url: renderURL)
 
                 case "pending", "generating":
                     VStack(spacing: 16) {

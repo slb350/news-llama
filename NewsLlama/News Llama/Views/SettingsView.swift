@@ -25,7 +25,7 @@ struct SettingsView: View {
 }
 
 struct GeneralSettingsView: View {
-    @AppStorage("serverURL") private var serverURL = "http://localhost:8000"
+    @AppStorage("serverURL") private var serverURL = "https://news.localbrandonfamily.com"
     private let updater: SPUUpdater
 
     init(updater: SPUUpdater) {

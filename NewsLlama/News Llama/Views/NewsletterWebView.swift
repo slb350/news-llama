@@ -2,8 +2,11 @@ import SwiftUI
 import WebKit
 
 struct NewsletterWebView: NSViewRepresentable {
-    let htmlContent: String
-    let baseURL: URL?
+    let url: URL
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
 
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
@@ -13,6 +16,12 @@ struct NewsletterWebView: NSViewRepresentable {
     }
 
     func updateNSView(_ webView: WKWebView, context: Context) {
-        webView.loadHTMLString(htmlContent, baseURL: baseURL)
+        guard url != context.coordinator.lastLoadedURL else { return }
+        context.coordinator.lastLoadedURL = url
+        webView.load(URLRequest(url: url))
+    }
+
+    class Coordinator {
+        var lastLoadedURL: URL?
     }
 }
