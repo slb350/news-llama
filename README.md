@@ -200,6 +200,35 @@ interests = [
 news_llama = NewsLlama(user_interests=interests)
 ```
 
+## macOS Native Client
+
+News Llama ships a native SwiftUI macOS app (`NewsLlama/`) that consumes the JSON API v1.
+
+### Quick Start
+
+```bash
+# Generate Xcode project from project.yml (requires XcodeGen)
+cd NewsLlama
+xcodegen generate
+open "News Llama.xcodeproj"
+```
+
+The macOS app requires the web server to be running locally. Start the server first (see Web Application below), then launch the app. The app communicates with the web server via the `/api/v1` endpoints.
+
+### JSON API v1
+
+The web server exposes a RESTful JSON API at `/api/v1` for use by the macOS client and other native consumers:
+
+| Prefix | Description |
+|--------|-------------|
+| `GET/POST /api/v1/users` | User creation and retrieval |
+| `GET /api/v1/interests/predefined` | Predefined interests (grouped or flat) |
+| `POST /api/v1/interests` | Add/remove interests for a user |
+| `GET /api/v1/newsletters` | List newsletters for a user |
+| `POST /api/v1/newsletters/generate` | Trigger newsletter generation |
+
+---
+
 ## Web Application
 
 News Llama includes a modern web interface for managing multiple user profiles, interests, and personalized newsletters.
