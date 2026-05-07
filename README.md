@@ -334,7 +334,7 @@ Built with **FastAPI**, **SQLAlchemy**, **SQLite** (WAL mode), **Alembic** migra
 
 **Key Components**:
 - **Database**: 3 tables (Users, UserInterests, Newsletters) with optimized indexes
-- **Service Layer**: 5 services (user, interest, newsletter, generation, scheduler)
+- **Service Layer**: 15 service modules — core (user, interest, newsletter, generation, scheduler), discovery (autonomous_discovery, direct_search, list_mining, discovery_metrics), AI integration (tier1, llama_wrapper, llama_wrapper_tier1), and support (blacklist, health_check, quality_scoring)
 - **API**: RESTful endpoints with cookie-based sessions
 - **Performance**: Database indexes, rate limiting, LRU file caching, eager loading
 
@@ -454,7 +454,7 @@ tests/
         └── test_generation_service.py  # Newsletter generation
 ```
 
-**Coverage Target**: 80%+ for src/web/ (250+ tests, 99%+ pass rate)
+**Coverage Target**: 80%+ for src/web/ (500+ tests, 99%+ pass rate)
 
 ## Output Examples
 

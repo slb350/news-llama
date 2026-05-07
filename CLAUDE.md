@@ -26,15 +26,20 @@ news-llama/
 │   └── web/                   # FastAPI web application
 │       ├── app.py             # FastAPI app, route registration
 │       ├── api/               # RESTful JSON API (v1)
-│       ├── services/          # 5 service classes (user, interest, newsletter, generation, scheduler)
+│       │   └── v1/            # v1 routes: users.py, interests.py, newsletters.py
+│       ├── services/          # 15 service modules: core (user, interest, newsletter, generation, scheduler) + discovery (autonomous_discovery, direct_search, list_mining, discovery_metrics) + AI (tier1, llama_wrapper, llama_wrapper_tier1) + support (blacklist, health_check, quality_scoring)
 │       ├── models.py          # SQLAlchemy ORM models (Users, UserInterests, Newsletters)
+│       ├── schemas.py         # Pydantic request/response schemas
 │       ├── database.py        # SQLite WAL mode + Alembic integration
+│       ├── config.py          # Web app configuration
+│       ├── dependencies.py    # FastAPI dependency injection
+│       ├── error_handlers.py  # Global error handling
 │       ├── rate_limiter.py
 │       └── file_cache.py      # LRU file cache
 ├── NewsLlama/                 # Native macOS SwiftUI app (XcodeGen project)
 ├── tests/
 │   ├── unit/                  # CLI/batch mode tests
-│   └── web/unit/              # Web application tests (250+ tests)
+│   └── web/unit/              # Web application tests (500+ tests)
 ├── docs/                      # Architecture, deployment, user guide
 ├── config/                    # Configuration templates
 ├── templates/                 # Jinja2 HTML templates
@@ -130,7 +135,7 @@ ENABLE_LLM_SOURCE_DISCOVERY=true
 `main.py` → aggregators (RSS, Twitter, Reddit, HN, dynamic) → content processor (dedup, filter, score) → LLM summarizer → output generators (HTML/JSON/RSS)
 
 ### Web Mode
-FastAPI app with 5 service classes. Service layer drives business logic; routes are thin controllers. APScheduler runs daily generation per-user. SQLite WAL mode with optimized indexes. LRU file cache for generated newsletters.
+FastAPI app with 15 service modules. Service layer drives business logic; routes are thin controllers. Core services handle user, interest, newsletter, generation, and scheduling. Extended services cover autonomous source discovery, direct search, list mining, discovery metrics, Tier 1 LLM integration, quality scoring, blacklist management, and health checks. APScheduler runs daily generation per-user. SQLite WAL mode with optimized indexes. LRU file cache for generated newsletters.
 
 ### Source Discovery (Five Tiers)
 1. Predefined patterns (fast lookup)
