@@ -162,9 +162,8 @@ FastAPI app with 15 service modules. Service layer drives business logic; routes
 
 - TDD: Write failing tests before implementation
 - Always run `TESTING=true` in test environments to prevent scheduler startup
-- `seed_library` must run before other seeds (calendar, tasks, social depend on it)
 - No stack traces exposed in user-facing error responses
-- **Coverage target**: 80%+ for `src/web/` (250+ tests, 99%+ pass rate)
+- **Coverage target**: 80%+ for `src/web/` (500+ tests, 99%+ pass rate)
 
 ## macOS App
 
