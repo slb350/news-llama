@@ -109,26 +109,80 @@ News Llama uses a **five-tier progressive discovery strategy** with intelligent 
 
 ```
 news-llama/
+├── main.py                      # CLI entry point (NewsLlama class, async orchestration)
+├── setup.py                     # Automated setup script
+├── dev.sh                       # Development helper (install/test/lint/format/run)
+├── requirements.txt             # Python dependencies (52 packages)
+├── alembic.ini                  # Database migration configuration
 ├── src/
-│   ├── aggregators/         # Source-specific aggregators
+│   ├── aggregators/             # Source-specific aggregators
+│   │   ├── base.py              # BaseAggregator abstract class
 │   │   ├── rss_aggregator.py
 │   │   ├── twitter_aggregator.py
-│   │   ├── reddit_aggregator.py
+│   │   ├── reddit_aggregator.py # asyncpraw with 24h smart time filtering
 │   │   ├── hackernews_aggregator.py
 │   │   └── dynamic_aggregator.py  # AI-discovered sources
-│   ├── processors/          # Content processing
-│   │   ├── content_processor.py
-│   │   ├── duplicate_detector.py
-│   │   └── source_discovery.py   # LLM source discovery
-│   ├── summarizers/         # LLM summarization
-│   ├── generators/          # Output generation
-│   └── utils/              # Configuration and models
-├── config/                 # Configuration templates
-├── output/                 # Generated content
-├── templates/              # HTML templates
-├── tests/                  # Test suite
-├── .env.example           # Environment variables template
-└── setup.py               # Automated setup script
+│   ├── processors/              # Content processing
+│   │   ├── content_processor.py # Cleaning, filtering, categorization, scoring
+│   │   ├── duplicate_detector.py # Cosine similarity deduplication (threshold 0.8)
+│   │   └── source_discovery.py  # LLM-powered five-tier source discovery
+│   ├── summarizers/             # LLM summarization via open-agent-sdk
+│   │   └── llm_summarizer.py    # Batch summarization, streaming JSON-first prompting
+│   ├── generators/              # Output generation (HTML, JSON, RSS)
+│   │   ├── html_generator.py    # Responsive HTML with Jinja2 templates
+│   │   ├── json_generator.py
+│   │   └── rss_generator.py
+│   ├── utils/                   # Configuration and utilities
+│   │   ├── config.py            # Pydantic-based configuration
+│   │   ├── models.py            # Article, SummarizedArticle dataclasses
+│   │   ├── logger.py            # Logging setup (loguru)
+│   │   ├── llm_prompts.py       # System prompts for LLM
+│   │   ├── constants.py         # Predefined interests and source patterns
+│   │   ├── image_cache.py       # Image caching utilities
+│   │   └── security.py          # Security utilities
+│   └── web/                     # FastAPI web application
+│       ├── app.py               # FastAPI app, route registration, lifespan management
+│       ├── models.py            # SQLAlchemy ORM (User, UserInterest, Newsletter)
+│       ├── schemas.py           # Pydantic request/response schemas
+│       ├── database.py          # SQLite WAL mode + connection pooling
+│       ├── config.py            # Web app configuration
+│       ├── dependencies.py      # FastAPI dependency injection
+│       ├── error_handlers.py    # Global error handling (no stack traces exposed)
+│       ├── rate_limiter.py      # Sliding window rate limiter (10 req/min default)
+│       ├── file_cache.py        # LRU cache for newsletter HTML (100 files, ~10MB)
+│       ├── api/                 # RESTful JSON API v1 (macOS client)
+│       │   └── v1/
+│       │       ├── users.py
+│       │       ├── interests.py
+│       │       └── newsletters.py
+│       └── services/            # 15 service modules (business logic layer)
+│           ├── user_service.py
+│           ├── interest_service.py
+│           ├── newsletter_service.py
+│           ├── generation_service.py
+│           ├── scheduler_service.py
+│           ├── llama_wrapper.py
+│           ├── autonomous_discovery_service.py
+│           ├── direct_search_service.py
+│           ├── list_mining_service.py
+│           ├── discovery_metrics_service.py
+│           ├── tier1_service.py
+│           ├── llama_wrapper_tier1.py
+│           ├── blacklist_service.py
+│           ├── quality_scoring.py
+│           └── health_check_service.py
+├── NewsLlama/                   # Native macOS SwiftUI app (XcodeGen project)
+├── tests/
+│   ├── unit/                    # CLI/batch mode tests (6 files)
+│   └── web/unit/                # Web application tests (35 files, 281+ functions)
+├── docs/                        # Architecture, deployment, user guide
+├── config/                      # Configuration templates
+├── templates/                   # Jinja2 HTML templates
+├── output/                      # Generated digests (HTML, JSON, RSS)
+├── db/                          # Alembic migration files
+├── assets/                      # Static assets
+├── screenshots/                 # Demo screenshots and GIFs
+└── .env.example                 # Environment variables template
 ```
 
 ## Performance
