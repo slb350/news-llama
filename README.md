@@ -1,6 +1,6 @@
 # News Llama 📰🦙
 
-AI-powered news curation engine that aggregates content from RSS, Twitter/X, Hacker News, Reddit, and web search, then summarizes the most relevant articles using local LLM.
+AI-powered news curation engine that aggregates content from RSS, Twitter/X, Reddit, and web search (DuckDuckGo), then summarizes the most relevant articles using a local LLM via open-agent-sdk.
 
 ![News Llama Demo](screenshots/demo.gif)
 
@@ -111,16 +111,18 @@ News Llama uses a **five-tier progressive discovery strategy** with intelligent 
 news-llama/
 ├── main.py                      # CLI entry point (NewsLlama class, async orchestration)
 ├── setup.py                     # Automated setup script
-├── dev.sh                       # Development helper (install/test/lint/format/run)
-├── requirements.txt             # Python dependencies (52 packages)
+├── take_screenshots.py          # Screenshot helper for macOS app
+├── requirements.txt             # Python dependencies (35 packages)
 ├── alembic.ini                  # Database migration configuration
+├── CONTRIBUTING.md              # Contribution guidelines
+├── CHANGELOG.md                 # Project changelog
 ├── src/
 │   ├── aggregators/             # Source-specific aggregators
 │   │   ├── base.py              # BaseAggregator abstract class
 │   │   ├── rss_aggregator.py
 │   │   ├── twitter_aggregator.py
 │   │   ├── reddit_aggregator.py # asyncpraw with 24h smart time filtering
-│   │   ├── hackernews_aggregator.py
+│   │   ├── hackernews_aggregator.py  # Disabled: empty content
 │   │   └── dynamic_aggregator.py  # AI-discovered sources
 │   ├── processors/              # Content processing
 │   │   ├── content_processor.py # Cleaning, filtering, categorization, scoring
@@ -136,13 +138,14 @@ news-llama/
 │   │   ├── config.py            # Pydantic-based configuration
 │   │   ├── models.py            # Article, SummarizedArticle dataclasses
 │   │   ├── logger.py            # Logging setup (loguru)
+│   │   ├── scheduler.py         # CLI mode scheduler
 │   │   ├── llm_prompts.py       # System prompts for LLM
 │   │   ├── constants.py         # Predefined interests and source patterns
 │   │   ├── image_cache.py       # Image caching utilities
 │   │   └── security.py          # Security utilities
 │   └── web/                     # FastAPI web application
 │       ├── app.py               # FastAPI app, route registration, lifespan management
-│       ├── models.py            # SQLAlchemy ORM (User, UserInterest, Newsletter)
+│       ├── models.py            # SQLAlchemy ORM (8 tables)
 │       ├── schemas.py           # Pydantic request/response schemas
 │       ├── database.py          # SQLite WAL mode + connection pooling
 │       ├── config.py            # Web app configuration
@@ -150,6 +153,8 @@ news-llama/
 │       ├── error_handlers.py    # Global error handling (no stack traces exposed)
 │       ├── rate_limiter.py      # Sliding window rate limiter (10 req/min default)
 │       ├── file_cache.py        # LRU cache for newsletter HTML (100 files, ~10MB)
+│       ├── static/              # Static assets (CSS, JS, favicon, logo)
+│       ├── templates/           # Jinja2 HTML templates (base, profile, calendar, metrics)
 │       ├── api/                 # RESTful JSON API v1 (macOS client)
 │       │   └── v1/
 │       │       ├── users.py
@@ -173,15 +178,14 @@ news-llama/
 │           └── health_check_service.py
 ├── NewsLlama/                   # Native macOS SwiftUI app (XcodeGen project)
 ├── tests/
-│   ├── unit/                    # CLI/batch mode tests (6 files)
-│   └── web/unit/                # Web application tests (35 files, 281+ functions)
+│   ├── test_*.py                # Root-level CLI tests (5 files)
+│   ├── unit/                    # Additional CLI/batch mode tests (4 files)
+│   └── web/unit/                # Web application tests (27 files + api/ subdir, 418+ functions)
 ├── docs/                        # Architecture, deployment, user guide
-├── config/                      # Configuration templates
-├── templates/                   # Jinja2 HTML templates
-├── output/                      # Generated digests (HTML, JSON, RSS)
-├── db/                          # Alembic migration files
-├── assets/                      # Static assets
+├── config/                      # Configuration templates (config.example.yaml)
+├── assets/                      # Static assets (logo.png)
 ├── screenshots/                 # Demo screenshots and GIFs
+├── db/                          # Alembic migration files
 └── .env.example                 # Environment variables template
 ```
 
@@ -220,13 +224,13 @@ LLM time:     ~21 minutes
 LLM_API_URL=http://localhost:8000/v1
 LLM_MODEL=llama-3.1-8b-instruct
 LLM_TEMPERATURE=0.7
-LLM_MAX_TOKENS=4000
+LLM_MAX_TOKENS=500
 
 # Reddit API (required for Reddit sources)
-REDDIT_CLIENT_ID=your_client_id
-REDDIT_CLIENT_SECRET=your_client_secret
-REDDIT_USERNAME=your_username
-REDDIT_PASSWORD=your_password
+REDDIT_CLIENT_ID=your_reddit_client_id
+REDDIT_CLIENT_SECRET=your_reddit_client_secret
+REDDIT_USERNAME=your_reddit_username
+REDDIT_PASSWORD=your_reddit_password
 
 # Output Settings
 MAX_ARTICLES_PER_CATEGORY=10  # Articles to show per category
@@ -273,13 +277,15 @@ The macOS app requires the web server to be running locally. Start the server fi
 
 The web server exposes a RESTful JSON API at `/api/v1` for use by the macOS client and other native consumers:
 
-| Prefix | Description |
-|--------|-------------|
-| `GET/POST /api/v1/users` | User creation and retrieval |
-| `GET /api/v1/interests/predefined` | Predefined interests (grouped or flat) |
-| `POST /api/v1/interests` | Add/remove interests for a user |
-| `GET /api/v1/newsletters` | List newsletters for a user |
-| `POST /api/v1/newsletters/generate` | Trigger newsletter generation |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/users` | List all users with interests and newsletter counts |
+| `GET` | `/api/v1/users/{user_id}` | Get user with full interest details |
+| `GET` | `/api/v1/users/{user_id}/newsletters` | Get newsletters for user (optional `?year=&month=`) |
+| `GET` | `/api/v1/interests/predefined` | Predefined interests (grouped; add `?flat=true` for flat list) |
+| `GET` | `/api/v1/interests/search` | Search predefined interests (`?q=query`) |
+| `GET` | `/api/v1/newsletters/{guid}/content` | Get newsletter metadata + HTML content |
+| `GET` | `/api/v1/newsletters/{guid}/render` | Render raw newsletter HTML (for WKWebView) |
 
 ---
 
@@ -324,11 +330,10 @@ SCHEDULER_MINUTE=0
 SCHEDULER_TIMEZONE=America/Los_Angeles
 
 # Database
-DATABASE_URL=sqlite:///./news_llama.db
+DATABASE_URL=sqlite:///data/news_llama.db
 
-# Web Server (optional, defaults shown)
-# HOST=127.0.0.1
-# PORT=8000
+# Security
+SECRET_KEY=your-secret-key-change-in-production
 ```
 
 #### 4. Start the Server
@@ -387,7 +392,7 @@ Check scheduler status: `http://localhost:8000/health/scheduler`
 Built with **FastAPI**, **SQLAlchemy**, **SQLite** (WAL mode), **Alembic** migrations, and **APScheduler** for background jobs.
 
 **Key Components**:
-- **Database**: 3 tables (Users, UserInterests, Newsletters) with optimized indexes
+- **Database**: 8 tables with optimized indexes — core (users, user_interests, newsletters) + discovery system (tier1_sources, source_blacklist, discovered_sources, source_health, source_contributions)
 - **Service Layer**: 15 service modules — core (user, interest, newsletter, generation, scheduler), discovery (autonomous_discovery, direct_search, list_mining, discovery_metrics), AI integration (tier1, llama_wrapper, llama_wrapper_tier1), and support (blacklist, health_check, quality_scoring)
 - **API**: RESTful endpoints with cookie-based sessions
 - **Performance**: Database indexes, rate limiting, LRU file caching, eager loading
@@ -395,8 +400,10 @@ Built with **FastAPI**, **SQLAlchemy**, **SQLite** (WAL mode), **Alembic** migra
 **Deep dive**: [Why We Over-Engineered Database Indexes for a Family SQLite App](https://open.substack.com/pub/stephenbrandon525517/p/a-love-letter-to-indexes-sqlite-and) - A detailed exploration of our indexing strategy and performance philosophy.
 
 **API Endpoints**:
-- **Pages**: `/`, `/profile/new`, `/calendar`, `/profile/settings`, `/newsletters/{guid}`
-- **API**: Profile creation/updates, interest management, newsletter generation/retry, health checks
+- **Pages**: `/`, `/profile/new`, `/calendar`, `/calendar/{year}/{month}`, `/profile/settings`, `/newsletters/{guid}`, `/metrics`
+- **Actions**: `/profile/create`, `/profile/avatar`, `/profile/settings/interests/add`, `/profile/settings/interests/remove`, `/newsletters/generate`, `/newsletters/{guid}/retry`
+- **Health**: `/health/scheduler`, `/health/generation`
+- **JSON API v1**: `/api/v1/users`, `/api/v1/users/{id}`, `/api/v1/users/{id}/newsletters`, `/api/v1/interests/predefined`, `/api/v1/interests/search`, `/api/v1/newsletters/{guid}/content`, `/api/v1/newsletters/{guid}/render`
 
 **Error Handling**: User-friendly messages for all scenarios, no stack traces exposed.
 
@@ -408,7 +415,10 @@ For detailed architecture documentation, see [docs/architecture.md](docs/archite
 
 ```bash
 # Database
-DATABASE_URL=sqlite:///./news_llama.db
+DATABASE_URL=sqlite:///data/news_llama.db
+
+# Security
+SECRET_KEY=your-secret-key-change-in-production
 
 # Scheduler
 SCHEDULER_ENABLED=true          # Enable/disable background scheduler
@@ -416,12 +426,12 @@ SCHEDULER_HOUR=6                # Hour for daily generation (0-23)
 SCHEDULER_MINUTE=0              # Minute for daily generation (0-59)
 SCHEDULER_TIMEZONE=America/Los_Angeles  # Timezone for scheduler
 
-# Server (optional, passed to uvicorn)
-# HOST=127.0.0.0
-# PORT=8000
-
 # Testing (disable scheduler during tests)
 TESTING=false
+
+# Logging
+LOG_LEVEL=INFO
+LOG_FILE=logs/news-llama.log
 ```
 
 All CLI configuration options (LLM, social media, processing) still apply to web mode.
@@ -439,23 +449,21 @@ For technical architecture details, see [docs/architecture.md](docs/architecture
 ### Development Commands
 
 ```bash
-# Install development dependencies
-./dev.sh install
-
-# Run tests
-./dev.sh test
-
-# Run with coverage
-./dev.sh test-coverage
-
-# Lint code
-./dev.sh lint
-
-# Format code
-./dev.sh format
+# Install dependencies
+pip install -r requirements.txt
 
 # Run the application
-./dev.sh run
+./venv/bin/uvicorn src.web.app:app --reload --port 8000
+
+# Lint code
+ruff check src/ tests/
+flake8 src/ tests/
+
+# Format code
+black src/ tests/
+
+# Type checking
+mypy src/
 ```
 
 ### Testing
@@ -463,7 +471,10 @@ For technical architecture details, see [docs/architecture.md](docs/architecture
 #### CLI Tests
 
 ```bash
-# Run CLI/batch mode tests
+# Run root-level CLI tests
+pytest tests/test_*.py
+
+# Run unit/ CLI tests
 pytest tests/unit/
 
 # Run specific test
@@ -480,7 +491,7 @@ TESTING=true PYTHONPATH=. pytest tests/web/unit/
 TESTING=true PYTHONPATH=. pytest tests/web/unit/ --cov=src/web --cov-report=html
 
 # Run specific test file
-TESTING=true PYTHONPATH=. pytest tests/web/unit/test_services.py
+TESTING=true PYTHONPATH=. pytest tests/web/unit/test_user_service.py
 ```
 
 **Note**: Set `TESTING=true` to disable background scheduler during tests.
@@ -489,26 +500,50 @@ TESTING=true PYTHONPATH=. pytest tests/web/unit/test_services.py
 
 ```
 tests/
-├── unit/                      # CLI/batch mode tests
-│   ├── test_models.py
-│   ├── test_content_processor.py
-│   ├── test_duplicate_detector.py
-│   ├── test_security.py
-│   └── test_integration.py
+├── test_models.py             # CLI model tests
+├── test_content_processor.py  # Content processor tests
+├── test_duplicate_detector.py # Duplicate detection tests
+├── test_security.py           # Security utility tests
+├── test_integration.py        # CLI integration tests
+├── unit/                      # Additional CLI/batch mode tests
+│   ├── test_llm_prompts.py
+│   ├── test_llm_summarizer_caching.py
+│   ├── test_main_tier1_integration.py
+│   └── test_models.py
 └── web/
-    └── unit/                  # Web application tests
-        ├── conftest.py        # Shared fixtures
-        ├── test_models.py     # SQLAlchemy models
-        ├── test_database.py   # Database setup
-        ├── test_services.py   # Service layer (5 test classes)
-        ├── test_routes.py     # API endpoints (6 test classes)
-        ├── test_performance.py  # Indexes, rate limiting, caching
-        ├── test_error_handlers.py  # Error handling
-        ├── test_ui_states.py  # Empty states, loading, validation
-        └── test_generation_service.py  # Newsletter generation
+    └── unit/                  # Web application tests (418+ functions)
+        ├── conftest.py        # Shared fixtures (in-memory SQLite)
+        ├── api/               # API v1 endpoint tests
+        │   ├── test_api_users.py
+        │   ├── test_api_interests.py
+        │   └── test_api_newsletters.py
+        ├── test_user_service.py
+        ├── test_interest_service.py
+        ├── test_newsletter_service.py
+        ├── test_generation_service.py
+        ├── test_scheduler_service.py
+        ├── test_llama_wrapper.py
+        ├── test_llama_wrapper_tier1.py
+        ├── test_autonomous_discovery_service.py
+        ├── test_direct_search_service.py
+        ├── test_list_mining_service.py
+        ├── test_discovery_metrics.py
+        ├── test_tier1_service.py
+        ├── test_blacklist_service.py
+        ├── test_quality_scoring.py
+        ├── test_health_check_service.py
+        ├── test_routes_profile.py
+        ├── test_routes_calendar.py
+        ├── test_routes_settings.py
+        ├── test_routes_newsletter.py
+        ├── test_routes_health.py
+        ├── test_error_handlers.py
+        ├── test_performance.py
+        ├── test_ui_states.py
+        └── test_source_discovery_models.py
 ```
 
-**Coverage Target**: 80%+ for src/web/ (500+ tests, 99%+ pass rate)
+**Coverage Target**: 80%+ for `src/` (enforced via `--cov-fail-under=80` in pytest.ini)
 
 ## Output Examples
 
@@ -559,7 +594,7 @@ Minimal configuration (env):
 LLM_API_URL=http://localhost:8000/v1
 LLM_MODEL=llama-3.1-8b-instruct
 LLM_TEMPERATURE=0.7
-LLM_MAX_TOKENS=4000
+LLM_MAX_TOKENS=500
 ```
 
 #### Code excerpts
@@ -642,6 +677,8 @@ await client.close()
 - **RSS Feed Errors**: Some discovered RSS feeds may return 404s (sites change URLs over time). This is normal and logged as warnings.
 - **Reddit Time Window**: Uses 24-hour `time_filter='day'` for top posts. Very low-activity subreddits may return 0 posts.
 - **No NSFW Support**: Intentionally excluded due to Reddit API limitations on restricted/quarantined subreddit access.
+- **HackerNews aggregator**: Disabled due to empty content extraction (HN uses external links, not on-site content).
+- **SQLite only**: Web mode uses SQLite; no PostgreSQL support (sufficient for single-server deployment).
 
 ## Contributing
 
