@@ -180,7 +180,7 @@ news-llama/
 ├── tests/
 │   ├── test_*.py                # Root-level CLI tests (5 files)
 │   ├── unit/                    # Additional CLI/batch mode tests (4 files)
-│   └── web/unit/                # Web application tests (27 files + api/ subdir, 418+ functions)
+│   └── web/unit/                # Web application tests (27 files + api/ subdir, 416 functions)
 ├── docs/                        # Architecture, deployment, user guide
 ├── config/                      # Configuration templates (config.example.yaml)
 ├── assets/                      # Static assets (logo.png)
@@ -511,7 +511,7 @@ tests/
 │   ├── test_main_tier1_integration.py
 │   └── test_models.py
 └── web/
-    └── unit/                  # Web application tests (418+ functions)
+    └── unit/                  # Web application tests (416 functions)
         ├── conftest.py        # Shared fixtures (in-memory SQLite)
         ├── api/               # API v1 endpoint tests
         │   ├── test_api_users.py
