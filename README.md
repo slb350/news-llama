@@ -271,7 +271,7 @@ xcodegen generate
 open "News Llama.xcodeproj"
 ```
 
-The macOS app requires the web server to be running locally. Start the server first (see Web Application below), then launch the app. The app communicates with the web server via the `/api/v1` endpoints.
+The macOS app defaults to `https://news.localbrandonfamily.com` as the server URL. For local development, update the URL in **Settings → General** to `http://localhost:8000`. Requires macOS 14.0+. Includes auto-update support via Sparkle (Check for Updates in Settings). The app communicates with the web server via the `/api/v1` endpoints.
 
 ### JSON API v1
 

@@ -68,6 +68,7 @@ news-llama/
 │       │   ├── calendar.html
 │       │   └── metrics.html
 │       ├── api/               # RESTful JSON API (v1)
+│       │   ├── schemas.py     # Pydantic schemas for API v1 responses
 │       │   └── v1/            # v1 routes: users.py, interests.py, newsletters.py
 │       └── services/          # 15 service modules: core (user, interest, newsletter,
 │                              #   generation, scheduler) + discovery (autonomous_discovery,
@@ -80,7 +81,7 @@ news-llama/
 │   │                          #   duplicate_detector, security, integration)
 │   ├── unit/                  # Additional CLI/batch mode tests (4 files: llm_prompts,
 │   │                          #   llm_summarizer_caching, main_tier1_integration, models)
-│   └── web/unit/              # Web application tests (27 files, 416 test functions)
+│   ├── web/unit/              # Web application tests (27 files, 416 test functions)
 │       ├── conftest.py        # Shared fixtures (in-memory SQLite for isolation)
 │       ├── api/               # API v1 endpoint tests (3 files)
 │       │   ├── test_api_users.py
@@ -110,6 +111,7 @@ news-llama/
 │       ├── test_performance.py         # Indexes, rate limiting, LRU caching
 │       ├── test_ui_states.py           # Empty/loading/error UI states
 │       └── test_source_discovery_models.py
+│   └── web/integration/       # Integration tests placeholder (empty, future use)
 ├── docs/                      # Architecture, deployment, user guide
 ├── config/                    # Configuration templates (config.example.yaml)
 ├── assets/                    # Static assets (logo.png)
@@ -367,4 +369,4 @@ xcodegen generate          # Requires XcodeGen
 open "News Llama.xcodeproj"
 ```
 
-The macOS app requires the web server running locally on port 8000. It communicates exclusively via the `/api/v1` JSON endpoints.
+The macOS app defaults to `https://news.localbrandonfamily.com` as the server URL, configurable via Settings → General. For local development, change the URL to `http://localhost:8000`. Requires macOS 14.0+. Includes auto-update support via the Sparkle framework (Check for Updates in Settings). Communicates exclusively via the `/api/v1` JSON endpoints.
