@@ -180,7 +180,7 @@ news-llama/
 ├── tests/
 │   ├── test_*.py                # Root-level CLI tests (5 files)
 │   ├── unit/                    # Additional CLI/batch mode tests (4 files)
-│   └── web/unit/                # Web application tests (27 files + api/ subdir, 416 functions)
+│   └── web/unit/                # Web application tests (26 files + api/ subdir, 416 functions)
 ├── docs/                        # Architecture, deployment, user guide
 ├── config/                      # Configuration templates (config.example.yaml)
 ├── assets/                      # Static assets (logo.png)

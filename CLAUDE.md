@@ -81,7 +81,7 @@ news-llama/
 │   │                          #   duplicate_detector, security, integration)
 │   ├── unit/                  # Additional CLI/batch mode tests (4 files: llm_prompts,
 │   │                          #   llm_summarizer_caching, main_tier1_integration, models)
-│   ├── web/unit/              # Web application tests (27 files, 416 test functions)
+│   ├── web/unit/              # Web application tests (26 files, 416 test functions)
 │       ├── conftest.py        # Shared fixtures (in-memory SQLite for isolation)
 │       ├── api/               # API v1 endpoint tests (3 files)
 │       │   ├── test_api_users.py
