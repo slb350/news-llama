@@ -156,6 +156,7 @@ news-llama/
 │       ├── static/              # Static assets (CSS, JS, favicon, logo)
 │       ├── templates/           # Jinja2 HTML templates (base, profile, calendar, metrics)
 │       ├── api/                 # RESTful JSON API v1 (macOS client)
+│       │   ├── schemas.py       # Pydantic schemas for API v1 responses
 │       │   └── v1/
 │       │       ├── users.py
 │       │       ├── interests.py
@@ -401,7 +402,7 @@ Built with **FastAPI**, **SQLAlchemy**, **SQLite** (WAL mode), **Alembic** migra
 
 **API Endpoints**:
 - **Pages**: `/`, `/profile/new`, `/calendar`, `/calendar/{year}/{month}`, `/profile/settings`, `/newsletters/{guid}`, `/metrics`
-- **Actions**: `/profile/create`, `/profile/avatar`, `/profile/settings/interests/add`, `/profile/settings/interests/remove`, `/newsletters/generate`, `/newsletters/{guid}/retry`
+- **Actions**: `/profile/create`, `/profile/avatar`, `/profile/{user_id}` (DELETE), `/profile/settings/interests/add`, `/profile/settings/interests/remove`, `/newsletters/generate`, `/newsletters/{guid}/retry`
 - **Health**: `/health/scheduler`, `/health/generation`
 - **JSON API v1**: `/api/v1/users`, `/api/v1/users/{id}`, `/api/v1/users/{id}/newsletters`, `/api/v1/interests/predefined`, `/api/v1/interests/search`, `/api/v1/newsletters/{guid}/content`, `/api/v1/newsletters/{guid}/render`
 
@@ -514,6 +515,7 @@ tests/
     └── unit/                  # Web application tests (416 functions)
         ├── conftest.py        # Shared fixtures (in-memory SQLite)
         ├── api/               # API v1 endpoint tests
+        │   ├── __init__.py
         │   ├── test_api_users.py
         │   ├── test_api_interests.py
         │   └── test_api_newsletters.py

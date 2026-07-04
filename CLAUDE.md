@@ -23,7 +23,7 @@ news-llama/
 │   │   ├── twitter_aggregator.py
 │   │   ├── reddit_aggregator.py # asyncpraw with 24h smart time filtering
 │   │   ├── hackernews_aggregator.py  # Disabled: empty content
-│   │   └── dynamic_aggregator.py    # AI-discovered sources
+│   │   └── dynamic_aggregator.py    # AI-discovered sources (Twitter delegate disabled: placeholder returns fake tweets)
 │   ├── processors/            # Content processing
 │   │   ├── content_processor.py    # Cleaning, filtering, categorization, scoring
 │   │   ├── duplicate_detector.py   # Cosine similarity dedup (threshold 0.8)
@@ -272,7 +272,7 @@ FastAPI app with 15 service modules. Service layer drives all business logic; ro
 |--------|----------|-------------|
 | `GET` | `/api/v1/users` | List all users with interests and newsletter counts |
 | `GET` | `/api/v1/users/{user_id}` | Get user with full interest details |
-| `GET` | `/api/v1/users/{user_id}/newsletters` | Get newsletters for user (by month) |
+| `GET` | `/api/v1/users/{user_id}/newsletters` | Get newsletters for user (optional `?year=&month=`; defaults to current month) |
 | `GET` | `/api/v1/interests/predefined` | Predefined interests (grouped or flat via `?flat=true`) |
 | `GET` | `/api/v1/interests/search` | Search predefined interests (`?q=query`) |
 | `GET` | `/api/v1/newsletters/{guid}/content` | Get newsletter content (JSON + HTML) |
@@ -298,6 +298,8 @@ FastAPI app with 15 service modules. Service layer drives all business logic; ro
 | `GET /metrics` | Discovery system metrics (public) |
 | `GET /health/scheduler` | Scheduler status and jobs |
 | `GET /health/generation` | Generation metrics and success rate |
+| `GET /favicon.ico` | Serves `static/favicon.ico` directly |
+| `GET /newsletters/logo.png` | Serves `static/logo.png` (backward compat for generated newsletter HTML) |
 
 ## Service Layer Details
 
