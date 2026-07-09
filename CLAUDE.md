@@ -2,7 +2,7 @@
 
 ## Project Description
 
-An AI-powered news curation engine that aggregates content from RSS, Twitter/X, Reddit, and web search (DuckDuckGo), then summarizes the most relevant articles using a local LLM via **open-agent-sdk**. Runs in CLI batch mode or as a persistent web application with multi-user support and automatic daily newsletter generation. (Hacker News aggregator exists but is disabled due to empty content extraction.)
+An AI-powered news curation engine that aggregates content from RSS, Reddit, and web search (DuckDuckGo), then summarizes the most relevant articles using a local LLM via **open-agent-sdk**. Runs in CLI batch mode or as a persistent web application with multi-user support and automatic daily newsletter generation. (Hacker News aggregator exists but is disabled due to empty content extraction. Twitter/X aggregator exists but is a placeholder — `_collect_from_user()` returns hardcoded fake tweets; tweepy is not called.)
 
 ## Repository Structure
 
@@ -20,10 +20,10 @@ news-llama/
 │   ├── aggregators/           # Source-specific aggregators
 │   │   ├── base.py            # BaseAggregator abstract class
 │   │   ├── rss_aggregator.py
-│   │   ├── twitter_aggregator.py
+│   │   ├── twitter_aggregator.py    # Unimplemented placeholder: returns hardcoded fake tweets, tweepy not called
 │   │   ├── reddit_aggregator.py # asyncpraw with 24h smart time filtering
 │   │   ├── hackernews_aggregator.py  # Disabled: empty content
-│   │   └── dynamic_aggregator.py    # AI-discovered sources (Twitter delegate disabled: placeholder returns fake tweets)
+│   │   └── dynamic_aggregator.py    # AI-discovered sources (Twitter delegate also disabled: delegates to placeholder)
 │   ├── processors/            # Content processing
 │   │   ├── content_processor.py    # Cleaning, filtering, categorization, scoring
 │   │   ├── duplicate_detector.py   # Cosine similarity dedup (threshold 0.8)
@@ -59,7 +59,9 @@ news-llama/
 │       │   ├── styles.css
 │       │   ├── avatar-manager.js
 │       │   ├── interest-manager.js
-│       │   └── form-accessibility.js
+│       │   ├── form-accessibility.js
+│       │   ├── favicon.ico
+│       │   └── logo.png
 │       ├── templates/         # Jinja2 HTML templates
 │       │   ├── base.html
 │       │   ├── profile_select.html
@@ -128,10 +130,11 @@ news-llama/
 | **CLI** | Python 3.8+, asyncio |
 | **Web Backend** | FastAPI 0.109+, SQLAlchemy 2.0+, SQLite (WAL mode) |
 | **Migrations** | Alembic |
-| **Scheduler** | APScheduler 3.10+ |
+| **Scheduler** | APScheduler 3.10+ (web mode), schedule (CLI mode) |
 | **LLM** | open-agent-sdk (OpenAI-compatible endpoints) with tool use |
-| **Content Sources** | RSS (feedparser), asyncpraw (Reddit), tweepy (Twitter), newspaper3k, BeautifulSoup4, ddgs (DuckDuckGo) |
-| **Text Processing** | NLTK, TextBlob (sentiment), newspaper3k (article extraction) |
+| **Content Sources** | RSS (feedparser), asyncpraw (Reddit), newspaper3k, BeautifulSoup4, ddgs (DuckDuckGo); tweepy listed in requirements but Twitter aggregator is unimplemented placeholder |
+| **Image Processing** | Pillow (avatar upload/resize), aiohttp (async image fetch) |
+| **Text Processing** | TextBlob (sentiment), newspaper3k (article extraction) |
 | **macOS App** | SwiftUI, XcodeGen |
 | **Templates** | Jinja2 |
 | **Logging** | loguru |
@@ -224,7 +227,7 @@ LOG_FILE=logs/news-llama.log
 ## Architecture
 
 ### CLI Mode
-`main.py` → aggregators (RSS, Twitter, Reddit, dynamic) → content processor (dedup, filter, score) → LLM summarizer → output generators (HTML/JSON/RSS)
+`main.py` → aggregators (RSS, Reddit, dynamic) → content processor (dedup, filter, score) → LLM summarizer → output generators (HTML/JSON/RSS) — Twitter aggregator is present but unimplemented (placeholder only)
 
 **Performance flow**: Articles are scored by recency + content quality + Reddit score, then pre-filtered to top N per category *before* LLM processing. This saves ~90% of LLM processing time (example: 661 raw articles → 100 pre-filtered → 78 valid LLM-summarized).
 
