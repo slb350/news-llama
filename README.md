@@ -1,6 +1,6 @@
 # News Llama 📰🦙
 
-AI-powered news curation engine that aggregates content from RSS, Twitter/X, Reddit, and web search (DuckDuckGo), then summarizes the most relevant articles using a local LLM via open-agent-sdk.
+AI-powered news curation engine that aggregates content from RSS, Reddit, and web search (DuckDuckGo), then summarizes the most relevant articles using a local LLM via open-agent-sdk. (Twitter/X aggregator exists in the codebase but is an unimplemented placeholder — no tweets are actually collected.)
 
 ![News Llama Demo](screenshots/demo.gif)
 
@@ -11,7 +11,7 @@ Tired of doom-scrolling through endless feeds? News Llama curates a personalized
 ## Features
 
 - **AI-Powered Source Discovery**: Five-tier progressive discovery strategy with intelligent subreddit matching
-- **Multi-Source Aggregation**: RSS, Twitter/X, Reddit (with smart time filtering for 24h top posts)
+- **Multi-Source Aggregation**: RSS, Reddit (with smart time filtering for 24h top posts); Twitter/X aggregator is an unimplemented placeholder
 - **Smart Content Processing**: Duplicate detection, sentiment analysis, keyword extraction
 - **Performance Optimized**: Pre-filters articles before LLM summarization (saves ~90% of LLM time!)
 - **AI Summarization**: Local LLM-powered summarization via open-agent-sdk
@@ -87,7 +87,7 @@ News Llama uses a **five-tier progressive discovery strategy** with intelligent 
    - Finds exact matches: "rust" → r/rust (NOT r/RustBelt)
    - Discovers variants: r/learnrust, r/rust_gamedev
    - Identifies specialized communities
-3. **Broad LLM Discovery**: Multi-source discovery (Twitter, RSS feeds)
+3. **Broad LLM Discovery**: Multi-source discovery (RSS feeds; Twitter/X discovery is in the prompt but aggregation is unimplemented)
 4. **Exact Match Fallback**: Tries r/{interest} directly
 5. **Reddit Search**: Last resort across all subreddits
 
@@ -95,7 +95,7 @@ News Llama uses a **five-tier progressive discovery strategy** with intelligent 
 
 **Interest: "AI"** → Discovers:
 - **Reddit**: r/MachineLearning, r/LocalLLaMA, r/OpenAI, r/ClaudeAI, r/singularity
-- **Twitter**: @sama, @ylecun, @karpathy, @fchollet, @openai
+- **Twitter**: @sama, @ylecun, @karpathy, @fchollet, @openai *(discovery only — Twitter aggregation is unimplemented)*
 - **RSS**: OpenAI Blog, Anthropic News, DeepMind Blog
 
 **Interest: "boxoffice"** → Discovers:
@@ -112,15 +112,17 @@ news-llama/
 ├── main.py                      # CLI entry point (NewsLlama class, async orchestration)
 ├── setup.py                     # Automated setup script
 ├── take_screenshots.py          # Screenshot helper for macOS app
-├── requirements.txt             # Python dependencies (35 packages)
+├── requirements.txt             # Python dependencies (37 packages)
 ├── alembic.ini                  # Database migration configuration
+├── pytest.ini                   # Test configuration (80%+ coverage target)
 ├── CONTRIBUTING.md              # Contribution guidelines
 ├── CHANGELOG.md                 # Project changelog
+├── LICENSE
 ├── src/
 │   ├── aggregators/             # Source-specific aggregators
 │   │   ├── base.py              # BaseAggregator abstract class
 │   │   ├── rss_aggregator.py
-│   │   ├── twitter_aggregator.py
+│   │   ├── twitter_aggregator.py    # Unimplemented placeholder: returns hardcoded fake tweets
 │   │   ├── reddit_aggregator.py # asyncpraw with 24h smart time filtering
 │   │   ├── hackernews_aggregator.py  # Disabled: empty content
 │   │   └── dynamic_aggregator.py  # AI-discovered sources

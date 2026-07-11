@@ -11,11 +11,12 @@ news-llama/
 ├── main.py                    # CLI entry point (NewsLlama class, async orchestration)
 ├── setup.py                   # Automated setup script
 ├── take_screenshots.py        # Screenshot helper for macOS app
-├── requirements.txt           # 35 Python dependencies
+├── requirements.txt           # 37 Python dependencies
 ├── alembic.ini                # Database migration configuration
 ├── pytest.ini                 # Test configuration (80%+ coverage target)
 ├── CONTRIBUTING.md            # Contribution guidelines
 ├── CHANGELOG.md               # Project changelog
+├── LICENSE
 ├── src/
 │   ├── aggregators/           # Source-specific aggregators
 │   │   ├── base.py            # BaseAggregator abstract class
