@@ -11,7 +11,7 @@ news-llama/
 ├── main.py                    # CLI entry point (NewsLlama class, async orchestration)
 ├── setup.py                   # Automated setup script
 ├── take_screenshots.py        # Screenshot helper for macOS app
-├── requirements.txt           # 36 Python dependencies
+├── requirements.txt           # 35 Python dependencies
 ├── alembic.ini                # Database migration configuration
 ├── pytest.ini                 # Test configuration (80%+ coverage target)
 ├── CONTRIBUTING.md            # Contribution guidelines
@@ -118,7 +118,7 @@ news-llama/
 │       ├── test_performance.py         # Indexes, rate limiting, LRU caching
 │       ├── test_ui_states.py           # Empty/loading/error UI states
 │       └── test_source_discovery_models.py
-│   └── web/integration/       # Integration tests placeholder (empty, future use)
+│   └── web/integration/       # Integration tests placeholder (contains only __init__.py; future use)
 ├── docs/                      # Architecture, deployment, user guide
 ├── config/                    # Configuration templates (config.example.yaml)
 ├── assets/                    # Static assets (logo.png)

@@ -186,7 +186,7 @@ news-llama/
 │   ├── web/
 │   │   ├── __init__.py
 │   │   ├── unit/                # Web application tests (26 files + api/ subdir, 416 functions)
-│   │   └── integration/         # Integration tests placeholder (empty, future use)
+│   │   └── integration/         # Integration tests placeholder (contains only __init__.py; future use)
 ├── docs/                        # Architecture, deployment, user guide
 ├── config/                      # Configuration templates (config.example.yaml)
 ├── assets/                      # Static assets (logo.png)
