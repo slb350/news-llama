@@ -185,7 +185,7 @@ news-llama/
 │   ├── unit/                    # Additional CLI/batch mode tests (4 files)
 │   ├── web/
 │   │   ├── __init__.py
-│   │   ├── unit/                # Web application tests (26 files + api/ subdir, 416 functions)
+│   │   ├── unit/                # Web application tests (26 files + api/ subdir, 416 functions; 528 total across all test directories)
 │   │   └── integration/         # Integration tests placeholder (contains only __init__.py; future use)
 ├── docs/                        # Architecture, deployment, user guide
 ├── config/                      # Configuration templates (config.example.yaml)
@@ -517,7 +517,7 @@ tests/
 │   ├── test_main_tier1_integration.py
 │   └── test_models.py
 └── web/
-    └── unit/                  # Web application tests (416 functions)
+    └── unit/                  # Web application tests (416 functions; 528 total across all test directories)
         ├── conftest.py        # Shared fixtures (in-memory SQLite)
         ├── api/               # API v1 endpoint tests
         │   ├── __init__.py

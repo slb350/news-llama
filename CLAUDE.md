@@ -86,7 +86,7 @@ news-llama/
 │   │                          #   llm_summarizer_caching, main_tier1_integration, models)
 │   ├── web/
 │       ├── __init__.py
-│   ├── web/unit/              # Web application tests (26 files + api/ subdir, 416 test functions)
+│   ├── web/unit/              # Web application tests (26 files + api/ subdir, 416 test functions; 528 total across all test directories)
 │       ├── __init__.py
 │       ├── conftest.py        # Shared fixtures (in-memory SQLite for isolation)
 │       ├── api/               # API v1 endpoint tests (4 files)
