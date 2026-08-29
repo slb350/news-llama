@@ -136,7 +136,7 @@ news-llama/
 | **Migrations** | Alembic |
 | **Scheduler** | APScheduler 3.10+ (web mode), schedule (CLI mode) |
 | **LLM** | open-agent-sdk (OpenAI-compatible endpoints) with tool use |
-| **Content Sources** | RSS (feedparser), asyncpraw (Reddit), newspaper3k, BeautifulSoup4, ddgs (DuckDuckGo); tweepy listed in requirements but Twitter aggregator is unimplemented placeholder |
+| **Content Sources** | RSS (feedparser), asyncpraw (Reddit), newspaper3k, BeautifulSoup4, ddgs (DuckDuckGo), lxml-html-clean (HTML cleaning for newspaper3k); tweepy listed in requirements but Twitter aggregator is unimplemented placeholder |
 | **Image Processing** | Pillow (avatar upload/resize), aiohttp (async image fetch), python-magic (MIME type validation for avatar uploads) |
 | **Text Processing** | TextBlob (sentiment), newspaper3k (article extraction) |
 | **macOS App** | SwiftUI, XcodeGen |
