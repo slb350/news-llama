@@ -715,3 +715,4 @@ This project is open source. See LICENSE file for details.
 - **TextBlob**: Sentiment analysis and keyword extraction
 - **Pydantic**: Data validation and settings management
 - **Jinja2**: Beautiful HTML template rendering
+- **lxml-html-clean**: HTML cleaning for newspaper3k article extraction
