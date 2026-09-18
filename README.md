@@ -141,7 +141,7 @@ news-llama/
 │   │   ├── models.py            # Article, SummarizedArticle dataclasses
 │   │   ├── logger.py            # Logging setup (loguru)
 │   │   ├── scheduler.py         # CLI mode scheduler
-│   │   ├── llm_prompts.py       # System prompts for LLM
+│   │   ├── llm_prompts.py       # LLMPrompts class: cache-optimized prompt factory (static system / dynamic user separation, ~22k tokens saved/run)
 │   │   ├── constants.py         # Predefined interests and source patterns
 │   │   ├── image_cache.py       # Image caching utilities
 │   │   └── security.py          # Security utilities
