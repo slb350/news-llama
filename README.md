@@ -562,7 +562,7 @@ tests/
 - **Responsive Design**: Mobile-friendly layout
 
 ### Article Information
-- **AI-generated summaries**: Concise summaries and 5-7 key bullet points
+- **AI-generated summaries**: Concise summaries and 3-5 key bullet points
 - **Sentiment analysis**: 0-100% score based on article language tone
   - 0-40%: Negative sentiment
   - 40-60%: Neutral/factual
@@ -582,7 +582,7 @@ The LLM analyzes your interests and suggests relevant sources across platforms, 
 ### Content Summarization
 Each article is summarized with:
 - ~500-word summary
-- 5-7 key bullet points
+- 3-5 key bullet points
 - Importance score (0.1-1.0)
 
 ### Smart Reasoning
