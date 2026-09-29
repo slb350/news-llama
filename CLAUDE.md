@@ -251,7 +251,7 @@ FastAPI app with 15 service modules. Service layer drives all business logic; ro
 
 ### LLM Integration (open-agent-sdk)
 - **Prompts**: `LLMPrompts` class (`src/utils/llm_prompts.py`) provides a cache-optimized prompt factory separating static system prompts from dynamic user prompts. The CLI-mode summarizer and source discovery reverted to inline prompts due to ROCm/AMD GPU memory issues with prompt caching; only the web layer's `direct_search_service.py` still uses `LLMPrompts`. The class and its token-estimate constants remain for future re-enablement.
-- **Summarization**: Streaming JSON-first prompting. Model returns `{"summary": ..., "key_points": [...], "importance_score": 0.0-1.0}`. Parsed from streamed text after completion.
+- **Summarization**: Streaming JSON-first prompting. Model returns `{"summary": ..., "key_points": [...], "importance_score": 0.1-1.0}`. Parsed from streamed text after completion.
 - **Source discovery**: Tool use pattern with `web_search` (DuckDuckGo). `auto_execute_tools=False` — manual tool execution loop so we can inject custom search logic.
 - **Error handling**: LLM timeout/failure on any article → that article skipped (not fatal). Generation failure → retry up to 3 times.
 

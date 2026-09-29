@@ -567,7 +567,7 @@ tests/
   - 0-40%: Negative sentiment
   - 40-60%: Neutral/factual
   - 60-100%: Positive sentiment
-- **Importance scoring**: LLM-generated 0.0-1.0 relevance score
+- **Importance scoring**: LLM-generated 0.1-1.0 relevance score
 - **Reading time estimates**: Based on word count
 - **Source attribution**: Shows original source + discovery reasoning
 - **Quality indicators**: Reddit scores, upvote ratios for social content
