@@ -2,6 +2,23 @@
 
 All notable changes to News Llama will be documented in this file.
 
+## 2026-10-04 (branch `fix/source-discovery-and-test-rot`, not merged)
+
+Repair pass, stopped partway because the project is no longer in use.
+
+### Fixed
+- LLM source discovery read `source_type`/`confidence_score`/`reason` while the prompt asks for `type`/`confidence`/`reasoning`, so every discovered source was routed as `web_search`
+- `your_*` placeholder API keys from `.env.example` passed validation
+- RSS and Hacker News publication times were naive and mixed local and UTC; both now emit timezone-aware UTC
+- Duplicate detection scores content-word Dice overlap with a 0.6 threshold; the same-domain bonus is gone
+- Placeholder `example.com` articles for web-search sources and the unreachable tool-use path in discovery are removed
+- Calendar grid aligns with real weekdays, and the "first newsletter" empty state shows only for users with no newsletters
+- `pytest.ini` used a `[tool:pytest]` header, so pytest ignored it; the 80% coverage gate and strict markers now apply
+- 19 stale or broken tests repaired; suite is 616 passed at 83% coverage
+
+### Remaining
+- `ruff check .` reports 236 findings under ruff 0.16.10's default rules, mostly naive `datetime.now()`/`date.today()` (DTZ, 143) and blind `except Exception` (BLE001, 53)
+
 ## [0.1.0] - 2024-XX-XX
 
 ### Added
