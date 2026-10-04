@@ -23,10 +23,10 @@ def add_tier1_source(
     interests: list[str],
     quality_score: float,
     discovered_via: str,
-    source_url: str = None,
-    description: str = None,
-    avg_posts_per_day: float = None,
-    domain_age_years: int = None,
+    source_url: str | None = None,
+    description: str | None = None,
+    avg_posts_per_day: float | None = None,
+    domain_age_years: int | None = None,
 ) -> Tier1Source:
     """
     Add source to Tier 1 or update if exists.

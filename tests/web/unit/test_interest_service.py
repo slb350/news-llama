@@ -354,7 +354,7 @@ class TestGetPredefinedInterestsGrouped:
         """Each group should have name, emoji, and interests."""
         grouped = get_predefined_interests_grouped()
 
-        for group_key, group_data in grouped.items():
+        for group_data in grouped.values():
             assert "name" in group_data
             assert "emoji" in group_data
             assert "interests" in group_data

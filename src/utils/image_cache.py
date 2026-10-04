@@ -52,10 +52,7 @@ def is_image_url(url: str) -> bool:
         return True
 
     # Check extension
-    if any(path.endswith(ext) for ext in IMAGE_EXTENSIONS):
-        return True
-
-    return False
+    return bool(any(path.endswith(ext) for ext in IMAGE_EXTENSIONS))
 
 
 def is_video_url(url: str) -> bool:
@@ -109,25 +106,24 @@ async def download_and_cache_image(url: str) -> str | None:
         # Clean up Reddit preview URLs (they have HTML entities)
         clean_url = url.replace("&amp;", "&")
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                clean_url,
-                timeout=aiohttp.ClientTimeout(total=30),
-                headers={
-                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-                    "Accept": "image/webp,image/apng,image/*,*/*;q=0.8",
-                }
-            ) as response:
-                if response.status != 200:
-                    logger.warning(f"Failed to download image: {url} (status {response.status})")
-                    return None
+        async with aiohttp.ClientSession() as session, session.get(
+            clean_url,
+            timeout=aiohttp.ClientTimeout(total=30),
+            headers={
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+                "Accept": "image/webp,image/apng,image/*,*/*;q=0.8",
+            }
+        ) as response:
+            if response.status != 200:
+                logger.warning(f"Failed to download image: {url} (status {response.status})")
+                return None
 
-                content_type = response.headers.get("Content-Type", "")
-                if not content_type.startswith("image/"):
-                    logger.warning(f"Not an image: {url} (content-type: {content_type})")
-                    return None
+            content_type = response.headers.get("Content-Type", "")
+            if not content_type.startswith("image/"):
+                logger.warning(f"Not an image: {url} (content-type: {content_type})")
+                return None
 
-                data = await response.read()
+            data = await response.read()
 
         # Process image with PIL
         image = Image.open(io.BytesIO(data))

@@ -141,10 +141,7 @@ class HackerNewsAggregator(BaseAggregator):
         # Skip job postings (could be configurable)
         job_keywords = ['hiring', 'looking for', 'job', 'career']
         title_lower = article.title.lower()
-        if any(keyword in title_lower for keyword in job_keywords):
-            return False
-
-        return True
+        return not any(keyword in title_lower for keyword in job_keywords)
 
     async def _fetch_content_for_top_articles(self, articles: list[Article], top_n: int = 5) -> list[Article]:
         """

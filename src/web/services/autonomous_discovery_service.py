@@ -81,7 +81,7 @@ KNOWN_LISTS = {
 }
 
 
-async def run_weekly_discovery(db: Session, interests: list[str] = None) -> dict:
+async def run_weekly_discovery(db: Session, interests: list[str] | None = None) -> dict:
     """
     Run weekly autonomous discovery job.
 
@@ -170,16 +170,14 @@ async def run_weekly_discovery(db: Session, interests: list[str] = None) -> dict
             score_input["discovery_count"] = 2
 
         # For Reddit: estimate activity from articles_found
-        if candidate["source_type"] == "reddit" and "articles_found" in health:
-            # Rough estimate: if health check found 50+ articles, likely active (>5/day)
-            if health["articles_found"] >= 20:
-                score_input["avg_posts_per_day"] = 10.0
+        # Rough estimate: 20+ articles found by the health check means likely active (>5/day)
+        if candidate["source_type"] == "reddit" and health.get("articles_found", 0) >= 20:
+            score_input["avg_posts_per_day"] = 10.0
 
         # For RSS: estimate update frequency from articles_found
-        if candidate["source_type"] == "rss" and "articles_found" in health:
-            # If found 10+ articles, likely updated frequently
-            if health["articles_found"] >= 10:
-                score_input["posts_last_30_days"] = 15
+        # 10+ articles found means the feed is likely updated frequently
+        if candidate["source_type"] == "rss" and health.get("articles_found", 0) >= 10:
+            score_input["posts_last_30_days"] = 15
             # Assume established RSS feeds (3+ years) if they have good content
             if health["articles_found"] >= 5:
                 score_input["domain_age_years"] = 5

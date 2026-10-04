@@ -126,7 +126,7 @@ def rate_limit(identifier_func, limiter: RateLimiter = newsletter_rate_limiter):
             identifier = None
 
             # Try to get identifier from kwargs
-            for key, value in kwargs.items():
+            for value in kwargs.values():
                 try:
                     identifier = identifier_func(value)
                     break
@@ -139,7 +139,7 @@ def rate_limit(identifier_func, limiter: RateLimiter = newsletter_rate_limiter):
                 return await func(*args, **kwargs)
 
             # Check rate limit
-            is_allowed, remaining = limiter.is_allowed(str(identifier))
+            is_allowed, _remaining = limiter.is_allowed(str(identifier))
 
             if not is_allowed:
                 raise HTTPException(

@@ -534,7 +534,7 @@ async def generate_newsletter(
     # Apply rate limiting only for authenticated users
     from src.web.rate_limiter import newsletter_rate_limiter
 
-    is_allowed, remaining = newsletter_rate_limiter.is_allowed(str(user.id))
+    is_allowed, _remaining = newsletter_rate_limiter.is_allowed(str(user.id))
     if not is_allowed:
         raise HTTPException(
             status_code=429,

@@ -230,13 +230,10 @@ class RedditAggregator(BaseAggregator):
         image_url = None
         is_gallery = False
         gallery_count = 0
-        is_video = False
 
-        # Check if it's a video link (redgifs, v.redd.it, etc.)
-        if hasattr(submission, "url") and submission.url:
-            if is_video_url(submission.url):
-                is_video = True
-                return (submission.url, False, 0, True)
+        # Video links (redgifs, v.redd.it, etc.) carry no still image
+        if getattr(submission, "url", None) and is_video_url(submission.url):
+            return (submission.url, False, 0, True)
 
         # Check for Reddit galleries (multiple images)
         if getattr(submission, "is_gallery", False):
@@ -263,21 +260,18 @@ class RedditAggregator(BaseAggregator):
                                 image_url = image_url.replace("&amp;", "&")
 
         # Check for direct image URL (i.redd.it, imgur, etc.)
-        if not image_url and hasattr(submission, "url") and submission.url:
-            if is_image_url(submission.url):
-                image_url = submission.url
+        if not image_url and getattr(submission, "url", None) and is_image_url(submission.url):
+            image_url = submission.url
 
         # Fall back to preview images
-        if not image_url:
-            if hasattr(submission, "preview") and submission.preview:
-                images = submission.preview.get("images", [])
-                if images:
-                    source = images[0].get("source", {})
-                    image_url = source.get("url")
-                    if image_url:
-                        image_url = image_url.replace("&amp;", "&")
+        if not image_url and getattr(submission, "preview", None):
+            images = submission.preview.get("images", [])
+            if images:
+                image_url = images[0].get("source", {}).get("url")
+                if image_url:
+                    image_url = image_url.replace("&amp;", "&")
 
-        return (image_url, is_gallery, gallery_count, is_video)
+        return (image_url, is_gallery, gallery_count, False)
 
     def _is_valid_article(self, article: Article) -> bool:
         """Validate Reddit post meets quality criteria"""

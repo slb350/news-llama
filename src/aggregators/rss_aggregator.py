@@ -155,13 +155,14 @@ class RSSAggregator(BaseAggregator):
         image_url = None
         if hasattr(entry, 'enclosures') and entry.enclosures:
             for enclosure in entry.enclosures:
-                if hasattr(enclosure, 'type') and enclosure.type.startswith('image/'):
-                    if hasattr(enclosure, 'href') and enclosure.href:
-                        if URLValidator.is_valid_url(enclosure.href):
-                            image_url = URLValidator.sanitize_url(enclosure.href)
-                            break
-                        else:
-                            logger.warning(f"Invalid image URL in RSS entry: {enclosure.href}")
+                is_image = getattr(enclosure, 'type', '').startswith('image/')
+                href = getattr(enclosure, 'href', None)
+                if not (is_image and href):
+                    continue
+                if URLValidator.is_valid_url(href):
+                    image_url = URLValidator.sanitize_url(href)
+                    break
+                logger.warning(f"Invalid image URL in RSS entry: {href}")
 
         return Article(
             title=entry.title,

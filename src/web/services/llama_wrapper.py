@@ -66,7 +66,7 @@ def generate_newsletter_for_interests(interests: list[str], output_date: date) -
         raise NewsLlamaWrapperError(f"Failed to generate newsletter: {e!s}")
 
 
-def get_output_file_path(output_date: date, guid: str = None) -> str:
+def get_output_file_path(output_date: date, guid: str | None = None) -> str:
     """
     Get output file path for newsletter.
 
@@ -118,9 +118,9 @@ def ensure_output_directory(directory_path: str):
 def generate_newsletter_with_tier1(
     interests: list[str],
     output_date: date,
-    newsletter_id: int = None,
+    newsletter_id: int | None = None,
     db: Session = None,
-    guid: str = None,
+    guid: str | None = None,
 ) -> str:
     """
     Generate newsletter using Tier 1 sources when available.
@@ -150,7 +150,7 @@ def generate_newsletter_with_tier1(
         # Check Tier 1 coverage
         pre_discovered = None
         if db:
-            tier1_sources, coverage = llama_wrapper_tier1.get_sources_with_coverage(
+            _tier1_sources, coverage = llama_wrapper_tier1.get_sources_with_coverage(
                 db, interests
             )
 

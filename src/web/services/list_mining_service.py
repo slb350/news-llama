@@ -30,13 +30,12 @@ async def mine_github_list(url: str, interest: str) -> list[dict]:
     list_name = url.split("/")[-1]
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status != 200:
-                    logger.warning(f"Failed to fetch {url}: {response.status}")
-                    return []
+        async with aiohttp.ClientSession() as session, session.get(url) as response:
+            if response.status != 200:
+                logger.warning(f"Failed to fetch {url}: {response.status}")
+                return []
 
-                content = await response.text()
+            content = await response.text()
 
         # Extract RSS/Atom feeds
         rss_pattern = r"\[([^\]]+)\]\((https?://[^\)]+\.(?:xml|rss|atom|feed))\)"
@@ -89,13 +88,12 @@ async def mine_reddit_wiki(url: str, interest: str) -> list[dict]:
     sources = []
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status != 200:
-                    logger.warning(f"Failed to fetch {url}: {response.status}")
-                    return []
+        async with aiohttp.ClientSession() as session, session.get(url) as response:
+            if response.status != 200:
+                logger.warning(f"Failed to fetch {url}: {response.status}")
+                return []
 
-                content = await response.text()
+            content = await response.text()
 
         # Extract subreddit mentions
         reddit_pattern = r"/r/([a-zA-Z0-9_]+)"

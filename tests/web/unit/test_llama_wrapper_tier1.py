@@ -158,7 +158,7 @@ class TestTier1FastPath:
         # Should still call NewsLlama with user interests (for LLM discovery)
         mock_news_llama_class.assert_called_once()
         # Get positional and keyword arguments
-        args, kwargs = mock_news_llama_class.call_args
+        _args, kwargs = mock_news_llama_class.call_args
         # In hybrid mode: still passes user interests for LLM discovery
         assert "user_interests" in kwargs
         assert kwargs["user_interests"] == ["Rust", "Python", "Go"]

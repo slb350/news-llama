@@ -29,10 +29,10 @@ class NewsLlama:
 
     def __init__(
         self,
-        config_path: str = None,
-        user_interests: list[str] = None,
-        pre_discovered_sources: list = None,
-        output_filename: str = None,
+        config_path: str | None = None,
+        user_interests: list[str] | None = None,
+        pre_discovered_sources: list | None = None,
+        output_filename: str | None = None,
     ):
         # Skip default sources if user interests or pre-discovered sources are specified
         skip_defaults = bool(user_interests or pre_discovered_sources)
@@ -386,7 +386,7 @@ class NewsLlama:
             raise
 
 
-async def main(interests: list[str] = None, schedule_mode: bool = False):
+async def main(interests: list[str] | None = None, schedule_mode: bool = False):
     """Main entry point"""
     setup_logging()
 

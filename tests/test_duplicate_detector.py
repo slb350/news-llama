@@ -320,7 +320,7 @@ class TestDuplicateDetector:
         assert len(result) > 0
 
         # Articles should be processed by category
-        categories = set(article.category for article in result)
+        categories = {article.category for article in result}
         assert "technology" in categories
         assert "programming" in categories
         assert "environment" in categories

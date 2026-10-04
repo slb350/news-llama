@@ -10,20 +10,20 @@ from src.aggregators.reddit_aggregator import RedditAggregator
 
 
 def _submission(**fields):
-    defaults = dict(
-        title="A sufficiently long link post title",
-        selftext="",
-        is_self=False,
-        url="https://example.com/story",
-        permalink="/r/rust/comments/1/story/",
-        subreddit="rust",
-        author="alice",
-        created_utc=time.time() - 3600,
-        score=42,
-        num_comments=7,
-        upvote_ratio=0.95,
-        link_flair_text="news",
-    )
+    defaults = {
+        "title": "A sufficiently long link post title",
+        "selftext": "",
+        "is_self": False,
+        "url": "https://example.com/story",
+        "permalink": "/r/rust/comments/1/story/",
+        "subreddit": "rust",
+        "author": "alice",
+        "created_utc": time.time() - 3600,
+        "score": 42,
+        "num_comments": 7,
+        "upvote_ratio": 0.95,
+        "link_flair_text": "news",
+    }
     defaults.update(fields)
     return SimpleNamespace(**defaults)
 
@@ -56,7 +56,7 @@ class FakeReddit:
 
 
 def _config(sources=None, **creds):
-    social = dict(reddit_client_id=None, reddit_client_secret=None, reddit_username=None, reddit_password=None, reddit_user_agent=None)
+    social = {"reddit_client_id": None, "reddit_client_secret": None, "reddit_username": None, "reddit_password": None, "reddit_user_agent": None}
     social.update(creds)
     return SimpleNamespace(
         social_media=SimpleNamespace(**social),

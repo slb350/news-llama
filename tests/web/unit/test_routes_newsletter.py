@@ -112,7 +112,7 @@ class TestGenerateNewsletterPost:
         self, mock_process, authenticated_client, db: Session
     ):
         """Should prevent duplicate newsletters for same user/date."""
-        client, user = authenticated_client
+        client, _user = authenticated_client
 
         # Create first newsletter
         response1 = client.post("/newsletters/generate", json={"date": "2025-10-22"})
@@ -132,7 +132,7 @@ class TestGenerateNewsletterPost:
         self, mock_process, authenticated_client
     ):
         """Should use today's date if not specified."""
-        client, user = authenticated_client
+        client, _user = authenticated_client
 
         response = client.post("/newsletters/generate", json={})
 
@@ -146,7 +146,7 @@ class TestGenerateNewsletterPost:
     @patch("src.web.services.generation_service.process_newsletter_generation")
     def test_generate_accepts_future_dates(self, mock_process, authenticated_client):
         """Should allow generating newsletters for future dates."""
-        client, user = authenticated_client
+        client, _user = authenticated_client
 
         future_date = (date.today() + timedelta(days=7)).isoformat()
         response = client.post("/newsletters/generate", json={"date": future_date})
@@ -158,7 +158,7 @@ class TestGenerateNewsletterPost:
     @patch("src.web.services.generation_service.process_newsletter_generation")
     def test_generate_validates_date_format(self, mock_process, authenticated_client):
         """Should reject invalid date formats."""
-        client, user = authenticated_client
+        client, _user = authenticated_client
 
         # Invalid date format
         response = client.post("/newsletters/generate", json={"date": "10-22-2025"})
@@ -170,7 +170,7 @@ class TestGenerateNewsletterPost:
         self, mock_process, authenticated_client, db: Session
     ):
         """Should queue background generation job."""
-        client, user = authenticated_client
+        client, _user = authenticated_client
 
         response = client.post("/newsletters/generate", json={"date": "2025-10-22"})
 
@@ -190,7 +190,7 @@ class TestGenerateNewsletterPost:
         self, mock_process, authenticated_client
     ):
         """Should allow same user to generate newsletters for different dates."""
-        client, user = authenticated_client
+        client, _user = authenticated_client
 
         response1 = client.post("/newsletters/generate", json={"date": "2025-10-22"})
         response2 = client.post("/newsletters/generate", json={"date": "2025-10-23"})
@@ -377,7 +377,7 @@ class TestNewsletterRetry:
 
     def test_retry_nonexistent_newsletter(self, authenticated_client):
         """Should return 404 for non-existent newsletter."""
-        client, user = authenticated_client
+        client, _user = authenticated_client
 
         response = client.post("/newsletters/invalid-guid-12345/retry")
 
@@ -451,7 +451,7 @@ class TestNewsletterIntegration:
         self, mock_llama_class, authenticated_client, db: Session
     ):
         """Test complete workflow: generate → process → retrieve."""
-        client, user = authenticated_client
+        client, _user = authenticated_client
 
         # Mock NewsLlama
         from unittest.mock import AsyncMock

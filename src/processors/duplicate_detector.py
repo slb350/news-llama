@@ -43,7 +43,7 @@ class DuplicateDetector:
         unique_articles = []
         duplicates_found = 0
         
-        for category, category_articles in articles_by_category.items():
+        for category_articles in articles_by_category.values():
             unique_in_category, dup_count = self._deduplicate_category(category_articles)
             unique_articles.extend(unique_in_category)
             duplicates_found += dup_count

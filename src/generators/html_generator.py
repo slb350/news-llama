@@ -25,7 +25,7 @@ class HTMLGenerator:
             autoescape=True
         )
     
-    def generate(self, articles: list[SummarizedArticle], output_filename: str = None) -> None:
+    def generate(self, articles: list[SummarizedArticle], output_filename: str | None = None) -> None:
         """
         Generate HTML output
 
@@ -47,7 +47,7 @@ class HTMLGenerator:
             f"Generated HTML with {len(digest.articles_by_category)} categories and {digest.total_articles} articles"
         )
     
-    def _generate_html_page(self, digest: NewsDigest, output_filename: str = None) -> None:
+    def _generate_html_page(self, digest: NewsDigest, output_filename: str | None = None) -> None:
         """
         Generate the main HTML page
 

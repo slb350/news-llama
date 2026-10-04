@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def add_to_blacklist(
-    db: Session, source_type: str, source_key: str, reason: str, source_url: str = None
+    db: Session, source_type: str, source_key: str, reason: str, source_url: str | None = None
 ) -> SourceBlacklist:
     """
     Add source to blacklist or increment failure count if exists.
