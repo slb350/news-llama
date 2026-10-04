@@ -104,7 +104,7 @@ class TestQueueNewsletterGeneration:
 class TestProcessNewsletterGeneration:
     """Tests for process_newsletter_generation."""
 
-    @patch("src.web.services.generation_service.generate_news_digest")
+    @patch("src.web.services.generation_service.generate_newsletter_with_tier1")
     def test_process_generation_success(
         self, mock_generate, db: Session, user_with_interests
     ):
@@ -123,7 +123,7 @@ class TestProcessNewsletterGeneration:
         assert result.generated_at is not None
         assert "/output/newsletters/" in result.file_path
 
-    @patch("src.web.services.generation_service.generate_news_digest")
+    @patch("src.web.services.generation_service.generate_newsletter_with_tier1")
     def test_process_generation_marks_generating(
         self, mock_generate, db: Session, user_with_interests
     ):
@@ -143,7 +143,7 @@ class TestProcessNewsletterGeneration:
 
         process_newsletter_generation(db, newsletter.id)
 
-    @patch("src.web.services.generation_service.generate_news_digest")
+    @patch("src.web.services.generation_service.generate_newsletter_with_tier1")
     def test_process_generation_uses_user_interests(
         self, mock_generate, db: Session, user_with_interests
     ):
@@ -165,7 +165,7 @@ class TestProcessNewsletterGeneration:
         assert "rust" in interests
         assert "python" in interests
 
-    @patch("src.web.services.generation_service.generate_news_digest")
+    @patch("src.web.services.generation_service.generate_newsletter_with_tier1")
     def test_process_generation_handles_failure(
         self, mock_generate, db: Session, user_with_interests
     ):
@@ -190,7 +190,7 @@ class TestProcessNewsletterGeneration:
         with pytest.raises(GenerationServiceError, match="Newsletter.*not found"):
             process_newsletter_generation(db, 99999)
 
-    @patch("src.web.services.generation_service.generate_news_digest")
+    @patch("src.web.services.generation_service.generate_newsletter_with_tier1")
     def test_process_generation_creates_output_directory(
         self, mock_generate, db: Session, user_with_interests
     ):
@@ -223,7 +223,7 @@ class TestGetGenerationStatus:
         assert status["generated_at"] is None
         assert status["retry_count"] == 0
 
-    @patch("src.web.services.generation_service.generate_news_digest")
+    @patch("src.web.services.generation_service.generate_newsletter_with_tier1")
     def test_get_status_completed(
         self, mock_generate, db: Session, user_with_interests
     ):

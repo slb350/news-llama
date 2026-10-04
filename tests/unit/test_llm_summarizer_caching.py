@@ -159,7 +159,7 @@ class TestLLMSummarizerCacheOptimization:
         user_prompt = mock_query.call_args[0][0]
 
         # User prompt SHOULD contain instructions (reverted approach)
-        assert "Please" in user_prompt or "provide" in user_prompt
+        assert "return ONLY valid JSON" in user_prompt
         assert "CRITICAL REQUIREMENTS:" in user_prompt or "Return ONLY" in user_prompt
 
     @patch("src.summarizers.llm_summarizer.oa_client.query")
