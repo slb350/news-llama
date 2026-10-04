@@ -5,7 +5,7 @@ LLM-powered source discovery system with cache-optimized prompts
 import asyncio
 import json
 from typing import List, Dict, Any, Optional
-from urllib.parse import quote
+from urllib.parse import urlparse
 
 from open_agent import TextBlock, Client  # type: ignore
 from open_agent.types import AgentOptions  # type: ignore
@@ -35,23 +35,11 @@ class SourceDiscoveryEngine:
                     "artificial",
                     "futurology",
                 ],
-                "twitter_accounts": [
-                    "elonmusk",
-                    "sama",
-                    "ylecun",
-                    "karpathy",
-                    "fchollet",
-                    "verge",
-                    "techcrunch",
-                    "wired",
-                    "arstechnica",
-                    "slashdot",
-                ],
                 "rss_feeds": [
-                    "arstechnica.com",
-                    "theverge.com",
-                    "techcrunch.com",
-                    "wired.com",
+                    "https://feeds.arstechnica.com/arstechnica/index",
+                    "https://www.theverge.com/rss/index.xml",
+                    "https://techcrunch.com/feed/",
+                    "https://www.wired.com/feed/rss",
                 ],
             },
             "ai": {
@@ -67,22 +55,9 @@ class SourceDiscoveryEngine:
                     "nlp",
                     "Robotics",
                 ],
-                "twitter_accounts": [
-                    "sama",
-                    "ylecun",
-                    "karpathy",
-                    "fchollet",
-                    " AndrewYNg",
-                    "hardmaru",
-                    "openai",
-                    "anthropicai",
-                    "googleai",
-                    "deepmind",
-                ],
                 "rss_feeds": [
-                    "openai.com/blog",
-                    "anthropic.com/news",
-                    "deepmind.google/blog",
+                    "https://openai.com/news/rss.xml",
+                    "https://deepmind.google/blog/rss.xml",
                 ],
             },
             "programming": {
@@ -97,18 +72,11 @@ class SourceDiscoveryEngine:
                     "webdev",
                     "devops",
                 ],
-                "twitter_accounts": [
-                    "github",
-                    "gitlab",
-                    "thepracticaldev",
-                    "code",
-                    "hackernewsbot",
-                ],
                 "rss_feeds": [
-                    "github.blog",
-                    "stackoverflow.blog",
-                    "dev.to",
-                    "medium.com/tag/programming",
+                    "https://github.blog/feed/",
+                    "https://stackoverflow.blog/feed/",
+                    "https://dev.to/feed",
+                    "https://medium.com/feed/tag/programming",
                 ],
             },
             "localllm": {
@@ -119,7 +87,7 @@ class SourceDiscoveryEngine:
                     "MachineLearning",
                     "selfhosted",
                 ],
-                "rss_feeds": ["ollama.com/blog"],
+                "rss_feeds": ["https://ollama.com/blog/rss.xml"],
             },
             "localllama": {
                 "reddit_subreddits": [
@@ -136,7 +104,7 @@ class SourceDiscoveryEngine:
                     "rust_gamedev",
                     "programming",
                 ],
-                "rss_feeds": ["this-week-in-rust.org/rss.xml"],
+                "rss_feeds": ["https://this-week-in-rust.org/rss.xml"],
             },
         }
 
@@ -181,7 +149,7 @@ class SourceDiscoveryEngine:
             f"LLM discovered {len(subreddit_sources)} subreddit matches for '{interest}'"
         )
 
-        # Tier 3: Broad LLM discovery (multi-source: Twitter, RSS, etc.)
+        # Tier 3: Broad LLM discovery (Reddit and RSS)
         llm_sources = await self._llm_discovery(interest)
         logger.info(
             f"LLM discovered {len(llm_sources)} multi-source matches for '{interest}'"
@@ -216,16 +184,11 @@ class SourceDiscoveryEngine:
             )
             all_sources.append(search_source)
 
-        # Log details of discovered sources
-        if all_sources:
-            source_summary = ", ".join(
-                [f"{s.name} ({s.source_type})" for s in all_sources[:5]]
-            )
-            logger.info(
-                f"Sources for '{interest}': {source_summary}{'...' if len(all_sources) > 5 else ''}"
-            )
-        else:
-            logger.warning(f"No sources found for '{interest}'")
+        # Tier 5 guarantees at least one source
+        source_summary = ", ".join(f"{s.name} ({s.source_type})" for s in all_sources[:5])
+        logger.info(
+            f"Sources for '{interest}': {source_summary}{'...' if len(all_sources) > 5 else ''}"
+        )
 
         return all_sources
 
@@ -239,13 +202,10 @@ class SourceDiscoveryEngine:
             patterns = self.source_patterns[interest_lower]
             sources.extend(self._create_sources_from_patterns(patterns, interest, 0.9))
 
-        # Partial matches
+        # Partial matches (other keys that contain, or are contained in, the interest)
         for key, patterns in self.source_patterns.items():
-            if interest_lower in key or key in interest_lower:
-                confidence = 0.7 if interest_lower != key else 0.8
-                sources.extend(
-                    self._create_sources_from_patterns(patterns, interest, confidence)
-                )
+            if key != interest_lower and (interest_lower in key or key in interest_lower):
+                sources.extend(self._create_sources_from_patterns(patterns, interest, 0.7))
 
         return sources
 
@@ -269,27 +229,13 @@ class SourceDiscoveryEngine:
                     )
                 )
 
-        # Twitter accounts
-        if "twitter_accounts" in patterns:
-            for account in patterns["twitter_accounts"]:
-                sources.append(
-                    DiscoveredSource(
-                        name=f"@{account}",
-                        username=account,
-                        source_type="twitter",
-                        category=interest,
-                        confidence_score=base_confidence,
-                        reason=f"Known {interest} Twitter account",
-                    )
-                )
-
         # RSS feeds
         if "rss_feeds" in patterns:
-            for feed_domain in patterns["rss_feeds"]:
+            for feed_url in patterns["rss_feeds"]:
                 sources.append(
                     DiscoveredSource(
-                        name=feed_domain,
-                        url=f"https://{feed_domain}/feed/",
+                        name=urlparse(feed_url).netloc,
+                        url=feed_url,
                         source_type="rss",
                         category=interest,
                         confidence_score=base_confidence,
@@ -357,49 +303,14 @@ CRITICAL REQUIREMENTS:
 - confidence_score must be a number between 0.0 and 1.0
 - Suggest 3-7 subreddits (quality over quantity)"""
 
-            options = AgentOptions(
-                system_prompt=system_prompt,
-                model=self.llm_config.model,
-                base_url=self.llm_config.api_url,
-                temperature=0.3,  # Lower temperature for more focused results
-                max_tokens=2000,
-                api_key="not-needed",
-                tools=[],
-                auto_execute_tools=False,
-                timeout=self.llm_config.timeout,
-                max_turns=1,
+            llm_response = await self._query_llm(
+                system_prompt, user_prompt, temperature=0.3, max_tokens=2000, interest=interest
             )
-
-            parts: List[str] = []
-
-            try:
-                async with asyncio.timeout(self.llm_config.timeout):
-                    client = Client(options)
-                    await client.query(user_prompt)
-
-                    async for block in client.receive_messages():
-                        if isinstance(block, TextBlock):
-                            parts.append(block.text)
-
-                    await client.close()
-            except asyncio.TimeoutError:
-                logger.warning(
-                    f"Subreddit discovery timed out for interest: {interest}"
-                )
-                return []
-
-            llm_response = "".join(parts).strip()
-
             if not llm_response:
-                logger.warning(
-                    f"Empty LLM response for subreddit discovery: {interest}"
-                )
+                logger.warning(f"Empty LLM response for subreddit discovery: {interest}")
                 return []
 
-            logger.debug(
-                f"LLM subreddit response for '{interest}': {llm_response[:200]}..."
-            )
-
+            logger.debug(f"LLM subreddit response for '{interest}': {llm_response[:200]}...")
             return self._parse_subreddit_response(llm_response, interest)
 
         except Exception as e:
@@ -411,23 +322,7 @@ CRITICAL REQUIREMENTS:
     ) -> List[DiscoveredSource]:
         """Parse LLM subreddit response into DiscoveredSource objects"""
         try:
-            # Strip markdown code blocks if present
-            response = response.strip()
-            if response.startswith("```"):
-                lines = response.split("\n")
-                lines = lines[1:]
-                if lines and lines[-1].strip() == "```":
-                    lines = lines[:-1]
-                response = "\n".join(lines).strip()
-
-            # Try to find JSON if LLM added text before/after
-            if not response.startswith("{"):
-                start = response.find("{")
-                end = response.rfind("}") + 1
-                if start != -1 and end > start:
-                    response = response[start:end]
-
-            data = json.loads(response)
+            data = self._extract_json_object(response)
             sources = []
 
             for sub_data in data.get("subreddits", []):
@@ -487,15 +382,14 @@ CRITICAL REQUIREMENTS:
             )
 
             # User prompt with all instructions embedded
-            user_prompt = f"""For the interest "{interest}", find 5-8 popular sources across multiple platforms:
+            user_prompt = f"""For the interest "{interest}", find 5-8 popular sources:
 - **Reddit communities** (subreddits)
 - **RSS feeds** from authoritative sites
-- **Twitter accounts** (if applicable)
 
 Return a JSON object with a "sources" array containing:
 
 **Required fields for ALL sources:**
-- type: Must be "reddit", "rss", or "twitter"
+- type: Must be "reddit" or "rss"
 - name: Human-readable name
 - confidence: Number between 0.0-1.0 (how confident you are this source is relevant)
 - reasoning: Brief explanation of why this source is relevant
@@ -503,7 +397,6 @@ Return a JSON object with a "sources" array containing:
 **Type-specific fields:**
 - For reddit: include "subreddit" field (just name, no r/ prefix)
 - For rss: include "url" field with full RSS feed URL
-- For twitter: include "username" field (no @ symbol)
 
 CRITICAL REQUIREMENTS:
 - Return ONLY valid JSON, no other text
@@ -528,90 +421,81 @@ Required JSON format:
             "url": "https://example.com/feed.xml",
             "confidence": 0.8,
             "reasoning": "Official news feed from authoritative source"
-        }},
-        {{
-            "type": "twitter",
-            "name": "Example Expert",
-            "username": "example_expert",
-            "confidence": 0.7,
-            "reasoning": "Leading voice in the field with regular updates"
         }}
     ]
 }}"""
 
-            options = AgentOptions(
-                system_prompt=system_prompt,
-                model=self.llm_config.model,
-                base_url=self.llm_config.api_url,
+            llm_response = await self._query_llm(
+                system_prompt,
+                user_prompt,
                 temperature=self.llm_config.temperature,
                 max_tokens=self.llm_config.max_tokens,
-                api_key="not-needed",
-                tools=[],
-                auto_execute_tools=False,
-                timeout=self.llm_config.timeout,
-                max_turns=1,  # Single turn for direct JSON response
+                interest=interest,
             )
-
-            parts: List[str] = []
-
-            # Wrap with asyncio timeout for additional safety
-            try:
-                async with asyncio.timeout(self.llm_config.timeout):
-                    client = Client(options)
-                    await client.query(user_prompt)
-
-                    async for block in client.receive_messages():
-                        if isinstance(block, TextBlock):
-                            parts.append(block.text)
-
-                    await client.close()
-            except asyncio.TimeoutError:
-                logger.warning(
-                    f"Source discovery timed out after {self.llm_config.timeout}s for interest: {interest}"
-                )
-                return []
-
-            llm_response = "".join(parts).strip()
-
-            # Log the response for debugging
             if not llm_response:
                 logger.warning(f"Empty LLM response for interest: {interest}")
                 return []
 
             logger.debug(f"LLM response for '{interest}': {llm_response[:200]}...")
-
             return self._parse_llm_response(llm_response, interest)
 
         except Exception as e:
             logger.error(f"Error in LLM discovery for '{interest}': {e}")
             return []
 
+    async def _query_llm(
+        self, system_prompt: str, user_prompt: str, *, temperature: float, max_tokens: int, interest: str
+    ) -> str:
+        """One tool-free completion; returns the stripped text, or "" if it times out."""
+        options = AgentOptions(
+            system_prompt=system_prompt,
+            model=self.llm_config.model,
+            base_url=self.llm_config.api_url,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            api_key="not-needed",
+            tools=[],
+            auto_execute_tools=False,
+            timeout=self.llm_config.timeout,
+            max_turns=1,
+        )
+        parts: List[str] = []
+        try:
+            async with asyncio.timeout(self.llm_config.timeout):
+                client = Client(options)
+                await client.query(user_prompt)
+                async for block in client.receive_messages():
+                    if isinstance(block, TextBlock):
+                        parts.append(block.text)
+                await client.close()
+        except asyncio.TimeoutError:
+            logger.warning(
+                f"LLM discovery timed out after {self.llm_config.timeout}s for interest: {interest}"
+            )
+            return ""
+        return "".join(parts).strip()
+
+    @staticmethod
+    def _extract_json_object(response: str) -> Dict[str, Any]:
+        """Parse the JSON object in an LLM reply, tolerating code fences and surrounding text."""
+        response = response.strip()
+        if response.startswith("```"):
+            lines = response.split("\n")[1:]
+            if lines and lines[-1].strip() == "```":
+                lines = lines[:-1]
+            response = "\n".join(lines).strip()
+        if not response.startswith("{"):
+            start, end = response.find("{"), response.rfind("}") + 1
+            if start != -1 and end > start:
+                response = response[start:end]
+        return json.loads(response)
+
     def _parse_llm_response(
         self, response: str, interest: str
     ) -> List[DiscoveredSource]:
         """Parse LLM response into DiscoveredSource objects"""
         try:
-            # Strip markdown code blocks if present
-            response = response.strip()
-            if response.startswith("```"):
-                # Remove code block markers
-                lines = response.split("\n")
-                # Remove first line (```json or ```)
-                lines = lines[1:]
-                # Remove last line (```)
-                if lines and lines[-1].strip() == "```":
-                    lines = lines[:-1]
-                response = "\n".join(lines).strip()
-
-            # Try to find JSON if LLM added text before/after
-            if not response.startswith("{"):
-                # Try to extract JSON from the response
-                start = response.find("{")
-                end = response.rfind("}") + 1
-                if start != -1 and end > start:
-                    response = response[start:end]
-
-            data = json.loads(response)
+            data = self._extract_json_object(response)
             sources = []
 
             for source_data in data.get("sources", []):
@@ -638,22 +522,9 @@ Required JSON format:
         self, sources: List[DiscoveredSource]
     ) -> List[DiscoveredSource]:
         """Remove duplicate sources, keeping highest confidence"""
-        seen = set()
-        unique = []
-
+        best: Dict[tuple, DiscoveredSource] = {}
         for source in sources:
-            # Create a unique key based on name and type
             key = (source.name.lower(), source.source_type)
-
-            if key not in seen:
-                seen.add(key)
-                unique.append(source)
-            else:
-                # Update existing source if this has higher confidence
-                for i, existing in enumerate(unique):
-                    if (existing.name.lower(), existing.source_type) == key:
-                        if source.confidence_score > existing.confidence_score:
-                            unique[i] = source
-                        break
-
-        return unique
+            if key not in best or source.confidence_score > best[key].confidence_score:
+                best[key] = source
+        return list(best.values())
