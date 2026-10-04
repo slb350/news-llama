@@ -19,7 +19,7 @@ Welcome to News Llama! This guide will help you get started with creating your p
 ### What is News Llama?
 
 News Llama is an AI-powered news curation service that:
-- **Aggregates** news from multiple sources (RSS, Reddit, Hacker News, Twitter/X)
+- **Aggregates** news from RSS feeds and Reddit
 - **Discovers** new sources based on your interests
 - **Summarizes** articles using AI for quick reading
 - **Personalizes** your daily news digest based on your preferences
@@ -196,7 +196,7 @@ To share a newsletter:
 #### Generating (🟡)
 - The system is:
   1. Discovering sources based on your interests
-  2. Aggregating articles from RSS, Reddit, Hacker News, Twitter
+  2. Aggregating articles from RSS and Reddit
   3. Removing duplicates and filtering low-quality content
   4. Summarizing articles with AI
   5. Generating the final HTML newsletter
@@ -205,7 +205,7 @@ To share a newsletter:
 - **Factors Affecting Speed**:
   - Number of interests (more interests = more sources to check)
   - LLM server performance
-  - API response times from Reddit/Twitter
+  - API response times from Reddit
 
 - **What to Do**: Check back in 15 minutes, or wait for the status to change
 
@@ -359,15 +359,13 @@ Use cases:
 
 News Llama aggregates from:
 
-**Always Checked:**
 - **RSS Feeds**: Blogs, news sites, podcasts
-- **Hacker News**: Top stories and new posts
-- **Reddit**: Subreddits related to your interests
+- **Reddit**: Subreddits related to your interests (requires Reddit API credentials)
 - **AI-Discovered Sources**: LLM finds sources based on your interests
 
-**Optional (if configured):**
-- **Twitter/X**: Tweets from relevant accounts
-- **Web Search**: Real-time Google/Bing search results
+Hacker News collection exists but is disabled, because its story links rarely yield extractable article text.
+
+Twitter/X and web search are not implemented; sources of those types that discovery suggests are skipped.
 
 **Source Discovery:**
 - Pre-defined patterns for common topics (AI → r/MachineLearning, @sama, etc.)
@@ -378,7 +376,7 @@ News Llama aggregates from:
 These sources were found by the AI source discovery engine:
 1. You add an interest (e.g., "quantum computing")
 2. AI analyzes your interest and searches for relevant sources
-3. It finds subreddits, Twitter accounts, RSS feeds you might not know about
+3. It finds subreddits and RSS feeds you might not know about
 4. These sources are marked with "AI Discovered" and show the reasoning
 
 Benefits:

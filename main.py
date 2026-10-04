@@ -8,7 +8,6 @@ import logging
 from typing import Dict, List
 
 from src.aggregators.rss_aggregator import RSSAggregator
-from src.aggregators.twitter_aggregator import TwitterAggregator
 from src.aggregators.reddit_aggregator import RedditAggregator
 
 # from src.aggregators.hackernews_aggregator import HackerNewsAggregator  # Disabled: empty content
@@ -112,15 +111,6 @@ class NewsLlama:
                 logger.info("Reddit disabled: missing credentials")
         except Exception:
             logger.info("Reddit disabled: credential validation failed")
-
-        # Conditionally enable Twitter only if all creds present
-        try:
-            if self.config.social_media.validate_twitter_credentials():
-                aggregators["twitter"] = TwitterAggregator(self.config)
-            else:
-                logger.info("Twitter disabled: missing credentials")
-        except Exception:
-            logger.info("Twitter disabled: credential validation failed")
 
         return aggregators
 
