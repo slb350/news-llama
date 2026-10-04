@@ -3,7 +3,7 @@ RSS feed aggregator
 """
 import asyncio
 import feedparser
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List
 from urllib.parse import urljoin
 import requests
@@ -129,24 +129,18 @@ class RSSAggregator(BaseAggregator):
             logger.warning(f"Could not sanitize article URL: {entry.link}")
             return None
 
-        # Extract publication date
-        published_at = datetime.now()
-        if hasattr(entry, 'published_parsed') and entry.published_parsed:
+        # Extract publication date (feedparser normalizes *_parsed to UTC)
+        published_at = datetime.now(timezone.utc)
+        parsed = getattr(entry, 'published_parsed', None) or getattr(entry, 'updated_parsed', None)
+        if parsed:
             try:
-                published_at = datetime(*entry.published_parsed[:6])
+                published_at = datetime(*parsed[:6], tzinfo=timezone.utc)
             except (ValueError, TypeError) as e:
-                logger.warning(f"Invalid published date in RSS entry: {e}")
-                published_at = datetime.now()
-        elif hasattr(entry, 'updated_parsed') and entry.updated_parsed:
-            try:
-                published_at = datetime(*entry.updated_parsed[:6])
-            except (ValueError, TypeError) as e:
-                logger.warning(f"Invalid updated date in RSS entry: {e}")
-                published_at = datetime.now()
+                logger.warning(f"Invalid publication date in RSS entry: {e}")
 
         # Skip if too old
         max_age_hours = self.config.processing.max_article_age
-        if published_at < datetime.now() - timedelta(hours=max_age_hours):
+        if published_at < datetime.now(timezone.utc) - timedelta(hours=max_age_hours):
             return None
 
         # Extract content

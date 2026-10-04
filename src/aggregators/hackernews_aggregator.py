@@ -2,7 +2,7 @@
 Hacker News aggregator
 """
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List
 import requests
 from newspaper import Article as NewspaperArticle
@@ -79,12 +79,12 @@ class HackerNewsAggregator(BaseAggregator):
             
             # Skip if too old
             if 'time' in story_data:
-                post_time = datetime.fromtimestamp(story_data['time'])
+                post_time = datetime.fromtimestamp(story_data['time'], tz=timezone.utc)
                 max_age_hours = self.config.processing.max_article_age
-                if post_time < datetime.now() - timedelta(hours=max_age_hours):
+                if post_time < datetime.now(timezone.utc) - timedelta(hours=max_age_hours):
                     return None
             else:
-                post_time = datetime.now()
+                post_time = datetime.now(timezone.utc)
             
             # Determine category based on title content (simple heuristic)
             title = story_data.get('title', '')

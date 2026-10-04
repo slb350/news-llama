@@ -4,12 +4,13 @@ Integration tests for the News Llama application
 import pytest
 import asyncio
 from unittest.mock import Mock, patch, AsyncMock
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+from email.utils import format_datetime
 
 from src.aggregators.rss_aggregator import RSSAggregator
 from src.processors.content_processor import ContentProcessor
 from src.processors.duplicate_detector import DuplicateDetector
-from src.utils.models import Article, SourceType
+from src.utils.models import Article, ProcessedArticle, SourceType
 
 
 class TestRSSAggregatorIntegration:
@@ -45,10 +46,13 @@ class TestRSSAggregatorIntegration:
     async def test_rss_aggregator_integration(self, mock_config):
         """Test RSS aggregator with mock HTTP responses"""
         aggregator = RSSAggregator(mock_config)
+        now = datetime.now(timezone.utc)
+        bbc_published = format_datetime(now - timedelta(hours=1), usegmt=True)
+        techcrunch_published = format_datetime(now - timedelta(hours=2), usegmt=True)
 
         # Mock HTTP responses
         mock_responses = {
-            'https://feeds.bbci.co.uk/news/rss.xml': """<?xml version="1.0" encoding="UTF-8"?>
+            'https://feeds.bbci.co.uk/news/rss.xml': f"""<?xml version="1.0" encoding="UTF-8"?>
             <rss version="2.0">
                 <channel>
                     <title>BBC News</title>
@@ -56,12 +60,12 @@ class TestRSSAggregatorIntegration:
                         <title>AI Breakthrough Announced</title>
                         <description>Scientists have made a major breakthrough in artificial intelligence research that could revolutionize how we understand machine learning. The research team discovered a new algorithm that significantly improves the efficiency of neural networks. This breakthrough has been published in the prestigious journal Nature and has generated significant excitement in the scientific community.</description>
                         <link>https://www.bbc.co.uk/news/ai-breakthrough</link>
-                        <pubDate>Wed, 20 Oct 2025 10:00:00 GMT</pubDate>
+                        <pubDate>{bbc_published}</pubDate>
                         <author>BBC Technology</author>
                     </item>
                 </channel>
             </rss>""",
-            'https://techcrunch.com/feed/': """<?xml version="1.0" encoding="UTF-8"?>
+            'https://techcrunch.com/feed/': f"""<?xml version="1.0" encoding="UTF-8"?>
             <rss version="2.0">
                 <channel>
                     <title>TechCrunch</title>
@@ -69,7 +73,7 @@ class TestRSSAggregatorIntegration:
                         <title>Startup Raises $50M</title>
                         <description>A new AI startup has raised $50 million in Series B funding led by major venture capital firms. The company specializes in developing artificial intelligence solutions for enterprise customers and plans to use the funding to expand its engineering team and accelerate product development. Industry experts believe this investment signals growing confidence in AI technology companies.</description>
                         <link>https://techcrunch.com/2025/10/20/startup-funding</link>
-                        <pubDate>Wed, 20 Oct 2025 09:00:00 GMT</pubDate>
+                        <pubDate>{techcrunch_published}</pubDate>
                         <author>TechCrunch Staff</author>
                     </item>
                 </channel>
@@ -143,6 +147,7 @@ class TestContentProcessingIntegration:
             min_article_length = 200
             max_article_age = 24
             sentiment_analysis = True
+            duplicate_threshold = 0.8
 
         class MockConfig:
             processing = MockProcessing()
@@ -295,6 +300,7 @@ class TestErrorHandlingIntegration:
             min_article_length = 200
             max_article_age = 24
             sentiment_analysis = True
+            duplicate_threshold = 0.8
 
         class MockConfig:
             processing = MockProcessing()
@@ -435,7 +441,7 @@ class TestErrorHandlingIntegration:
                         <channel>
                             <item>
                                 <title>Working Article</title>
-                                <description>This works fine</description>
+                                <description>The working feed returned a complete article while the other feed failed with a network error. The aggregator should keep this article and log the failure for the broken feed rather than abandoning the whole collection run because one source was unreachable.</description>
                                 <link>https://example.com/working</link>
                             </item>
                         </channel>
@@ -462,6 +468,7 @@ class TestPerformanceIntegration:
             min_article_length = 200
             max_article_age = 24
             sentiment_analysis = True
+            duplicate_threshold = 0.8
 
         class MockConfig:
             processing = MockProcessing()
