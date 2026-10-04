@@ -168,24 +168,10 @@ class TestAPIKeyValidator:
         for key in invalid_keys:
             assert not APIKeyValidator.validate_api_key(key, "Test"), f"Invalid API key passed: {key}"
 
-    def test_twitter_credentials_validation(self):
-        """Test Twitter credentials validation"""
-        # Valid credentials
-        mock_config = Mock()
-        mock_config.twitter_api_key = "valid_twitter_key_1234567890"
-        mock_config.twitter_api_secret = "valid_twitter_secret_1234567890"
-        mock_config.twitter_access_token = "valid_access_token_1234567890"
-        mock_config.twitter_access_token_secret = "valid_token_secret_1234567890"
-
-        assert APIKeyValidator.validate_twitter_credentials(mock_config)
-
-        # Missing credentials
-        mock_config.twitter_api_key = None
-        assert not APIKeyValidator.validate_twitter_credentials(mock_config)
-
-        # Invalid credentials
-        mock_config.twitter_api_key = "your_twitter_api_key"
-        assert not APIKeyValidator.validate_twitter_credentials(mock_config)
+    def test_env_template_placeholders_are_rejected(self):
+        """Every your_* placeholder in .env.example fails validation, not only your_api_key"""
+        for placeholder in ["your_reddit_client_secret", "your_service_token_value"]:
+            assert not APIKeyValidator.validate_api_key(placeholder, "Test"), placeholder
 
     def test_reddit_credentials_validation(self):
         """Test Reddit credentials validation"""

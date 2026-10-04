@@ -13,29 +13,12 @@ from pydantic import BaseModel, Field, field_validator
 load_dotenv()
 
 
-class RSSSource(BaseModel):
-    url: str
-    name: str
-    category: str
-
-
-class TwitterSource(BaseModel):
-    username: str
-    category: str
-
-
-class RedditSource(BaseModel):
-    subreddit: str
-    category: str
-    limit: int = 50
-
-
 class DiscoveredSource(BaseModel):
     name: str
     url: str | None = None
     username: str | None = None
     subreddit: str | None = None
-    source_type: str  # rss, twitter, reddit, web_search
+    source_type: str  # rss, reddit, reddit_search, twitter or web_search (the last two are skipped)
     category: str
     confidence_score: float
     reason: str
@@ -81,30 +64,11 @@ class LoggingConfig(BaseModel):
 
 
 class SocialMediaConfig(BaseModel):
-    twitter_api_key: str | None = Field(default_factory=lambda: os.getenv("TWITTER_API_KEY"))
-    twitter_api_secret: str | None = Field(default_factory=lambda: os.getenv("TWITTER_API_SECRET"))
-    twitter_access_token: str | None = Field(default_factory=lambda: os.getenv("TWITTER_ACCESS_TOKEN"))
-    twitter_access_token_secret: str | None = Field(default_factory=lambda: os.getenv("TWITTER_ACCESS_TOKEN_SECRET"))
-
     reddit_client_id: str | None = Field(default_factory=lambda: os.getenv("REDDIT_CLIENT_ID"))
     reddit_client_secret: str | None = Field(default_factory=lambda: os.getenv("REDDIT_CLIENT_SECRET"))
     reddit_username: str | None = Field(default_factory=lambda: os.getenv("REDDIT_USERNAME"))
     reddit_password: str | None = Field(default_factory=lambda: os.getenv("REDDIT_PASSWORD"))
     reddit_user_agent: str | None = Field(default_factory=lambda: os.getenv("REDDIT_USER_AGENT", "news-llama/1.0"))
-
-    @field_validator('twitter_api_key', 'twitter_api_secret', 'twitter_access_token', 'twitter_access_token_secret')
-    @classmethod
-    def validate_twitter_keys(cls, v):
-        if v:
-            # Simple validation without importing to avoid circular dependency
-            if len(v) < 20 or any(indicator in v.lower() for indicator in ['your_', 'example_', 'test_', 'xxx', '123']):
-                try:
-                    from src.utils.logger import logger
-                    logger.warning(f"Twitter API key appears invalid: {v[:10]}...")
-                except Exception:
-                    # Fallback to print only if logger is unavailable
-                    print(f"Warning: Twitter API key appears invalid: {v[:10]}...")
-        return v
 
     @field_validator('reddit_client_id', 'reddit_client_secret')
     @classmethod
@@ -116,24 +80,6 @@ class SocialMediaConfig(BaseModel):
             except Exception:
                 print(f"Warning: Reddit credential appears too short: {len(v)} characters")
         return v
-
-    def validate_twitter_credentials(self) -> bool:
-        """Validate all Twitter credentials are present and valid"""
-        required_keys = [
-            self.twitter_api_key, self.twitter_api_secret,
-            self.twitter_access_token, self.twitter_access_token_secret
-        ]
-
-        if not all(required_keys):
-            return False
-
-        # Import here to avoid circular import
-        try:
-            from src.utils.security import APIKeyValidator
-            return APIKeyValidator.validate_twitter_credentials(self)
-        except ImportError:
-            # Fallback validation
-            return all(len(key) >= 20 for key in required_keys if key)
 
     def validate_reddit_credentials(self) -> bool:
         """Validate Reddit credentials are present and valid"""
@@ -239,11 +185,6 @@ class Config(BaseModel):
         try:
             # Import here to avoid circular import
             from src.utils.logger import logger
-
-            # Validate Twitter credentials if present
-            if any([self.social_media.twitter_api_key, self.social_media.twitter_api_secret]):
-                if not self.social_media.validate_twitter_credentials():
-                    logger.warning("Twitter API credentials validation failed")
 
             # Validate Reddit credentials if present
             if any([self.social_media.reddit_client_id, self.social_media.reddit_client_secret]):

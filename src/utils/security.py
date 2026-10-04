@@ -183,7 +183,6 @@ class SecureHTTPClient:
         self.rate_limiters = {
             'default': RateLimiter(RateLimitConstants.DEFAULT_CALLS_PER_SECOND),
             'rss': RateLimiter(RateLimitConstants.RSS_REQUESTS_PER_SECOND),
-            'twitter': RateLimiter(RateLimitConstants.TWITTER_REQUESTS_PER_SECOND),
             'reddit': RateLimiter(RateLimitConstants.REDDIT_REQUESTS_PER_SECOND),
             'web_search': RateLimiter(RateLimitConstants.WEB_SEARCH_REQUESTS_PER_MINUTE / 60.0)
         }
@@ -317,26 +316,6 @@ class APIKeyValidator:
             # Don't fail here as different services have different formats
 
         logger.debug(f"API key for {service_name} passed validation")
-        return True
-
-    @staticmethod
-    def validate_twitter_credentials(social_media_config) -> bool:
-        """
-        Validate Twitter API credentials
-
-        Args:
-            social_media_config: SocialMediaConfig instance
-        """
-        required_keys = [
-            'twitter_api_key', 'twitter_api_secret',
-            'twitter_access_token', 'twitter_access_token_secret'
-        ]
-
-        for key in required_keys:
-            api_key = getattr(social_media_config, key, None)
-            if not APIKeyValidator.validate_api_key(api_key, f"Twitter {key}"):
-                return False
-
         return True
 
     @staticmethod

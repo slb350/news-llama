@@ -11,14 +11,6 @@ sources:
       name: "TechCrunch"
       category: "technology"
   
-  twitter:
-    - username: "elonmusk"
-      category: "technology"
-    - username: "verge"
-      category: "technology"
-    - username: "bbcnews"
-      category: "general"
-  
   reddit:
     - subreddit: "technology"
       category: "technology"

@@ -6,11 +6,8 @@ from main import NewsLlama
 
 
 class TestSetupAggregators:
-    def test_twitter_credentials_do_not_enable_a_twitter_aggregator(self):
-        """There is no Twitter integration, so valid credentials must not add a source of fake tweets"""
-        with patch(
-            "src.utils.config.SocialMediaConfig.validate_twitter_credentials", return_value=True
-        ), patch("src.utils.config.SocialMediaConfig.validate_reddit_credentials", return_value=False):
+    def test_without_reddit_credentials_only_rss_is_enabled(self):
+        with patch("src.utils.config.SocialMediaConfig.validate_reddit_credentials", return_value=False):
             news_llama = NewsLlama(user_interests=["AI"])
 
         assert set(news_llama.aggregators) == {"rss"}
