@@ -667,10 +667,10 @@ IMPORTANT: Even if you use web search or other tools, return ONLY the final JSON
                     url=source_data.get("url"),
                     username=source_data.get("username"),
                     subreddit=source_data.get("subreddit"),
-                    source_type=source_data.get("source_type", "web_search"),
+                    source_type=source_data.get("type", "web_search"),
                     category=interest,
-                    confidence_score=source_data.get("confidence_score", 0.5),
-                    reason=source_data.get("reason", "LLM discovered"),
+                    confidence_score=source_data.get("confidence", 0.5),
+                    reason=source_data.get("reasoning", "LLM discovered"),
                 )
                 sources.append(source)
 
