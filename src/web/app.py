@@ -24,7 +24,6 @@ from PIL import Image  # noqa: E402
 from fastapi import FastAPI, Request, Depends, Response, HTTPException, UploadFile, File  # noqa: E402
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
-from fastapi.templating import Jinja2Templates  # noqa: E402
 from fastapi.exceptions import RequestValidationError  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 from pathlib import Path  # noqa: E402
@@ -101,6 +100,13 @@ from src.web.api.v1 import api_router  # noqa: E402
 
 app.include_router(api_router)
 
+from src.web.routes.calendar import router as calendar_router  # noqa: E402
+from src.web.routes.status import router as status_router  # noqa: E402
+from src.web.templating import templates  # noqa: E402
+
+app.include_router(calendar_router)
+app.include_router(status_router)
+
 # Mount static files
 static_path = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
@@ -113,59 +119,6 @@ async def favicon():
     from fastapi.responses import FileResponse
 
     return FileResponse(static_path / "favicon.ico")
-
-
-# Output path reference (for file serving via routes, not static mount)
-output_path = Path(__file__).parent.parent.parent / "output"
-
-# Templates
-templates_path = Path(__file__).parent / "templates"
-templates = Jinja2Templates(directory=str(templates_path))
-
-
-# Mock data for frontend testing
-MOCK_USERS = [
-    {"id": 1, "first_name": "Alice", "avatar_path": None},
-    {"id": 2, "first_name": "Bob", "avatar_path": None},
-    {"id": 3, "first_name": "Charlie", "avatar_path": None},
-]
-
-MOCK_INTERESTS = [
-    "AI",
-    "rust",
-    "LocalLLM",
-    "LocalLlama",
-    "strix halo",
-    "startups",
-    "technology",
-    "programming",
-    "machine learning",
-    "web development",
-]
-
-MOCK_NEWSLETTERS = [
-    {
-        "id": 1,
-        "user_id": 1,
-        "date": "2025-10-22",
-        "guid": "news-2025-10-22",  # Maps to actual file in output/
-        "status": "completed",
-    },
-    {
-        "id": 2,
-        "user_id": 1,
-        "date": "2025-10-21",
-        "guid": "news-2025-10-22",  # Reuse same file for demo
-        "status": "completed",
-    },
-    {
-        "id": 3,
-        "user_id": 1,
-        "date": "2025-10-20",
-        "guid": "news-2025-10-22",  # Reuse same file for demo
-        "status": "pending",
-    },
-]
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -358,73 +311,6 @@ async def upload_avatar(
     user_service.update_user(db, user.id, avatar_path=avatar_filename)
 
     return {"status": "success", "avatar_path": avatar_filename}
-
-
-@app.get("/calendar", response_class=HTMLResponse)
-async def calendar_view(
-    request: Request,
-    user_id: Optional[int] = None,  # Query parameter for profile selection
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Calendar view page with user session check."""
-    # If user_id provided in query param, set cookie and redirect
-    if user_id is not None:
-        # Validate user exists
-        selected_user = db.query(User).filter(User.id == user_id).first()
-        if selected_user:
-            response = RedirectResponse(url="/calendar", status_code=303)
-            response.set_cookie(key="user_id", value=str(user_id))
-            return response
-        # Invalid user_id, redirect to home
-        return RedirectResponse(url="/", status_code=303)
-
-    # Redirect to profile select if no user session
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-
-    # Default to current month/year
-    from datetime import date
-
-    today = date.today()
-    year = today.year
-    month = today.month
-    month_names = [
-        "",
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-    ]
-    current_month = f"{month_names[month]} {year}"
-
-    # Get newsletters for current month
-    newsletters = newsletter_service.get_newsletters_by_month(db, user.id, year, month)
-
-    # Check if any newsletters are pending/generating
-    has_active = any(n.status in ["pending", "generating"] for n in newsletters)
-
-    return templates.TemplateResponse(
-        request,
-        "calendar.html",
-        {
-            "user": user,
-            "newsletters": newsletters,
-            "current_month": current_month,
-            "year": year,
-            "month": month,
-            "has_active": has_active,
-            "today": today,
-        },
-    )
 
 
 @app.get("/profile/settings", response_class=HTMLResponse)
@@ -741,173 +627,6 @@ async def retry_newsletter_route(
         raise HTTPException(status_code=404, detail=get_friendly_message(e))
     except newsletter_service.NewsletterValidationError as e:
         raise HTTPException(status_code=400, detail=get_friendly_message(e))
-
-
-@app.get("/calendar/{year}/{month}", response_class=HTMLResponse)
-async def calendar_month(
-    request: Request,
-    year: int,
-    month: int,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """Calendar view for specific month (HTMX partial) with validation."""
-    # Redirect to profile select if no user session
-    if not user:
-        return RedirectResponse(url="/", status_code=303)
-
-    # Validate month range
-    if month < 1 or month > 12:
-        return HTMLResponse("<h1>Invalid month</h1>", status_code=404)
-
-    # Month names for display
-    month_names = [
-        "",
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-    ]
-    current_month = f"{month_names[month]} {year}"
-
-    # Get newsletters for specified month
-    newsletters = newsletter_service.get_newsletters_by_month(db, user.id, year, month)
-
-    # Check if any newsletters are pending/generating
-    has_active = any(n.status in ["pending", "generating"] for n in newsletters)
-
-    # Get today's date for highlighting in calendar
-    from datetime import date
-
-    today = date.today()
-
-    return templates.TemplateResponse(
-        request,
-        "calendar.html",
-        {
-            "user": user,
-            "newsletters": newsletters,
-            "current_month": current_month,
-            "year": year,
-            "month": month,
-            "has_active": has_active,
-            "today": today,
-        },
-    )
-
-
-@app.get("/metrics", response_class=HTMLResponse)
-async def metrics_page(request: Request, db: Session = Depends(get_db)):
-    """
-    Public metrics page - no authentication required.
-
-    Shows discovery system performance stats and scheduler status.
-    """
-    from src.web.services.discovery_metrics_service import get_all_metrics
-    from datetime import datetime, timezone
-
-    metrics = get_all_metrics(db)
-
-    # Get scheduler status
-    scheduler_info = {"running": scheduler_service.scheduler.running, "jobs": []}
-
-    if scheduler_service.scheduler.running:
-        for job in scheduler_service.scheduler.get_jobs():
-            job_info = {
-                "id": job.id,
-                "function": job.func.__name__,
-                "next_run": None,
-                "next_run_formatted": None,
-                "hours_until": None,
-            }
-
-            if job.next_run_time:
-                # Get timezone if available (APScheduler stores timezone object)
-                if hasattr(job.trigger, "timezone"):
-                    tz = job.trigger.timezone
-                    next_run_local = job.next_run_time.astimezone(tz)
-                    tz_name = str(tz)
-                else:
-                    next_run_local = job.next_run_time.astimezone(timezone.utc)
-                    tz_name = "UTC"
-
-                job_info["next_run"] = next_run_local.isoformat()
-                job_info["next_run_formatted"] = next_run_local.strftime(
-                    "%Y-%m-%d %I:%M %p %Z"
-                )
-
-                # Calculate hours until
-                now = datetime.now(timezone.utc)
-                time_until = next_run_local - now
-                job_info["hours_until"] = time_until.total_seconds() / 3600
-
-                # Get schedule description
-                if job.id == "daily_generation" and hasattr(job.trigger, "hour"):
-                    job_info["schedule"] = (
-                        f"Daily at {job.trigger.hour:02d}:{job.trigger.minute:02d} {tz_name}"
-                    )
-                elif job.id == "weekly_discovery" and hasattr(
-                    job.trigger, "day_of_week"
-                ):
-                    job_info["schedule"] = (
-                        f"Weekly on {job.trigger.day_of_week} at {job.trigger.hour:02d}:{job.trigger.minute:02d} {tz_name}"
-                    )
-                elif job.id == "rate_limiter_cleanup" and hasattr(
-                    job.trigger, "interval"
-                ):
-                    job_info["schedule"] = f"Every {job.trigger.interval}"
-                else:
-                    job_info["schedule"] = "Custom schedule"
-
-            scheduler_info["jobs"].append(job_info)
-
-    return templates.TemplateResponse(
-        request, "metrics.html", {"metrics": metrics, "scheduler": scheduler_info}
-    )
-
-
-@app.get("/health/scheduler")
-async def scheduler_health():
-    """
-    Check scheduler status and jobs.
-
-    Returns scheduler running status and list of scheduled jobs with their next run times.
-    """
-    jobs_info = []
-    for job in scheduler_service.scheduler.get_jobs():
-        jobs_info.append(
-            {
-                "id": job.id,
-                "next_run": job.next_run_time.isoformat()
-                if job.next_run_time
-                else None,
-                "name": str(job.func),
-            }
-        )
-
-    return {
-        "running": scheduler_service.scheduler.running,
-        "jobs": jobs_info,
-        "job_count": len(jobs_info),
-    }
-
-
-@app.get("/health/generation")
-async def generation_health():
-    """
-    Check generation metrics and performance.
-
-    Returns generation stats including success/failure counts, success rate, and average duration.
-    """
-    return generation_service.metrics.get_stats()
 
 
 if __name__ == "__main__":

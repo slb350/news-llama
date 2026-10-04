@@ -116,13 +116,12 @@ class TestCalendarView:
     ):
         """Should display user's newsletters for the month."""
         client.cookies.set("user_id", str(user.id))
-        response = client.get("/calendar")
+        response = client.get("/calendar/2025/10")
 
         html = response.text
-        # Should contain newsletter dates
-        assert "2025-10-15" in html or "15" in html
-        assert "2025-10-20" in html or "20" in html
-        assert "2025-10-22" in html or "22" in html
+        assert 'data-newsletter-date="2025-10-15"' in html
+        assert 'data-newsletter-date="2025-10-20"' in html
+        assert 'data-newsletter-date="2025-10-22"' in html
 
     def test_calendar_empty_month(self, client: TestClient, user):
         """Should handle month with no newsletters gracefully."""
@@ -143,14 +142,11 @@ class TestCalendarView:
         # Login as first user
         user = newsletters_october_2025[0].user_id
         client.cookies.set("user_id", str(user))
-        response = client.get("/calendar")
+        response = client.get("/calendar/2025/10")
 
         html = response.text
-        # Should show first user's newsletters
-        assert "2025-10-15" in html or "15" in html
-        # Should NOT show other user's newsletter
-        # This is harder to test in HTML, but we can verify count
-        # (implementation detail - may need adjustment based on template)
+        assert 'data-newsletter-date="2025-10-15"' in html
+        assert 'data-newsletter-date="2025-10-25"' not in html
 
     def test_calendar_with_invalid_cookie(self, client: TestClient):
         """Should redirect if user_id cookie is invalid."""
@@ -167,6 +163,50 @@ class TestCalendarView:
 
         assert response.status_code == 303
         assert response.headers["location"] == "/"
+
+
+class TestCalendarEmptyStateScope:
+    """The first-newsletter empty state is for users with no newsletters at all."""
+
+    def test_month_without_newsletters_shows_grid_when_user_has_older_ones(
+        self, client: TestClient, user, newsletters_october_2025
+    ):
+        client.cookies.set("user_id", str(user.id))
+        html = client.get("/calendar/2025/11").text
+
+        assert 'data-state="empty"' not in html
+        assert 'id="calendar-container"' in html
+
+    def test_user_without_any_newsletters_sees_empty_state(
+        self, client: TestClient, user
+    ):
+        client.cookies.set("user_id", str(user.id))
+        html = client.get("/calendar/2025/11").text
+
+        assert 'data-state="empty"' in html
+        assert 'id="calendar-container"' not in html
+
+
+class TestCalendarGridPadding:
+    """Padding cells line the first day up under its weekday in a Sunday-first grid."""
+
+    @pytest.mark.parametrize(
+        "year, month, leading, trailing",
+        [
+            (2025, 10, 3, 1),  # Wed 1 Oct, 31 days
+            (2026, 2, 0, 0),  # Sun 1 Feb, 28 days
+            (2026, 8, 6, 5),  # Sat 1 Aug, 31 days
+        ],
+    )
+    def test_padding_matches_first_weekday(
+        self, client: TestClient, db: Session, user, year, month, leading, trailing
+    ):
+        create_pending_newsletter(db, user.id, date(2025, 1, 1))
+        client.cookies.set("user_id", str(user.id))
+        html = client.get(f"/calendar/{year}/{month}").text
+
+        assert html.count('data-padding="leading"') == leading
+        assert html.count('data-padding="trailing"') == trailing
 
 
 class TestCalendarMonth:
@@ -272,6 +312,15 @@ class TestCalendarMonth:
 
         # Should return 422 validation error or 404
         assert response.status_code in [404, 422]
+
+    def test_calendar_month_rejects_year_outside_calendar_range(
+        self, client: TestClient, user
+    ):
+        """Years the calendar module cannot represent return 404, not a server error."""
+        client.cookies.set("user_id", str(user.id))
+
+        assert client.get("/calendar/0/1").status_code == 404
+        assert client.get("/calendar/10000/1").status_code == 404
 
     def test_calendar_month_invalid_month_high(self, client: TestClient, user):
         """Should reject month > 12."""
