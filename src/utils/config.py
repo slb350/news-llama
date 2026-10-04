@@ -63,7 +63,7 @@ class OutputConfig(BaseModel):
 
 
 class ProcessingConfig(BaseModel):
-    duplicate_threshold: float = Field(default_factory=lambda: float(os.getenv("DUPLICATE_THRESHOLD", "0.8")))
+    duplicate_threshold: float = Field(default_factory=lambda: float(os.getenv("DUPLICATE_THRESHOLD", "0.6")))
     min_article_length: int = Field(default_factory=lambda: int(os.getenv("MIN_ARTICLE_LENGTH", "200")))
     max_article_age: int = Field(default_factory=lambda: int(os.getenv("MAX_ARTICLE_AGE_HOURS", "24")))
     sentiment_analysis: bool = Field(default_factory=lambda: os.getenv("ENABLE_SENTIMENT_ANALYSIS", "true").lower() == "true")

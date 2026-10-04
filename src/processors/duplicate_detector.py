@@ -1,8 +1,9 @@
 """
 Duplicate detection using similarity analysis
 """
+import re
+from functools import lru_cache
 from typing import List, Tuple
-from difflib import SequenceMatcher
 from collections import defaultdict
 from datetime import timezone
 
@@ -83,45 +84,36 @@ class DuplicateDetector:
         return unique_articles, duplicates_found
     
     def _calculate_similarity(self, article1: ProcessedArticle, article2: ProcessedArticle) -> float:
-        """Calculate similarity between two articles"""
-        # Title similarity (weighted more heavily)
-        title_similarity = SequenceMatcher(None, article1.title.lower(), article2.title.lower()).ratio()
-        
-        # URL similarity (exact domain match)
-        url_similarity = self._url_similarity(str(article1.url), str(article2.url))
-        
-        # Content similarity
+        """Dice overlap of content words, or of title words when either article has no content.
+
+        The same URL is always a duplicate. A shared domain adds nothing, since one site publishes many
+        different stories.
+        """
+        if str(article1.url) == str(article2.url):
+            return 1.0
+
         snippet_length = ProcessingConstants.CONTENT_SNIPPET_LENGTH
-        content_similarity = SequenceMatcher(
-            None,
-            article1.content[:snippet_length],
-            article2.content[:snippet_length]
-        ).ratio()
-        
-        # Weighted combination
-        # Title is most important, then URL, then content
-        total_similarity = (
-            title_similarity * 0.5 +
-            url_similarity * 0.3 +
-            content_similarity * 0.2
-        )
-        
-        return total_similarity
-    
-    def _url_similarity(self, url1: str, url2: str) -> float:
-        """Calculate URL similarity"""
-        # Extract domain
-        domain1 = url1.split('/')[2] if len(url1.split('/')) > 2 else ''
-        domain2 = url2.split('/')[2] if len(url2.split('/')) > 2 else ''
-        
-        if domain1 == domain2:
-            # Same domain, check if it's the same article
-            path1 = '/'.join(url1.split('/')[3:]) if len(url1.split('/')) > 3 else ''
-            path2 = '/'.join(url2.split('/')[3:]) if len(url2.split('/')) > 3 else ''
-            
-            if path1 == path2:
-                return 1.0  # Exact same URL
-            else:
-                return 0.8  # Same domain, different articles
-        
-        return 0.0  # Different domains
+        content1 = _content_words(article1.content[:snippet_length])
+        content2 = _content_words(article2.content[:snippet_length])
+        if content1 and content2:
+            return _dice(content1, content2)
+        return _dice(_content_words(article1.title), _content_words(article2.title))
+
+
+# Function words that carry no topic, so two unrelated articles do not match on them.
+_STOPWORDS = frozenset(
+    "a an the and or of in on to for with is are was were be been this that these those it its "
+    "as at by from has have had can could will would about new".split()
+)
+
+
+# Cached because every article is compared against every kept article in its category.
+@lru_cache(maxsize=4096)
+def _content_words(text: str) -> frozenset:
+    return frozenset(w for w in re.findall(r"[a-z0-9%$]+", text.lower()) if w not in _STOPWORDS)
+
+
+def _dice(words1: frozenset, words2: frozenset) -> float:
+    if not words1 or not words2:
+        return 0.0
+    return 2 * len(words1 & words2) / (len(words1) + len(words2))

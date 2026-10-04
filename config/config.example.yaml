@@ -64,7 +64,7 @@ output:
 
 # Processing settings
 processing:
-  duplicate_threshold: 0.8  # Similarity threshold for duplicate detection
+  duplicate_threshold: 0.6  # Word-overlap (Dice) score at or above which articles are duplicates
   min_article_length: 200   # Minimum characters to process
   max_article_age: 24       # Maximum age in hours
   sentiment_analysis: true

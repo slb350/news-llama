@@ -17,7 +17,7 @@ class TestDuplicateDetector:
         """Create a mock config and detector for testing"""
         class MockConfig:
             class Processing:
-                duplicate_threshold = 0.8
+                duplicate_threshold = 0.6
                 min_article_length = 200
                 max_article_age = 24
 
@@ -179,35 +179,49 @@ class TestDuplicateDetector:
         # Low threshold should detect more duplicates (fewer unique articles)
         assert len(result_low) <= len(result_high)
 
-    def test_url_similarity(self, detector):
-        """Test URL similarity calculation"""
-        # Exact same URL
-        similarity = detector._url_similarity(
-            "https://example.com/article/123",
-            "https://example.com/article/123"
+    @staticmethod
+    def _article(title, content, url):
+        return ProcessedArticle(
+            title=title,
+            content=content,
+            url=url,
+            source="Test",
+            source_type=SourceType.RSS,
+            category="test",
+            published_at=datetime.now(),
+            word_count=10,
+            reading_time_minutes=1,
+            keywords=[],
+        )
+
+    def test_identical_url_is_a_duplicate_whatever_the_text(self, detector):
+        """The same URL is the same article even if the feeds' excerpts differ"""
+        similarity = detector._calculate_similarity(
+            self._article("Headline", "One excerpt about markets.", "https://example.com/a/1"),
+            self._article("Other headline", "A different excerpt about weather.", "https://example.com/a/1"),
         )
         assert similarity == 1.0
 
-        # Same domain, different article
-        similarity = detector._url_similarity(
-            "https://example.com/article/123",
-            "https://example.com/article/456"
-        )
-        assert similarity == 0.8
-
-        # Different domains
-        similarity = detector._url_similarity(
-            "https://example.com/article/123",
-            "https://different.com/article/123"
+    def test_same_domain_does_not_raise_similarity(self, detector):
+        """Two different stories from one site are not near-duplicates"""
+        similarity = detector._calculate_similarity(
+            self._article("Rates rise", "The central bank raised interest rates again.", "https://example.com/a/1"),
+            self._article("Storm hits", "A tropical storm made landfall overnight.", "https://example.com/a/2"),
         )
         assert similarity == 0.0
 
-        # Invalid URLs
-        similarity = detector._url_similarity(
-            "invalid-url",
-            "https://example.com/article/123"
+    def test_title_similarity_used_when_content_is_empty(self, detector):
+        """Articles without content are compared by title"""
+        similar = detector._calculate_similarity(
+            self._article("Python 4 released today", "", "https://a.com/1"),
+            self._article("Python 4 released", "", "https://b.com/1"),
         )
-        assert similarity == 0.0
+        different = detector._calculate_similarity(
+            self._article("Python 4 released", "", "https://a.com/1"),
+            self._article("Election results announced", "", "https://b.com/1"),
+        )
+        assert similar >= detector.threshold
+        assert different == 0.0
 
     def test_content_similarity(self, detector):
         """Test content similarity calculation"""

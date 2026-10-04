@@ -147,7 +147,7 @@ class TestContentProcessingIntegration:
             min_article_length = 200
             max_article_age = 24
             sentiment_analysis = True
-            duplicate_threshold = 0.8
+            duplicate_threshold = 0.6
 
         class MockConfig:
             processing = MockProcessing()
@@ -300,7 +300,7 @@ class TestErrorHandlingIntegration:
             min_article_length = 200
             max_article_age = 24
             sentiment_analysis = True
-            duplicate_threshold = 0.8
+            duplicate_threshold = 0.6
 
         class MockConfig:
             processing = MockProcessing()
@@ -468,7 +468,7 @@ class TestPerformanceIntegration:
             min_article_length = 200
             max_article_age = 24
             sentiment_analysis = True
-            duplicate_threshold = 0.8
+            duplicate_threshold = 0.6
 
         class MockConfig:
             processing = MockProcessing()

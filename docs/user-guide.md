@@ -540,8 +540,7 @@ Your browser cookie expired or was deleted.
 - Report particularly bad summaries to your admin for fine-tuning
 
 **If Articles Are Duplicates:**
-- Duplicate detection is 80-90% accurate, not perfect
-- Very similar articles from different sources may appear
+- Duplicates are matched on shared words, so two outlets covering one story in different wording may both appear
 - This is normal and shows comprehensive coverage
 
 ### Browser Issues
