@@ -83,25 +83,21 @@ class RedditAggregator(BaseAggregator):
             logger.warning("Reddit client not configured, skipping Reddit aggregation")
             return []
 
-        try:
-            articles = []
+        # The client stays open: search_reddit may reuse it, and close() releases it
+        articles = []
+        for subreddit_config in self.config.sources.get("reddit", []):
+            try:
+                posts = await self._collect_from_subreddit(subreddit_config)
+                articles.extend(posts)
+                logger.info(
+                    f"Collected {len(posts)} posts from r/{subreddit_config['subreddit']}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error collecting from subreddit r/{subreddit_config['subreddit']}: {e}"
+                )
 
-            for subreddit_config in self.config.sources.get("reddit", []):
-                try:
-                    posts = await self._collect_from_subreddit(subreddit_config)
-                    articles.extend(posts)
-                    logger.info(
-                        f"Collected {len(posts)} posts from r/{subreddit_config['subreddit']}"
-                    )
-                except Exception as e:
-                    logger.error(
-                        f"Error collecting from subreddit r/{subreddit_config['subreddit']}: {e}"
-                    )
-
-            return articles
-        finally:
-            # Note: Don't close reddit client here, it may be reused by search_reddit
-            pass
+        return articles
 
     async def close(self):
         """Close the Reddit client session"""
@@ -122,12 +118,12 @@ class RedditAggregator(BaseAggregator):
         try:
             # Progressive time filters: try month -> year -> all time
             time_filters = ["month", "year", "all"]
+            subreddit = await self.reddit.subreddit("all")
 
             for time_filter in time_filters:
                 logger.info(f"Searching Reddit for: {query} (time: {time_filter})")
 
                 articles = []
-                subreddit = await self.reddit.subreddit("all")
 
                 # Build search parameters
                 search_params = {"limit": limit, "time_filter": time_filter}
