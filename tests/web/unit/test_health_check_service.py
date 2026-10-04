@@ -5,16 +5,17 @@ Tests source health checking: Reddit, RSS, HackerNews.
 Uses mocked aggregators to avoid external network dependencies.
 """
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 from sqlalchemy.orm import Session
 
 from src.web.database import get_test_db
 from src.web.services.health_check_service import (
-    check_reddit_health,
-    check_rss_health,
     bulk_health_check,
     bulk_health_check_and_update,
+    check_reddit_health,
+    check_rss_health,
 )
 
 

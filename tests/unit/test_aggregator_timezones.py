@@ -4,7 +4,7 @@ whatever the host's local timezone is.
 """
 
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from email.utils import format_datetime
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
@@ -43,7 +43,7 @@ def _rss_entry(published: datetime):
 class TestRSSPublicationTime:
     @pytest.mark.asyncio
     async def test_entry_older_than_max_age_is_skipped_west_of_utc(self, pacific_time):
-        entry = _rss_entry(datetime.now(timezone.utc) - timedelta(hours=28))
+        entry = _rss_entry(datetime.now(UTC) - timedelta(hours=28))
 
         article = await RSSAggregator(_config())._parse_entry(
             entry, "Feed", "test", "https://example.com/feed.xml"
@@ -53,14 +53,14 @@ class TestRSSPublicationTime:
 
     @pytest.mark.asyncio
     async def test_published_at_is_aware_utc(self, pacific_time):
-        published = (datetime.now(timezone.utc) - timedelta(hours=1)).replace(microsecond=0)
+        published = (datetime.now(UTC) - timedelta(hours=1)).replace(microsecond=0)
 
         article = await RSSAggregator(_config())._parse_entry(
             _rss_entry(published), "Feed", "test", "https://example.com/feed.xml"
         )
 
         assert article.published_at == published
-        assert article.published_at.tzinfo == timezone.utc
+        assert article.published_at.tzinfo == UTC
 
 
 class TestHackerNewsPublicationTime:
@@ -73,8 +73,8 @@ class TestHackerNewsPublicationTime:
         with patch("src.aggregators.hackernews_aggregator.requests.get", return_value=response):
             article = await HackerNewsAggregator(_config())._fetch_story(1)
 
-        assert article.published_at == datetime.fromtimestamp(posted, tz=timezone.utc)
-        assert article.published_at.tzinfo == timezone.utc
+        assert article.published_at == datetime.fromtimestamp(posted, tz=UTC)
+        assert article.published_at.tzinfo == UTC
 
     @pytest.mark.asyncio
     async def test_story_older_than_max_age_is_skipped(self, pacific_time):

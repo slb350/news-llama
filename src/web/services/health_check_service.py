@@ -5,18 +5,18 @@ Checks Reddit, RSS, HackerNews sources for availability and activity.
 """
 
 import asyncio
-import time
 import logging
-from typing import Dict, List
+import time
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from src.web.models import SourceHealth
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 
-async def check_reddit_health(subreddit: str) -> Dict:
+async def check_reddit_health(subreddit: str) -> dict:
     """
     Health check Reddit subreddit.
 
@@ -67,7 +67,7 @@ async def check_reddit_health(subreddit: str) -> Dict:
 
 async def check_rss_health(
     source_key: str, source_url: str, timeout_seconds: int = 5
-) -> Dict:
+) -> dict:
     """
     Health check RSS feed.
 
@@ -92,7 +92,7 @@ async def check_rss_health(
             "error": None,
         }
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         elapsed_ms = int((time.time() - start) * 1000)
         logger.debug(f"RSS health check timeout for {source_key}")
         return {
@@ -134,7 +134,7 @@ async def check_rss_health(
         }
 
 
-async def bulk_health_check(sources: List[Dict]) -> List[Dict]:
+async def bulk_health_check(sources: list[dict]) -> list[dict]:
     """
     Health check multiple sources concurrently.
 
@@ -201,7 +201,7 @@ async def bulk_health_check(sources: List[Dict]) -> List[Dict]:
     return results
 
 
-async def bulk_health_check_and_update(db: Session, sources: List[Dict]):
+async def bulk_health_check_and_update(db: Session, sources: list[dict]):
     """
     Health check sources and update source_health table.
 
@@ -218,7 +218,7 @@ async def bulk_health_check_and_update(db: Session, sources: List[Dict]):
     logger.info(f"Health checked {len(results)} sources, updated database")
 
 
-def update_health_record(db: Session, source: Dict, health_result: Dict):
+def update_health_record(db: Session, source: dict, health_result: dict):
     """Update source_health table with health check result."""
     now = datetime.now().isoformat()
 

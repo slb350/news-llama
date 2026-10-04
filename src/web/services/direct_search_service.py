@@ -8,10 +8,9 @@ import asyncio
 import json
 import logging
 import os
-from typing import List, Dict
 from urllib.parse import urlparse
 
-from open_agent import TextBlock, Client  # type: ignore
+from open_agent import Client, TextBlock  # type: ignore
 from open_agent.types import AgentOptions  # type: ignore
 
 from src.utils.llm_prompts import LLMPrompts
@@ -22,7 +21,7 @@ logger = logging.getLogger(__name__)
 CONFIDENCE_THRESHOLD = 0.6
 
 
-async def search_for_interest(interest: str) -> List[Dict]:
+async def search_for_interest(interest: str) -> list[dict]:
     """
     Search for sources related to an interest using LLM.
 
@@ -71,7 +70,7 @@ async def search_for_interest(interest: str) -> List[Dict]:
         return []
 
 
-async def search_for_interests(interests: List[str]) -> List[Dict]:
+async def search_for_interests(interests: list[str]) -> list[dict]:
     """
     Search for sources for multiple interests concurrently.
 
@@ -92,7 +91,7 @@ async def search_for_interests(interests: List[str]) -> List[Dict]:
     return _deduplicate_sources(all_sources)
 
 
-async def _call_llm_search(interest: str) -> Dict:
+async def _call_llm_search(interest: str) -> dict:
     """
     Call LLM with cache-optimized prompts to find sources.
 
@@ -132,7 +131,7 @@ async def _call_llm_search(interest: str) -> Dict:
         max_turns=1,
     )
 
-    parts: List[str] = []
+    parts: list[str] = []
 
     try:
         async with asyncio.timeout(llm_timeout):
@@ -144,7 +143,7 @@ async def _call_llm_search(interest: str) -> Dict:
                     parts.append(block.text)
 
             await client.close()
-    except asyncio.TimeoutError:
+    except TimeoutError:
         logger.warning(f"LLM search timed out for interest: {interest}")
         return {"sources": []}
 
@@ -159,7 +158,7 @@ async def _call_llm_search(interest: str) -> Dict:
     return _parse_llm_response(llm_response)
 
 
-def _parse_llm_response(response: str) -> Dict:
+def _parse_llm_response(response: str) -> dict:
     """Parse LLM JSON response, handling markdown code blocks."""
     try:
         # Strip markdown code blocks if present
@@ -199,7 +198,7 @@ def _normalize_source_type(source_type: str) -> str:
     return type_map.get(source_type.lower(), "rss")
 
 
-def _extract_source_key(source: Dict) -> str:
+def _extract_source_key(source: dict) -> str:
     """Extract source key from LLM response."""
     if source["type"].lower() in ["reddit", "subreddit"]:
         # Use subreddit field if provided, otherwise extract from URL or name
@@ -221,7 +220,7 @@ def _extract_source_key(source: Dict) -> str:
         return source.get("name", "unknown").lower().replace(" ", "_")
 
 
-def _deduplicate_sources(sources: List[Dict]) -> List[Dict]:
+def _deduplicate_sources(sources: list[dict]) -> list[dict]:
     """Deduplicate sources by (source_type, source_key)."""
     seen = {}
     for source in sources:

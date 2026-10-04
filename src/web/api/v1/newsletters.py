@@ -4,11 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
+from src.web import file_cache
+from src.web.api.schemas import NewsletterContentResponse
 from src.web.database import get_db
 from src.web.services import newsletter_service
 from src.web.services.newsletter_service import NewsletterNotFoundError
-from src.web import file_cache
-from src.web.api.schemas import NewsletterContentResponse
 
 router = APIRouter()
 

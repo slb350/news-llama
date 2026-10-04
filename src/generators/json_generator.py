@@ -3,11 +3,10 @@ JSON output generator
 """
 import json
 from pathlib import Path
-from typing import List
 
 from src.generators.digest import build_digest
-from src.utils.models import SummarizedArticle, NewsDigest
 from src.utils.logger import logger
+from src.utils.models import NewsDigest, SummarizedArticle
 
 
 class JSONGenerator:
@@ -17,7 +16,7 @@ class JSONGenerator:
         self.config = config
         self.output_dir = Path(config.output.directory)
 
-    def generate(self, articles: List[SummarizedArticle]) -> None:
+    def generate(self, articles: list[SummarizedArticle]) -> None:
         """Generate JSON output"""
         if not articles:
             logger.warning("No articles to generate JSON for")

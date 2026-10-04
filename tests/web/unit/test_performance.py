@@ -5,17 +5,18 @@ Tests index usage, eager loading, rate limiting, and caching.
 Part of Phase 7b: Performance & Optimization.
 """
 
-import pytest
 import time
 from datetime import date, timedelta
-from sqlalchemy.orm import Session
-from sqlalchemy import text
+from unittest.mock import MagicMock, patch
+
+import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from src.web.app import app
 from src.web.database import get_test_db
-from src.web.services import user_service, newsletter_service, interest_service
+from src.web.services import interest_service, newsletter_service, user_service
 
 
 @pytest.fixture

@@ -4,13 +4,14 @@ Unit tests for autonomous discovery service - TDD RED phase.
 Tests weekly discovery orchestration.
 """
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 from sqlalchemy.orm import Session
 
 from src.web.database import get_test_db
+from src.web.models import DiscoveredSource, Tier1Source
 from src.web.services import autonomous_discovery_service
-from src.web.models import Tier1Source, DiscoveredSource
 
 
 @pytest.fixture
@@ -92,8 +93,8 @@ class TestWeeklyDiscovery:
     @pytest.mark.asyncio
     async def test_includes_custom_user_interests(self, db: Session):
         """Should discover sources for both predefined and custom user interests."""
-        from src.web.services.user_service import create_user
         from src.web.services.interest_service import add_user_interest
+        from src.web.services.user_service import create_user
 
         # Create user with custom interest
         user = create_user(db, first_name="TestUser")

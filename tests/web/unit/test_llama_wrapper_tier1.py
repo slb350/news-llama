@@ -4,14 +4,15 @@ Unit tests for FULL Tier 1 integration - TDD RED phase.
 Tests actual speed improvements and source usage.
 """
 
-import pytest
 from datetime import date
-from unittest.mock import patch, Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 from sqlalchemy.orm import Session
 
 from src.web.database import get_test_db
+from src.web.models import SourceContribution, Tier1Source
 from src.web.services import llama_wrapper_tier1, tier1_service
-from src.web.models import Tier1Source, SourceContribution
 
 
 @pytest.fixture
@@ -164,8 +165,8 @@ class TestTier1FastPath:
 
     def test_track_source_contributions(self, db: Session):
         """Should track which Tier 1 sources contributed articles."""
-        from src.web.services.user_service import create_user
         from src.web.services.newsletter_service import create_pending_newsletter
+        from src.web.services.user_service import create_user
 
         user = create_user(db, first_name="Test")
         newsletter = create_pending_newsletter(db, user.id, date.today())

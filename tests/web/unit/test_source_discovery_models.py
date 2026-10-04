@@ -5,17 +5,18 @@ Tests tier1_sources, source_blacklist, discovered_sources,
 source_health, source_contributions tables and relationships.
 """
 
+from datetime import date, datetime
+
 import pytest
-from datetime import datetime, date
 from sqlalchemy.orm import Session
 
 from src.web.database import get_test_db
 from src.web.models import (
-    Tier1Source,
-    SourceBlacklist,
     DiscoveredSource,
-    SourceHealth,
+    SourceBlacklist,
     SourceContribution,
+    SourceHealth,
+    Tier1Source,
 )
 
 
@@ -400,8 +401,8 @@ class TestSourceContributionModel:
 
     def test_create_contribution_record(self, db: Session):
         """Should track source contributions to newsletter."""
-        from src.web.services.user_service import create_user
         from src.web.services.newsletter_service import create_pending_newsletter
+        from src.web.services.user_service import create_user
 
         user = create_user(db, first_name="TestUser")
         newsletter = create_pending_newsletter(db, user.id, date.today())
@@ -422,11 +423,11 @@ class TestSourceContributionModel:
 
     def test_contribution_cascade_delete(self, db: Session):
         """Should cascade delete when newsletter deleted."""
-        from src.web.services.user_service import create_user
         from src.web.services.newsletter_service import (
             create_pending_newsletter,
             delete_newsletter,
         )
+        from src.web.services.user_service import create_user
 
         user = create_user(db, first_name="CascadeTest")
         newsletter = create_pending_newsletter(db, user.id, date.today())
@@ -457,8 +458,8 @@ class TestSourceContributionModel:
 
     def test_contribution_multiple_sources(self, db: Session):
         """Should track multiple sources per newsletter."""
-        from src.web.services.user_service import create_user
         from src.web.services.newsletter_service import create_pending_newsletter
+        from src.web.services.user_service import create_user
 
         user = create_user(db, first_name="MultiSource")
         newsletter = create_pending_newsletter(db, user.id, date.today())
@@ -492,8 +493,8 @@ class TestSourceContributionModel:
 
     def test_contribution_default_values(self, db: Session):
         """Should use default values for articles counts."""
-        from src.web.services.user_service import create_user
         from src.web.services.newsletter_service import create_pending_newsletter
+        from src.web.services.user_service import create_user
 
         user = create_user(db, first_name="DefaultTest")
         newsletter = create_pending_newsletter(db, user.id, date.today())

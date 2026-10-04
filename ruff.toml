@@ -1,0 +1,6 @@
+# Ruff's default rule set; no line-length rule is enabled by default.
+target-version = "py311"
+
+[lint.flake8-bugbear]
+# FastAPI dependency markers are evaluated once per route by design.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.File", "fastapi.Query", "fastapi.Form"]

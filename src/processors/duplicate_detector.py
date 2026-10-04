@@ -2,14 +2,13 @@
 Duplicate detection using similarity analysis
 """
 import re
-from functools import lru_cache
-from typing import List, Tuple
 from collections import defaultdict
-from datetime import timezone
+from datetime import UTC
+from functools import lru_cache
 
-from src.utils.models import ProcessedArticle
-from src.utils.logger import logger
 from src.utils.constants import ProcessingConstants
+from src.utils.logger import logger
+from src.utils.models import ProcessedArticle
 
 
 class DuplicateDetector:
@@ -26,10 +25,10 @@ class DuplicateDetector:
             return dt
         # If timezone-naive, assume UTC
         if dt.tzinfo is None or dt.tzinfo.utcoffset(dt) is None:
-            return dt.replace(tzinfo=timezone.utc)
+            return dt.replace(tzinfo=UTC)
         return dt
     
-    def deduplicate(self, articles: List[ProcessedArticle]) -> List[ProcessedArticle]:
+    def deduplicate(self, articles: list[ProcessedArticle]) -> list[ProcessedArticle]:
         """Remove duplicate articles from the list"""
         if not articles:
             return []
@@ -53,7 +52,7 @@ class DuplicateDetector:
         
         return unique_articles
     
-    def _deduplicate_category(self, articles: List[ProcessedArticle]) -> Tuple[List[ProcessedArticle], int]:
+    def _deduplicate_category(self, articles: list[ProcessedArticle]) -> tuple[list[ProcessedArticle], int]:
         """Deduplicate articles within a specific category"""
         if len(articles) <= 1:
             return articles, 0
@@ -102,8 +101,7 @@ class DuplicateDetector:
 
 # Function words that carry no topic, so two unrelated articles do not match on them.
 _STOPWORDS = frozenset(
-    "a an the and or of in on to for with is are was were be been this that these those it its "
-    "as at by from has have had can could will would about new".split()
+    ["a", "an", "the", "and", "or", "of", "in", "on", "to", "for", "with", "is", "are", "was", "were", "be", "been", "this", "that", "these", "those", "it", "its", "as", "at", "by", "from", "has", "have", "had", "can", "could", "will", "would", "about", "new"]
 )
 
 

@@ -5,9 +5,6 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from src.web.database import get_db
-from src.web.services import user_service, interest_service, newsletter_service
-from src.web.services.user_service import UserNotFoundError
 from src.web.api.schemas import (
     InterestBrief,
     InterestFull,
@@ -17,6 +14,9 @@ from src.web.api.schemas import (
     UserListResponse,
     UserNewslettersResponse,
 )
+from src.web.database import get_db
+from src.web.services import interest_service, newsletter_service, user_service
+from src.web.services.user_service import UserNotFoundError
 
 router = APIRouter()
 

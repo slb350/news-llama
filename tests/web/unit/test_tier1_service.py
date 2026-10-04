@@ -4,19 +4,20 @@ Unit tests for Tier 1 source service - TDD RED phase.
 Tests Tier 1 source management: add, query, coverage, health updates.
 """
 
-import pytest
 import json
+
+import pytest
 from sqlalchemy.orm import Session
 
 from src.web.database import get_test_db
+from src.web.models import Tier1Source
 from src.web.services.tier1_service import (
     add_tier1_source,
-    get_sources_for_interests,
     get_coverage_stats,
-    mark_source_unhealthy,
+    get_sources_for_interests,
     mark_source_healthy,
+    mark_source_unhealthy,
 )
-from src.web.models import Tier1Source
 
 
 @pytest.fixture

@@ -1,21 +1,20 @@
 """
 Security utilities for News Llama
 """
-import re
-import time
 import asyncio
-from typing import Optional, Dict, List
-from urllib.parse import urlparse
+import time
 from collections import defaultdict
+from urllib.parse import urlparse
+
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from src.utils.constants import (
-    ValidationConstants,
-    SecurityConstants,
     HTTPConstants,
-    RateLimitConstants
+    RateLimitConstants,
+    SecurityConstants,
+    ValidationConstants,
 )
 from src.utils.logger import logger
 
@@ -72,7 +71,7 @@ class URLValidator:
             return False
 
     @staticmethod
-    def sanitize_url(url: str) -> Optional[str]:
+    def sanitize_url(url: str) -> str | None:
         """
         Sanitize a URL by removing dangerous components
 
@@ -151,7 +150,7 @@ class RateLimiter:
             # Record this call
             self.last_calls[identifier].append(time.time())
 
-    def get_status(self, identifier: str = "default") -> Dict[str, int]:
+    def get_status(self, identifier: str = "default") -> dict[str, int]:
         """
         Get current rate limit status
 
@@ -212,7 +211,7 @@ class SecureHTTPClient:
             'Upgrade-Insecure-Requests': '1'
         })
 
-    async def get(self, url: str, rate_limit_key: str = 'default', **kwargs) -> Optional[requests.Response]:
+    async def get(self, url: str, rate_limit_key: str = 'default', **kwargs) -> requests.Response | None:
         """
         Make a secure HTTP GET request with rate limiting
 

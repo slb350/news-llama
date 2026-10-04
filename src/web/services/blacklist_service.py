@@ -5,10 +5,10 @@ Manages source blacklist: add, check, filter, resurrect.
 Auto-populated from source failures during health checks.
 """
 
-from sqlalchemy.orm import Session
-from datetime import datetime
 import logging
-from typing import List, Dict
+from datetime import datetime
+
+from sqlalchemy.orm import Session
 
 from src.web.models import SourceBlacklist
 
@@ -96,7 +96,7 @@ def is_blacklisted(db: Session, source_type: str, source_key: str) -> bool:
     return entry is not None
 
 
-def filter_blacklisted_sources(db: Session, sources: List[Dict]) -> List[Dict]:
+def filter_blacklisted_sources(db: Session, sources: list[dict]) -> list[dict]:
     """
     Filter out blacklisted sources from candidate list.
 
@@ -164,7 +164,7 @@ def remove_from_blacklist(db: Session, source_type: str, source_key: str):
         logger.info(f"Resurrected {source_type}:{source_key} (removed from blacklist)")
 
 
-def get_blacklist_stats(db: Session) -> Dict:
+def get_blacklist_stats(db: Session) -> dict:
     """
     Get blacklist statistics.
 

@@ -6,16 +6,16 @@ Mines curated lists for high-quality source discovery:
 - Reddit wiki pages
 """
 
-import aiohttp
-import re
 import logging
-from typing import List, Dict
+import re
 from urllib.parse import urlparse
+
+import aiohttp
 
 logger = logging.getLogger(__name__)
 
 
-async def mine_github_list(url: str, interest: str) -> List[Dict]:
+async def mine_github_list(url: str, interest: str) -> list[dict]:
     """
     Mine a GitHub awesome-list for sources.
 
@@ -75,7 +75,7 @@ async def mine_github_list(url: str, interest: str) -> List[Dict]:
         return []
 
 
-async def mine_reddit_wiki(url: str, interest: str) -> List[Dict]:
+async def mine_reddit_wiki(url: str, interest: str) -> list[dict]:
     """
     Mine a Reddit wiki page for related subreddits.
 
@@ -119,7 +119,7 @@ async def mine_reddit_wiki(url: str, interest: str) -> List[Dict]:
         return []
 
 
-async def mine_all_lists_for_interest(interest: str, known_lists: Dict) -> List[Dict]:
+async def mine_all_lists_for_interest(interest: str, known_lists: dict) -> list[dict]:
     """
     Mine all known lists for a given interest.
 
@@ -146,7 +146,7 @@ async def mine_all_lists_for_interest(interest: str, known_lists: Dict) -> List[
     return deduplicate_sources(all_sources)
 
 
-def deduplicate_sources(sources: List[Dict]) -> List[Dict]:
+def deduplicate_sources(sources: list[dict]) -> list[dict]:
     """
     Deduplicate sources by (source_type, source_key).
 

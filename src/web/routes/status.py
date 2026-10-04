@@ -1,6 +1,6 @@
 """Public metrics page and health endpoints for the scheduler and generation."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
@@ -36,11 +36,11 @@ def _job_info(job) -> dict:
     }
     if job.next_run_time:
         # APScheduler cron triggers carry their timezone; fall back to UTC for others
-        tz = getattr(job.trigger, "timezone", timezone.utc)
+        tz = getattr(job.trigger, "timezone", UTC)
         next_run_local = job.next_run_time.astimezone(tz)
         info["next_run"] = next_run_local.isoformat()
         info["next_run_formatted"] = next_run_local.strftime("%Y-%m-%d %I:%M %p %Z")
-        info["hours_until"] = (next_run_local - datetime.now(timezone.utc)).total_seconds() / 3600
+        info["hours_until"] = (next_run_local - datetime.now(UTC)).total_seconds() / 3600
         info["schedule"] = _job_schedule(job, str(tz))
     return info
 

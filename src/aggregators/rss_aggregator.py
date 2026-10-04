@@ -2,22 +2,16 @@
 RSS feed aggregator
 """
 import asyncio
+from datetime import UTC, datetime, timedelta
+
 import feedparser
-from datetime import datetime, timedelta, timezone
-from typing import List
-from urllib.parse import urljoin
-import requests
 from bs4 import BeautifulSoup
 
 from src.aggregators.base import BaseAggregator
-from src.utils.models import Article, SourceType
+from src.utils.constants import ProcessingConstants, SecurityConstants
 from src.utils.logger import logger
+from src.utils.models import Article, SourceType
 from src.utils.security import URLValidator, get_secure_http_client
-from src.utils.constants import (
-    ProcessingConstants,
-    SecurityConstants,
-    HTTPConstants
-)
 
 
 class RSSAggregator(BaseAggregator):
@@ -27,7 +21,7 @@ class RSSAggregator(BaseAggregator):
         super().__init__(config)
         self.http_client = get_secure_http_client()
 
-    async def collect(self) -> List[Article]:
+    async def collect(self) -> list[Article]:
         """Collect articles from configured RSS feeds"""
         articles = []
 
@@ -52,7 +46,7 @@ class RSSAggregator(BaseAggregator):
 
         return articles
     
-    async def _collect_from_feed(self, feed_config: dict) -> List[Article]:
+    async def _collect_from_feed(self, feed_config: dict) -> list[Article]:
         """Collect articles from a single RSS feed"""
         feed_url = feed_config['url']
         feed_name = feed_config['name']
@@ -130,17 +124,17 @@ class RSSAggregator(BaseAggregator):
             return None
 
         # Extract publication date (feedparser normalizes *_parsed to UTC)
-        published_at = datetime.now(timezone.utc)
+        published_at = datetime.now(UTC)
         parsed = getattr(entry, 'published_parsed', None) or getattr(entry, 'updated_parsed', None)
         if parsed:
             try:
-                published_at = datetime(*parsed[:6], tzinfo=timezone.utc)
+                published_at = datetime(*parsed[:6], tzinfo=UTC)
             except (ValueError, TypeError) as e:
                 logger.warning(f"Invalid publication date in RSS entry: {e}")
 
         # Skip if too old
         max_age_hours = self.config.processing.max_article_age
-        if published_at < datetime.now(timezone.utc) - timedelta(hours=max_age_hours):
+        if published_at < datetime.now(UTC) - timedelta(hours=max_age_hours):
             return None
 
         # Extract content

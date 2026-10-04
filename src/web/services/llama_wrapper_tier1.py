@@ -7,12 +7,12 @@ Provides interface between web app and Tier 1 source system for fast path genera
 import json
 import logging
 from datetime import datetime
-from typing import List, Tuple, Dict
+
 from sqlalchemy.orm import Session
 
-from src.web.models import Tier1Source, SourceContribution
-from src.web.services import tier1_service, blacklist_service
 from src.utils.config import DiscoveredSource
+from src.web.models import SourceContribution, Tier1Source
+from src.web.services import blacklist_service, tier1_service
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +20,8 @@ COVERAGE_THRESHOLD = 90.0  # % threshold for using Tier 1 only
 
 
 def convert_tier1_to_discovered(
-    tier1_sources: List[Tier1Source],
-) -> List[DiscoveredSource]:
+    tier1_sources: list[Tier1Source],
+) -> list[DiscoveredSource]:
     """
     Convert Tier 1 database sources to DiscoveredSource format for NewsLlama.
 
@@ -82,8 +82,8 @@ def convert_tier1_to_discovered(
 
 
 def get_sources_with_coverage(
-    db: Session, user_interests: List[str]
-) -> Tuple[List[Tier1Source], float]:
+    db: Session, user_interests: list[str]
+) -> tuple[list[Tier1Source], float]:
     """
     Get Tier 1 sources for interests with coverage percentage.
 
@@ -109,8 +109,8 @@ def get_sources_with_coverage(
 
 
 def get_healthy_tier1_for_interests(
-    db: Session, user_interests: List[str]
-) -> List[Tier1Source]:
+    db: Session, user_interests: list[str]
+) -> list[Tier1Source]:
     """
     Get healthy Tier 1 sources for interests.
 
@@ -122,8 +122,8 @@ def get_healthy_tier1_for_interests(
 
 
 def get_filtered_tier1_sources(
-    db: Session, user_interests: List[str]
-) -> List[Tier1Source]:
+    db: Session, user_interests: list[str]
+) -> list[Tier1Source]:
     """
     Get healthy, non-blacklisted Tier 1 sources for interests.
 
@@ -150,7 +150,7 @@ def get_filtered_tier1_sources(
 
 
 def track_source_contributions(
-    db: Session, newsletter_id: int, contributions: List[Dict]
+    db: Session, newsletter_id: int, contributions: list[dict]
 ):
     """
     Track which sources contributed articles to newsletter.
@@ -183,7 +183,7 @@ def track_source_contributions(
     )
 
 
-def extract_contributions_from_stats(stats: Dict) -> List[Dict]:
+def extract_contributions_from_stats(stats: dict) -> list[dict]:
     """
     Extract source contribution data from NewsLlama stats.
 

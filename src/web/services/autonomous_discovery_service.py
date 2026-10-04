@@ -16,18 +16,18 @@ import asyncio
 import json
 import logging
 from datetime import datetime
-from typing import List, Dict
+
 from sqlalchemy.orm import Session
 
 from src.web.models import DiscoveredSource, UserInterest
 from src.web.services import (
-    list_mining_service,
+    blacklist_service,
     direct_search_service,
     health_check_service,
+    interest_service,
+    list_mining_service,
     quality_scoring,
     tier1_service,
-    blacklist_service,
-    interest_service,
 )
 
 logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ KNOWN_LISTS = {
 }
 
 
-async def run_weekly_discovery(db: Session, interests: List[str] = None) -> Dict:
+async def run_weekly_discovery(db: Session, interests: list[str] = None) -> dict:
     """
     Run weekly autonomous discovery job.
 
@@ -228,7 +228,7 @@ async def run_weekly_discovery(db: Session, interests: List[str] = None) -> Dict
     return stats
 
 
-def _get_all_interests(db: Session) -> List[str]:
+def _get_all_interests(db: Session) -> list[str]:
     """Get all unique interests (predefined + custom user interests)."""
     # Predefined interests
     predefined = interest_service.get_predefined_interests()
@@ -245,7 +245,7 @@ def _get_all_interests(db: Session) -> List[str]:
     return all_interests
 
 
-async def _mine_all_lists(interests: List[str]) -> List[Dict]:
+async def _mine_all_lists(interests: list[str]) -> list[dict]:
     """Mine curated lists for all interests."""
     tasks = []
     for interest in interests:
@@ -270,7 +270,7 @@ async def _mine_all_lists(interests: List[str]) -> List[Dict]:
     return all_sources
 
 
-async def _direct_search(interests: List[str]) -> List[Dict]:
+async def _direct_search(interests: list[str]) -> list[dict]:
     """Direct LLM search for all interests."""
     try:
         return await direct_search_service.search_for_interests(interests)
@@ -279,7 +279,7 @@ async def _direct_search(interests: List[str]) -> List[Dict]:
         return []
 
 
-def _log_discoveries(db: Session, candidates: List[Dict]):
+def _log_discoveries(db: Session, candidates: list[dict]):
     """Log all discoveries to discovered_sources table."""
     for candidate in candidates:
         try:

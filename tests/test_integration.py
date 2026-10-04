@@ -1,11 +1,11 @@
 """
 Integration tests for the News Llama application
 """
-import pytest
-import asyncio
-from unittest.mock import Mock, patch, AsyncMock
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from email.utils import format_datetime
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from src.aggregators.rss_aggregator import RSSAggregator
 from src.processors.content_processor import ContentProcessor
@@ -46,7 +46,7 @@ class TestRSSAggregatorIntegration:
     async def test_rss_aggregator_integration(self, mock_config):
         """Test RSS aggregator with mock HTTP responses"""
         aggregator = RSSAggregator(mock_config)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         bbc_published = format_datetime(now - timedelta(hours=1), usegmt=True)
         techcrunch_published = format_datetime(now - timedelta(hours=2), usegmt=True)
 

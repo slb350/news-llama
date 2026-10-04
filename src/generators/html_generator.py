@@ -3,12 +3,12 @@ HTML output generator
 """
 from datetime import datetime
 from pathlib import Path
-from typing import List
+
 from jinja2 import Environment, FileSystemLoader
 
 from src.generators.digest import build_digest
-from src.utils.models import SummarizedArticle, NewsDigest
 from src.utils.logger import logger
+from src.utils.models import NewsDigest, SummarizedArticle
 
 
 class HTMLGenerator:
@@ -25,7 +25,7 @@ class HTMLGenerator:
             autoescape=True
         )
     
-    def generate(self, articles: List[SummarizedArticle], output_filename: str = None) -> None:
+    def generate(self, articles: list[SummarizedArticle], output_filename: str = None) -> None:
         """
         Generate HTML output
 

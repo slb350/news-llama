@@ -1,13 +1,12 @@
 """
 RSS feed generator
 """
-from pathlib import Path
-from typing import List
 from email.utils import formatdate
+from pathlib import Path
 
 from src.generators.digest import build_digest
-from src.utils.models import SummarizedArticle, NewsDigest
 from src.utils.logger import logger
+from src.utils.models import NewsDigest, SummarizedArticle
 
 
 class RSSGenerator:
@@ -17,7 +16,7 @@ class RSSGenerator:
         self.config = config
         self.output_dir = Path(config.output.directory)
 
-    def generate(self, articles: List[SummarizedArticle]) -> None:
+    def generate(self, articles: list[SummarizedArticle]) -> None:
         """Generate RSS output"""
         if not articles:
             logger.warning("No articles to generate RSS for")

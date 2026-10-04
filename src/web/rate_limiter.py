@@ -7,7 +7,6 @@ For production, consider Redis-backed rate limiting.
 
 import time
 from collections import defaultdict, deque
-from typing import Dict, Deque, Tuple
 from functools import wraps
 
 from fastapi import HTTPException, status
@@ -32,9 +31,9 @@ class RateLimiter:
         self.max_requests = max_requests
         self.window_seconds = window_seconds
         # Store deques of timestamps per identifier
-        self._requests: Dict[str, Deque[float]] = defaultdict(deque)
+        self._requests: dict[str, deque[float]] = defaultdict(deque)
 
-    def is_allowed(self, identifier: str) -> Tuple[bool, int]:
+    def is_allowed(self, identifier: str) -> tuple[bool, int]:
         """
         Check if request is allowed for identifier.
 

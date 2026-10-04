@@ -1,8 +1,10 @@
 """
 Test suite for News Llama
 """
-import pytest
 from datetime import datetime
+
+import pytest
+
 from src.utils.models import Article, SourceType
 
 

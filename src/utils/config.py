@@ -2,12 +2,12 @@
 Configuration management for News Llama using environment variables
 """
 import os
-import yaml
 from pathlib import Path
-from typing import Dict, Any, List, Optional
-from pydantic import BaseModel, Field, field_validator
-from dotenv import load_dotenv
+from typing import Any
 
+import yaml
+from dotenv import load_dotenv
+from pydantic import BaseModel, Field, field_validator
 
 # Load environment variables from .env file
 load_dotenv()
@@ -32,9 +32,9 @@ class RedditSource(BaseModel):
 
 class DiscoveredSource(BaseModel):
     name: str
-    url: Optional[str] = None
-    username: Optional[str] = None
-    subreddit: Optional[str] = None
+    url: str | None = None
+    username: str | None = None
+    subreddit: str | None = None
     source_type: str  # rss, twitter, reddit, web_search
     category: str
     confidence_score: float
@@ -42,7 +42,7 @@ class DiscoveredSource(BaseModel):
 
 
 class Category(BaseModel):
-    keywords: List[str]
+    keywords: list[str]
     priority: str = "medium"  # high, medium, low
 
 
@@ -55,7 +55,7 @@ class LLMConfig(BaseModel):
 
 
 class OutputConfig(BaseModel):
-    formats: List[str] = Field(default_factory=lambda: os.getenv("OUTPUT_FORMATS", "html,rss,json").split(","))
+    formats: list[str] = Field(default_factory=lambda: os.getenv("OUTPUT_FORMATS", "html,rss,json").split(","))
     directory: str = Field(default_factory=lambda: os.getenv("OUTPUT_DIRECTORY", "output"))
     template_dir: str = Field(default_factory=lambda: os.getenv("TEMPLATE_DIRECTORY", "templates"))
     max_articles_per_category: int = Field(default_factory=lambda: int(os.getenv("MAX_ARTICLES_PER_CATEGORY", "5")))
@@ -81,16 +81,16 @@ class LoggingConfig(BaseModel):
 
 
 class SocialMediaConfig(BaseModel):
-    twitter_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("TWITTER_API_KEY"))
-    twitter_api_secret: Optional[str] = Field(default_factory=lambda: os.getenv("TWITTER_API_SECRET"))
-    twitter_access_token: Optional[str] = Field(default_factory=lambda: os.getenv("TWITTER_ACCESS_TOKEN"))
-    twitter_access_token_secret: Optional[str] = Field(default_factory=lambda: os.getenv("TWITTER_ACCESS_TOKEN_SECRET"))
+    twitter_api_key: str | None = Field(default_factory=lambda: os.getenv("TWITTER_API_KEY"))
+    twitter_api_secret: str | None = Field(default_factory=lambda: os.getenv("TWITTER_API_SECRET"))
+    twitter_access_token: str | None = Field(default_factory=lambda: os.getenv("TWITTER_ACCESS_TOKEN"))
+    twitter_access_token_secret: str | None = Field(default_factory=lambda: os.getenv("TWITTER_ACCESS_TOKEN_SECRET"))
 
-    reddit_client_id: Optional[str] = Field(default_factory=lambda: os.getenv("REDDIT_CLIENT_ID"))
-    reddit_client_secret: Optional[str] = Field(default_factory=lambda: os.getenv("REDDIT_CLIENT_SECRET"))
-    reddit_username: Optional[str] = Field(default_factory=lambda: os.getenv("REDDIT_USERNAME"))
-    reddit_password: Optional[str] = Field(default_factory=lambda: os.getenv("REDDIT_PASSWORD"))
-    reddit_user_agent: Optional[str] = Field(default_factory=lambda: os.getenv("REDDIT_USER_AGENT", "news-llama/1.0"))
+    reddit_client_id: str | None = Field(default_factory=lambda: os.getenv("REDDIT_CLIENT_ID"))
+    reddit_client_secret: str | None = Field(default_factory=lambda: os.getenv("REDDIT_CLIENT_SECRET"))
+    reddit_username: str | None = Field(default_factory=lambda: os.getenv("REDDIT_USERNAME"))
+    reddit_password: str | None = Field(default_factory=lambda: os.getenv("REDDIT_PASSWORD"))
+    reddit_user_agent: str | None = Field(default_factory=lambda: os.getenv("REDDIT_USER_AGENT", "news-llama/1.0"))
 
     @field_validator('twitter_api_key', 'twitter_api_secret', 'twitter_access_token', 'twitter_access_token_secret')
     @classmethod
@@ -152,13 +152,13 @@ class SocialMediaConfig(BaseModel):
 
 class SourceDiscoveryConfig(BaseModel):
     enabled: bool = Field(default_factory=lambda: os.getenv("ENABLE_LLM_SOURCE_DISCOVERY", "true").lower() == "true")
-    web_search_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("WEB_SEARCH_API_KEY"))
+    web_search_api_key: str | None = Field(default_factory=lambda: os.getenv("WEB_SEARCH_API_KEY"))
     max_sources_per_category: int = 100  # Allow many sources across all interests
 
 
 class Config(BaseModel):
-    sources: Dict[str, List[Dict[str, Any]]] = Field(default_factory=dict)
-    categories: Dict[str, Category] = Field(default_factory=dict)
+    sources: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)
+    categories: dict[str, Category] = Field(default_factory=dict)
     llm: LLMConfig = Field(default_factory=LLMConfig)
     output: OutputConfig = Field(default_factory=OutputConfig)
     processing: ProcessingConfig = Field(default_factory=ProcessingConfig)
@@ -167,11 +167,11 @@ class Config(BaseModel):
     social_media: SocialMediaConfig = Field(default_factory=SocialMediaConfig)
     source_discovery: SourceDiscoveryConfig = Field(default_factory=SourceDiscoveryConfig)
     
-    discovered_sources: List[DiscoveredSource] = Field(default_factory=list)
+    discovered_sources: list[DiscoveredSource] = Field(default_factory=list)
     # Propagated user preferences for generators
-    user_interests: List[str] = Field(default_factory=list)
+    user_interests: list[str] = Field(default_factory=list)
 
-    def __init__(self, config_path: Optional[str] = None, skip_default_sources: bool = False):
+    def __init__(self, config_path: str | None = None, skip_default_sources: bool = False):
         # Initialize with environment variables (Pydantic handles this via Field defaults)
         super().__init__()
 
@@ -201,7 +201,7 @@ class Config(BaseModel):
         # Validate API keys
         self._validate_api_keys()
     
-    def _load_config(self, config_path: str) -> Dict[str, Any]:
+    def _load_config(self, config_path: str) -> dict[str, Any]:
         """Load configuration from YAML file"""
         with open(config_path, 'r') as f:
             return yaml.safe_load(f)

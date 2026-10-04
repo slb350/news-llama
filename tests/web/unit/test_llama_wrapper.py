@@ -7,17 +7,18 @@ Tests integration between web app and main NewsLlama engine:
 - ensure_output_directory: Create output directory if missing
 """
 
-import pytest
+import tempfile
 from datetime import date
 from pathlib import Path
-from unittest.mock import Mock, patch, AsyncMock
-import tempfile
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from src.web.services.llama_wrapper import (
+    NewsLlamaWrapperError,
+    ensure_output_directory,
     generate_newsletter_for_interests,
     get_output_file_path,
-    ensure_output_directory,
-    NewsLlamaWrapperError,
 )
 
 

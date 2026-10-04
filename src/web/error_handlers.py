@@ -5,11 +5,11 @@ Provides user-friendly error messages and prevents technical details
 from leaking to end users.
 """
 
-from fastapi import Request, status
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
 import logging
 
+from fastapi import Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +69,7 @@ def get_friendly_message(exception: Exception) -> str:
         return ERROR_MESSAGES["interest_validation"]
     elif exception_name == "NewsletterNotFoundError":
         return ERROR_MESSAGES["newsletter_not_found"]
-    elif exception_name == "DuplicateNewsletterError":
-        return ERROR_MESSAGES["newsletter_duplicate"]
-    elif exception_name == "NewsletterAlreadyExistsError":
+    elif exception_name == "DuplicateNewsletterError" or exception_name == "NewsletterAlreadyExistsError":
         return ERROR_MESSAGES["newsletter_duplicate"]
     elif exception_name == "NewsletterValidationError":
         # Check for specific validation errors

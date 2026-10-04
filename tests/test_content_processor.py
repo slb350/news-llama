@@ -1,13 +1,13 @@
 """
 Test suite for content processing functionality
 """
-import pytest
 from datetime import datetime
-from textblob import TextBlob
+
+import pytest
 
 from src.processors.content_processor import ContentProcessor
-from src.utils.models import Article, SourceType
 from src.utils.constants import ProcessingConstants
+from src.utils.models import Article, SourceType
 
 
 class TestContentProcessor:

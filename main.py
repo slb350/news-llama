@@ -2,23 +2,22 @@
 Main entry point for News Llama
 """
 
-import asyncio
 import argparse
+import asyncio
 import logging
-from typing import Dict, List
-
-from src.aggregators.rss_aggregator import RSSAggregator
-from src.aggregators.reddit_aggregator import RedditAggregator
+from datetime import UTC
 
 # from src.aggregators.hackernews_aggregator import HackerNewsAggregator  # Disabled: empty content
 from src.aggregators.dynamic_aggregator import DynamicAggregator
+from src.aggregators.reddit_aggregator import RedditAggregator
+from src.aggregators.rss_aggregator import RSSAggregator
+from src.generators.html_generator import HTMLGenerator
+from src.generators.json_generator import JSONGenerator
+from src.generators.rss_generator import RSSGenerator
 from src.processors.content_processor import ContentProcessor
 from src.processors.duplicate_detector import DuplicateDetector
 from src.processors.source_discovery import SourceDiscoveryEngine
 from src.summarizers.llm_summarizer import LLMSummarizer
-from src.generators.html_generator import HTMLGenerator
-from src.generators.json_generator import JSONGenerator
-from src.generators.rss_generator import RSSGenerator
 from src.utils.config import Config
 from src.utils.logger import setup_logging
 
@@ -31,8 +30,8 @@ class NewsLlama:
     def __init__(
         self,
         config_path: str = None,
-        user_interests: List[str] = None,
-        pre_discovered_sources: List = None,
+        user_interests: list[str] = None,
+        pre_discovered_sources: list = None,
         output_filename: str = None,
     ):
         # Skip default sources if user interests or pre-discovered sources are specified
@@ -95,7 +94,7 @@ class NewsLlama:
                 f"Added dynamic aggregator with {len(discovered_sources)} discovered sources"
             )
 
-    def _setup_aggregators(self) -> Dict[str, object]:
+    def _setup_aggregators(self) -> dict[str, object]:
         """Initialize content aggregators"""
         aggregators = {
             "rss": RSSAggregator(self.config),
@@ -114,7 +113,7 @@ class NewsLlama:
 
         return aggregators
 
-    def _setup_generators(self) -> Dict[str, object]:
+    def _setup_generators(self) -> dict[str, object]:
         """Initialize output generators"""
         return {
             "html": HTMLGenerator(self.config),
@@ -122,7 +121,7 @@ class NewsLlama:
             "rss": RSSGenerator(self.config),
         }
 
-    def _filter_top_articles(self, articles: List, max_articles: int = 20) -> List:
+    def _filter_top_articles(self, articles: list, max_articles: int = 20) -> list:
         """
         Filter to top N articles based on recency and quality signals
 
@@ -131,10 +130,10 @@ class NewsLlama:
         - Word count (more content = better, but HN links with no content = worse)
         - Source reputation (certain sources ranked higher)
         """
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         scored_articles = []
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         for article in articles:
             score = 0
@@ -144,7 +143,7 @@ class NewsLlama:
                 # Normalize datetime to timezone-aware UTC
                 pub_at = article.published_at
                 if pub_at.tzinfo is None or pub_at.tzinfo.utcoffset(pub_at) is None:
-                    pub_at = pub_at.replace(tzinfo=timezone.utc)
+                    pub_at = pub_at.replace(tzinfo=UTC)
 
                 age_hours = (now - pub_at).total_seconds() / 3600
                 recency_score = max(
@@ -181,13 +180,13 @@ class NewsLlama:
 
         return top_articles
 
-    def _prefilter_articles_for_summarization(self, articles: List) -> List:
+    def _prefilter_articles_for_summarization(self, articles: list) -> list:
         """
         Pre-filter articles to top N per category BEFORE summarization to save LLM time.
         Groups by category, sorts by quality (recency + metadata), and limits to max per category.
         """
-        from datetime import datetime, timezone
         from collections import defaultdict
+        from datetime import datetime
 
         max_per_category = self.config.output.max_articles_per_category
         logger.info(
@@ -204,7 +203,7 @@ class NewsLlama:
         for category, cat_articles in by_category.items():
             # Score articles by recency and quality
             scored = []
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
             for article in cat_articles:
                 score = 0
@@ -213,7 +212,7 @@ class NewsLlama:
                 if article.published_at:
                     pub_at = article.published_at
                     if pub_at.tzinfo is None or pub_at.tzinfo.utcoffset(pub_at) is None:
-                        pub_at = pub_at.replace(tzinfo=timezone.utc)
+                        pub_at = pub_at.replace(tzinfo=UTC)
                     age_hours = (now - pub_at).total_seconds() / 3600
                     recency_score = max(
                         0, 10 - (age_hours / 2.4)
@@ -251,7 +250,7 @@ class NewsLlama:
         )
         return filtered_articles
 
-    def _filter_valid_summaries(self, articles: List) -> List:
+    def _filter_valid_summaries(self, articles: list) -> list:
         """
         Filter out articles with failed content extraction or invalid summaries
 
@@ -387,7 +386,7 @@ class NewsLlama:
             raise
 
 
-async def main(interests: List[str] = None, schedule_mode: bool = False):
+async def main(interests: list[str] = None, schedule_mode: bool = False):
     """Main entry point"""
     setup_logging()
 
@@ -415,7 +414,7 @@ async def main(interests: List[str] = None, schedule_mode: bool = False):
         stats = await news_llama.run()
 
         if stats:
-            print(f"\nNews Llama Summary:")
+            print("\nNews Llama Summary:")
             print(f"   Total articles collected: {stats['total_articles']}")
             print(f"   Unique articles after deduplication: {stats['unique_articles']}")
             print(f"   Articles summarized: {stats['summarized_articles']}")

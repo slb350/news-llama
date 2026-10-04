@@ -13,19 +13,19 @@ Tests interest management operations:
 import pytest
 from sqlalchemy.orm import Session
 
+from src.web.database import get_test_db
 from src.web.services.interest_service import (
-    get_predefined_interests,
-    get_predefined_interests_grouped,
-    search_interests,
-    add_user_interest,
-    remove_user_interest,
-    get_user_interests,
+    DuplicateInterestError,
     InterestNotFoundError,
     InterestValidationError,
-    DuplicateInterestError,
+    add_user_interest,
+    get_predefined_interests,
+    get_predefined_interests_grouped,
+    get_user_interests,
+    remove_user_interest,
+    search_interests,
 )
 from src.web.services.user_service import create_user
-from src.web.database import get_test_db
 
 
 @pytest.fixture

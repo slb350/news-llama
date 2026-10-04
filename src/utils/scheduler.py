@@ -2,10 +2,11 @@
 Scheduler for automated news curation
 """
 import asyncio
-import schedule
 import time
-from typing import Callable, Awaitable
+from collections.abc import Awaitable, Callable
 from datetime import datetime
+
+import schedule
 
 from src.utils.logger import logger
 

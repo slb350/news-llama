@@ -6,11 +6,11 @@ Expected to FAIL until models are implemented.
 
 import pytest
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import sessionmaker
 
 # These imports will fail until we create the models - that's expected (RED phase)
-from src.web.models import Base, User, Newsletter, UserInterest
+from src.web.models import Base, Newsletter, User, UserInterest
 
 
 @pytest.fixture

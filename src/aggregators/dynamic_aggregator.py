@@ -2,20 +2,19 @@
 Dynamic aggregator for LLM-discovered sources
 """
 
-from typing import List, Dict
 
 from src.aggregators.base import BaseAggregator
-from src.aggregators.rss_aggregator import RSSAggregator
 from src.aggregators.reddit_aggregator import RedditAggregator
-from src.utils.models import Article
+from src.aggregators.rss_aggregator import RSSAggregator
 from src.utils.config import DiscoveredSource
 from src.utils.logger import logger
+from src.utils.models import Article
 
 
 class DynamicAggregator(BaseAggregator):
     """Aggregator that handles dynamically discovered sources"""
 
-    def __init__(self, config, discovered_sources: List[DiscoveredSource]):
+    def __init__(self, config, discovered_sources: list[DiscoveredSource]):
         super().__init__(config)
         self.discovered_sources = discovered_sources
         self.delegate_aggregators = {
@@ -23,7 +22,7 @@ class DynamicAggregator(BaseAggregator):
             "reddit": RedditAggregator(config),
         }
 
-    async def collect(self) -> List[Article]:
+    async def collect(self) -> list[Article]:
         """Collect articles from discovered sources"""
         articles = []
 
@@ -52,7 +51,7 @@ class DynamicAggregator(BaseAggregator):
             if "reddit" in self.delegate_aggregators:
                 await self.delegate_aggregators["reddit"].close()
 
-    def _group_sources_by_type(self) -> Dict[str, List[DiscoveredSource]]:
+    def _group_sources_by_type(self) -> dict[str, list[DiscoveredSource]]:
         """Group discovered sources by their type"""
         grouped = {}
         for source in self.discovered_sources:
@@ -62,8 +61,8 @@ class DynamicAggregator(BaseAggregator):
         return grouped
 
     async def _collect_from_source_type(
-        self, source_type: str, sources: List[DiscoveredSource]
-    ) -> List[Article]:
+        self, source_type: str, sources: list[DiscoveredSource]
+    ) -> list[Article]:
         """Collect articles from a specific source type"""
         if source_type == "rss":
             return await self._collect_from_rss_sources(sources)
@@ -82,8 +81,8 @@ class DynamicAggregator(BaseAggregator):
             return []
 
     async def _collect_from_rss_sources(
-        self, sources: List[DiscoveredSource]
-    ) -> List[Article]:
+        self, sources: list[DiscoveredSource]
+    ) -> list[Article]:
         """Collect from RSS sources"""
         articles = []
 
@@ -109,8 +108,8 @@ class DynamicAggregator(BaseAggregator):
         return articles
 
     async def _collect_from_reddit_sources(
-        self, sources: List[DiscoveredSource]
-    ) -> List[Article]:
+        self, sources: list[DiscoveredSource]
+    ) -> list[Article]:
         """Collect from Reddit sources"""
         articles = []
 
@@ -146,8 +145,8 @@ class DynamicAggregator(BaseAggregator):
         return articles
 
     async def _collect_from_reddit_search(
-        self, sources: List[DiscoveredSource]
-    ) -> List[Article]:
+        self, sources: list[DiscoveredSource]
+    ) -> list[Article]:
         """Collect from Reddit search queries"""
         articles = []
 

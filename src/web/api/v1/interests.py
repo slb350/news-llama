@@ -2,13 +2,13 @@
 
 from fastapi import APIRouter
 
-from src.web.services import interest_service
 from src.web.api.schemas import (
     InterestGroup,
     InterestSearchResponse,
     PredefinedInterestsFlatResponse,
     PredefinedInterestsGroupedResponse,
 )
+from src.web.services import interest_service
 
 router = APIRouter()
 

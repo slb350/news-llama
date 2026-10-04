@@ -7,14 +7,15 @@ Tests profile selection, creation, and user session management:
 - POST /profile/create: Create profile and set session cookie
 """
 
-import pytest
 from datetime import date
+from unittest.mock import MagicMock, patch
+
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from unittest.mock import patch, MagicMock
 
 from src.web.app import app
-from src.web.database import get_test_db, get_db
+from src.web.database import get_db, get_test_db
 from src.web.services.user_service import create_user
 
 
@@ -409,7 +410,7 @@ class TestProfileDelete:
         assert "deleted successfully" in data["message"].lower()
 
         # Verify user was actually deleted
-        from src.web.services.user_service import get_user, UserNotFoundError
+        from src.web.services.user_service import UserNotFoundError, get_user
 
         with pytest.raises(UserNotFoundError):
             get_user(db, user_id)
@@ -429,11 +430,11 @@ class TestProfileDelete:
         self, client: TestClient, db: Session
     ):
         """Should cascade delete to user_interests table."""
-        from src.web.services.user_service import create_user
         from src.web.services.interest_service import (
             add_user_interest,
             get_user_interests,
         )
+        from src.web.services.user_service import create_user
 
         # Create user with interests
         user = create_user(db, first_name="CascadeTest")
@@ -450,7 +451,7 @@ class TestProfileDelete:
         assert response.status_code == 200
 
         # Verify interests were cascaded (should return empty list, not raise)
-        from src.web.services.user_service import get_user, UserNotFoundError
+        from src.web.services.user_service import UserNotFoundError, get_user
 
         # User should not exist
         with pytest.raises(UserNotFoundError):
@@ -469,10 +470,11 @@ class TestProfileDelete:
         self, client: TestClient, db: Session
     ):
         """Should cascade delete to newsletters table."""
-        from src.web.services.user_service import create_user
-        from src.web.services.newsletter_service import get_newsletters_by_month
-        from src.web.models import Newsletter
         from datetime import datetime
+
+        from src.web.models import Newsletter
+        from src.web.services.newsletter_service import get_newsletters_by_month
+        from src.web.services.user_service import create_user
 
         # Create user with newsletters
         user = create_user(db, first_name="NewsletterCascade")
@@ -510,7 +512,7 @@ class TestProfileDelete:
         assert response.status_code == 200
 
         # Verify newsletters were cascaded
-        from src.web.services.user_service import get_user, UserNotFoundError
+        from src.web.services.user_service import UserNotFoundError, get_user
 
         # User should not exist
         with pytest.raises(UserNotFoundError):

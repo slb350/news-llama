@@ -2,14 +2,14 @@
 Reddit aggregator using asyncpraw
 """
 
-from datetime import datetime, timedelta, timezone
-from typing import List, Optional, Tuple
+from datetime import UTC, datetime, timedelta
+
 import asyncpraw
 
 from src.aggregators.base import BaseAggregator
-from src.utils.models import Article, SourceType
+from src.utils.image_cache import download_and_cache_image, is_image_url, is_video_url
 from src.utils.logger import logger
-from src.utils.image_cache import is_image_url, is_video_url, download_and_cache_image
+from src.utils.models import Article, SourceType
 
 
 class RedditAggregator(BaseAggregator):
@@ -74,7 +74,7 @@ class RedditAggregator(BaseAggregator):
             self.reddit = None
             self._initialization_failed = True
 
-    async def collect(self) -> List[Article]:
+    async def collect(self) -> list[Article]:
         """Collect posts from configured subreddits"""
         # Lazy initialize client (only happens once, inside async context)
         await self._ensure_reddit_client()
@@ -106,7 +106,7 @@ class RedditAggregator(BaseAggregator):
 
     async def search_reddit(
         self, query: str, category: str, limit: int = 50
-    ) -> List[Article]:
+    ) -> list[Article]:
         """Search all of Reddit for posts matching a query with progressive time filter fallback"""
         # Lazy initialize client (only happens once, inside async context)
         await self._ensure_reddit_client()
@@ -157,7 +157,7 @@ class RedditAggregator(BaseAggregator):
             logger.error(f"Error searching Reddit for '{query}': {e}")
             return []
 
-    async def _collect_from_subreddit(self, config: dict) -> List[Article]:
+    async def _collect_from_subreddit(self, config: dict) -> list[Article]:
         """Collect posts from a specific subreddit"""
         subreddit_name = config["subreddit"]
         category = config["category"]
@@ -181,8 +181,8 @@ class RedditAggregator(BaseAggregator):
         """Parse Reddit submission into Article model"""
         # Skip if too old
         max_age_hours = self.config.processing.max_article_age
-        post_time = datetime.fromtimestamp(submission.created_utc, tz=timezone.utc)
-        if post_time < datetime.now(timezone.utc) - timedelta(hours=max_age_hours):
+        post_time = datetime.fromtimestamp(submission.created_utc, tz=UTC)
+        if post_time < datetime.now(UTC) - timedelta(hours=max_age_hours):
             return None
 
         # Extract content (self-text or external URL)
@@ -221,7 +221,7 @@ class RedditAggregator(BaseAggregator):
 
     async def _extract_media_info(
         self, submission
-    ) -> Tuple[Optional[str], bool, int, bool]:
+    ) -> tuple[str | None, bool, int, bool]:
         """
         Extract media information from a Reddit submission.
 

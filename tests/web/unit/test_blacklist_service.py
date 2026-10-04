@@ -8,15 +8,15 @@ import pytest
 from sqlalchemy.orm import Session
 
 from src.web.database import get_test_db
+from src.web.models import SourceBlacklist
 from src.web.services.blacklist_service import (
     add_to_blacklist,
-    is_blacklisted,
     filter_blacklisted_sources,
+    get_blacklist_stats,
+    is_blacklisted,
     mark_resurrection_attempt,
     remove_from_blacklist,
-    get_blacklist_stats,
 )
-from src.web.models import SourceBlacklist
 
 
 @pytest.fixture

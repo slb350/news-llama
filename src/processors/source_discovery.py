@@ -4,10 +4,10 @@ LLM-powered source discovery system with cache-optimized prompts
 
 import asyncio
 import json
-from typing import List, Dict, Any, Optional
+from typing import Any
 from urllib.parse import urlparse
 
-from open_agent import TextBlock, Client  # type: ignore
+from open_agent import Client, TextBlock  # type: ignore
 from open_agent.types import AgentOptions  # type: ignore
 
 from src.utils.config import Config, DiscoveredSource
@@ -109,8 +109,8 @@ class SourceDiscoveryEngine:
         }
 
     async def discover_sources(
-        self, user_interests: List[str]
-    ) -> List[DiscoveredSource]:
+        self, user_interests: list[str]
+    ) -> list[DiscoveredSource]:
         """Discover relevant sources based on user interests"""
         if not self.config.source_discovery.enabled:
             logger.info("Source discovery is disabled")
@@ -137,7 +137,7 @@ class SourceDiscoveryEngine:
 
     async def _discover_sources_for_interest(
         self, interest: str
-    ) -> List[DiscoveredSource]:
+    ) -> list[DiscoveredSource]:
         """Discover sources for a specific interest using multi-tier strategy"""
         # Tier 1: Check predefined patterns first (curated, high quality)
         pattern_sources = self._check_predefined_patterns(interest)
@@ -192,7 +192,7 @@ class SourceDiscoveryEngine:
 
         return all_sources
 
-    def _check_predefined_patterns(self, interest: str) -> List[DiscoveredSource]:
+    def _check_predefined_patterns(self, interest: str) -> list[DiscoveredSource]:
         """Check predefined patterns for known interests"""
         interest_lower = interest.lower()
         sources = []
@@ -210,8 +210,8 @@ class SourceDiscoveryEngine:
         return sources
 
     def _create_sources_from_patterns(
-        self, patterns: Dict[str, List[str]], interest: str, base_confidence: float
-    ) -> List[DiscoveredSource]:
+        self, patterns: dict[str, list[str]], interest: str, base_confidence: float
+    ) -> list[DiscoveredSource]:
         """Create DiscoveredSource objects from patterns"""
         sources = []
 
@@ -245,7 +245,7 @@ class SourceDiscoveryEngine:
 
         return sources
 
-    async def _llm_discover_subreddits(self, interest: str) -> List[DiscoveredSource]:
+    async def _llm_discover_subreddits(self, interest: str) -> list[DiscoveredSource]:
         """
         Use LLM to discover relevant subreddit names with short system prompt.
 
@@ -319,7 +319,7 @@ CRITICAL REQUIREMENTS:
 
     def _parse_subreddit_response(
         self, response: str, interest: str
-    ) -> List[DiscoveredSource]:
+    ) -> list[DiscoveredSource]:
         """Parse LLM subreddit response into DiscoveredSource objects"""
         try:
             data = self._extract_json_object(response)
@@ -347,7 +347,7 @@ CRITICAL REQUIREMENTS:
             logger.error(f"Response was: {response[:500]}")
             return []
 
-    def _try_exact_subreddit_match(self, interest: str) -> Optional[DiscoveredSource]:
+    def _try_exact_subreddit_match(self, interest: str) -> DiscoveredSource | None:
         """Try creating a subreddit source with exact name match as fallback"""
         # Clean the interest string (remove spaces, special chars for subreddit name)
         subreddit_name = interest.strip().replace(" ", "").replace("-", "")
@@ -367,7 +367,7 @@ CRITICAL REQUIREMENTS:
             reason=f"Exact name match for '{interest}'",
         )
 
-    async def _llm_discovery(self, interest: str) -> List[DiscoveredSource]:
+    async def _llm_discovery(self, interest: str) -> list[DiscoveredSource]:
         """
         Use LLM to discover sources with short system prompt.
 
@@ -459,7 +459,7 @@ Required JSON format:
             timeout=self.llm_config.timeout,
             max_turns=1,
         )
-        parts: List[str] = []
+        parts: list[str] = []
         try:
             async with asyncio.timeout(self.llm_config.timeout):
                 client = Client(options)
@@ -468,7 +468,7 @@ Required JSON format:
                     if isinstance(block, TextBlock):
                         parts.append(block.text)
                 await client.close()
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(
                 f"LLM discovery timed out after {self.llm_config.timeout}s for interest: {interest}"
             )
@@ -476,7 +476,7 @@ Required JSON format:
         return "".join(parts).strip()
 
     @staticmethod
-    def _extract_json_object(response: str) -> Dict[str, Any]:
+    def _extract_json_object(response: str) -> dict[str, Any]:
         """Parse the JSON object in an LLM reply, tolerating code fences and surrounding text."""
         response = response.strip()
         if response.startswith("```"):
@@ -492,7 +492,7 @@ Required JSON format:
 
     def _parse_llm_response(
         self, response: str, interest: str
-    ) -> List[DiscoveredSource]:
+    ) -> list[DiscoveredSource]:
         """Parse LLM response into DiscoveredSource objects"""
         try:
             data = self._extract_json_object(response)
@@ -519,10 +519,10 @@ Required JSON format:
             return []
 
     def _deduplicate_sources(
-        self, sources: List[DiscoveredSource]
-    ) -> List[DiscoveredSource]:
+        self, sources: list[DiscoveredSource]
+    ) -> list[DiscoveredSource]:
         """Remove duplicate sources, keeping highest confidence"""
-        best: Dict[tuple, DiscoveredSource] = {}
+        best: dict[tuple, DiscoveredSource] = {}
         for source in sources:
             key = (source.name.lower(), source.source_type)
             if key not in best or source.confidence_score > best[key].confidence_score:

@@ -6,6 +6,7 @@ Tests for /health/generation endpoint that returns generation metrics.
 
 import pytest
 from fastapi.testclient import TestClient
+
 from src.web.app import app
 from src.web.services import generation_service
 

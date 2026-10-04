@@ -9,23 +9,24 @@ Tests newsletter lifecycle management:
 - get_newsletter_count: Statistics
 """
 
-import pytest
 from datetime import date
+
+import pytest
 from sqlalchemy.orm import Session
 
+from src.web.database import get_test_db
 from src.web.services.newsletter_service import (
+    DuplicateNewsletterError,
+    NewsletterNotFoundError,
     create_pending_newsletter,
-    get_newsletters_by_month,
     get_newsletter_by_guid,
-    mark_newsletter_generating,
+    get_newsletter_count,
+    get_newsletters_by_month,
     mark_newsletter_completed,
     mark_newsletter_failed,
-    get_newsletter_count,
-    NewsletterNotFoundError,
-    DuplicateNewsletterError,
+    mark_newsletter_generating,
 )
 from src.web.services.user_service import create_user
-from src.web.database import get_test_db
 
 
 @pytest.fixture

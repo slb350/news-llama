@@ -8,28 +8,29 @@ Tests newsletter generation lifecycle:
 - handle_generation_error: Mark newsletter as failed and increment retry count
 """
 
-import pytest
 from datetime import date
-from sqlalchemy.orm import Session
 from unittest.mock import patch
 
+import pytest
+from sqlalchemy.orm import Session
+
+from src.web.database import get_test_db
+from src.web.models import Newsletter
 from src.web.services.generation_service import (
-    queue_newsletter_generation,
-    process_newsletter_generation,
-    get_generation_status,
-    handle_generation_error,
     GenerationServiceError,
     NewsletterAlreadyExistsError,
     NewsletterGenerationError,
+    get_generation_status,
+    handle_generation_error,
+    process_newsletter_generation,
+    queue_newsletter_generation,
 )
-from src.web.services.user_service import create_user
 from src.web.services.interest_service import add_user_interest
 from src.web.services.newsletter_service import (
-    get_newsletter_by_guid,
     create_pending_newsletter,
+    get_newsletter_by_guid,
 )
-from src.web.database import get_test_db
-from src.web.models import Newsletter
+from src.web.services.user_service import create_user
 
 
 @pytest.fixture

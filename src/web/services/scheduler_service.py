@@ -6,21 +6,22 @@ using APScheduler. Optimized for family-sized deployment (10-50 users) without
 requiring Redis or Celery.
 """
 
+import logging
+from concurrent.futures import ThreadPoolExecutor
+from datetime import date
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
-from concurrent.futures import ThreadPoolExecutor
-import logging
-from datetime import date
 
 from src.web.database import SessionLocal
-from src.web.services import (
-    user_service,
-    generation_service,
-    autonomous_discovery_service,
-)
 from src.web.models import Newsletter
 from src.web.rate_limiter import newsletter_rate_limiter
+from src.web.services import (
+    autonomous_discovery_service,
+    generation_service,
+    user_service,
+)
 
 logger = logging.getLogger(__name__)
 

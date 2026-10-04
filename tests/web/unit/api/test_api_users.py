@@ -7,16 +7,17 @@ Tests JSON API responses for native client consumption:
 - GET /api/v1/users/{id}/newsletters — newsletters for a given month
 """
 
-import pytest
 from datetime import date
+
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from src.web.app import app
-from src.web.database import get_test_db, get_db
-from src.web.services.user_service import create_user
+from src.web.database import get_db, get_test_db
 from src.web.services.interest_service import add_user_interest
 from src.web.services.newsletter_service import create_pending_newsletter
+from src.web.services.user_service import create_user
 
 
 @pytest.fixture

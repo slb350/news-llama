@@ -5,19 +5,20 @@ Tests that all service exceptions are caught and converted to appropriate
 HTTP responses with user-friendly messages (not technical details).
 """
 
+from datetime import date
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch
-from datetime import date
 from sqlalchemy.orm import Session
 
 from src.web.app import app
 from src.web.database import get_test_db
 from src.web.services import (
-    user_service,
+    generation_service,
     interest_service,
     newsletter_service,
-    generation_service,
+    user_service,
 )
 
 

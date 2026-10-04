@@ -5,16 +5,16 @@ Tracks and reports on autonomous discovery system performance.
 """
 
 import logging
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from typing import Dict
 
-from src.web.models import Tier1Source, SourceBlacklist, DiscoveredSource
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
+from src.web.models import DiscoveredSource, SourceBlacklist, Tier1Source
 
 logger = logging.getLogger(__name__)
 
 
-def get_tier1_stats(db: Session) -> Dict:
+def get_tier1_stats(db: Session) -> dict:
     """Get Tier 1 source statistics.
 
     Returns:
@@ -45,7 +45,7 @@ def get_tier1_stats(db: Session) -> Dict:
     }
 
 
-def get_blacklist_stats(db: Session) -> Dict:
+def get_blacklist_stats(db: Session) -> dict:
     """Get blacklist statistics.
 
     Returns:
@@ -78,7 +78,7 @@ def get_blacklist_stats(db: Session) -> Dict:
     return {"total": total, "by_type": by_type, "by_reason": by_reason}
 
 
-def get_discovery_stats(db: Session) -> Dict:
+def get_discovery_stats(db: Session) -> dict:
     """Get discovery source statistics.
 
     Returns:
@@ -110,7 +110,7 @@ def get_discovery_stats(db: Session) -> Dict:
     }
 
 
-def get_all_metrics(db: Session) -> Dict:
+def get_all_metrics(db: Session) -> dict:
     """Get all discovery system metrics.
 
     Combines Tier 1, blacklist, and discovery stats into a single response.

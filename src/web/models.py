@@ -4,18 +4,18 @@ Implemented following TDD methodology (GREEN phase).
 """
 
 from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
     Column,
+    Float,
+    ForeignKey,
+    Index,
     Integer,
     String,
     Text,
-    Float,
-    Boolean,
-    ForeignKey,
-    CheckConstraint,
     UniqueConstraint,
-    Index,
 )
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 

@@ -6,15 +6,16 @@ Verifies that LLMSummarizer uses short system prompts to avoid triggering
 prompt caching issues on the LLM server.
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from datetime import datetime
 from contextlib import nullcontext
+from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+from open_agent import TextBlock  # type: ignore
 
 from src.summarizers.llm_summarizer import LLMSummarizer
-from src.utils.models import ProcessedArticle, SourceType
 from src.utils.llm_prompts import LLMPrompts
-from open_agent import TextBlock  # type: ignore
+from src.utils.models import ProcessedArticle, SourceType
 
 
 @pytest.fixture

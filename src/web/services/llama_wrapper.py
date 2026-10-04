@@ -7,6 +7,7 @@ Provides interface between web app and main NewsLlama newsletter generation engi
 import logging
 from datetime import date
 from pathlib import Path
+
 from sqlalchemy.orm import Session
 
 # Import main NewsLlama engine
@@ -20,7 +21,6 @@ logger = logging.getLogger(__name__)
 class NewsLlamaWrapperError(Exception):
     """Base exception for wrapper errors."""
 
-    pass
 
 
 def generate_newsletter_for_interests(interests: list[str], output_date: date) -> str:
@@ -63,7 +63,7 @@ def generate_newsletter_for_interests(interests: list[str], output_date: date) -
     except Exception as e:
         if isinstance(e, NewsLlamaWrapperError):
             raise
-        raise NewsLlamaWrapperError(f"Failed to generate newsletter: {str(e)}")
+        raise NewsLlamaWrapperError(f"Failed to generate newsletter: {e!s}")
 
 
 def get_output_file_path(output_date: date, guid: str = None) -> str:
@@ -111,7 +111,7 @@ def ensure_output_directory(directory_path: str):
         dir_path.mkdir(parents=True, exist_ok=True)
     except Exception as e:
         raise NewsLlamaWrapperError(
-            f"Failed to create output directory {directory_path}: {str(e)}"
+            f"Failed to create output directory {directory_path}: {e!s}"
         )
 
 
@@ -201,4 +201,4 @@ def generate_newsletter_with_tier1(
     except Exception as e:
         if isinstance(e, NewsLlamaWrapperError):
             raise
-        raise NewsLlamaWrapperError(f"Failed to generate newsletter: {str(e)}")
+        raise NewsLlamaWrapperError(f"Failed to generate newsletter: {e!s}")

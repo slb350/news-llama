@@ -5,14 +5,15 @@ Orchestrates newsletter generation by integrating NewsLlama engine with
 web application database and file management.
 """
 
-from sqlalchemy.orm import Session
-from datetime import date
-import logging
 import asyncio
+import logging
 import time
+from datetime import date
 
-from src.web.services import user_service, interest_service, newsletter_service
+from sqlalchemy.orm import Session
+
 from src.web.models import Newsletter
+from src.web.services import interest_service, newsletter_service, user_service
 from src.web.services.llama_wrapper import generate_newsletter_with_tier1
 
 logger = logging.getLogger(__name__)
@@ -26,19 +27,16 @@ MAX_RETRIES = 3
 class GenerationServiceError(Exception):
     """Base exception for generation service errors."""
 
-    pass
 
 
 class NewsletterAlreadyExistsError(GenerationServiceError):
     """Raised when newsletter already exists for user/date."""
 
-    pass
 
 
 class NewsletterGenerationError(GenerationServiceError):
     """Raised when newsletter generation fails."""
 
-    pass
 
 
 def queue_newsletter_generation(db: Session, user_id: int, newsletter_date: date):
@@ -129,10 +127,10 @@ def process_newsletter_generation(db: Session, newsletter_id: int):
     except Exception as e:
         # Handle generation failure
         logger.error(
-            f"Failed to generate newsletter {newsletter_id}: {str(e)}", exc_info=True
+            f"Failed to generate newsletter {newsletter_id}: {e!s}", exc_info=True
         )
         handle_generation_error(db, newsletter_id, str(e))
-        raise NewsletterGenerationError(f"Failed to generate newsletter: {str(e)}")
+        raise NewsletterGenerationError(f"Failed to generate newsletter: {e!s}")
 
 
 def get_generation_status(db: Session, newsletter_id: int):
@@ -285,7 +283,7 @@ async def process_newsletter_with_retry(
                     f"Newsletter {newsletter_id} failed after {max_retries} attempts"
                 )
                 handle_generation_error(
-                    db, newsletter_id, f"Max retries exceeded: {str(e)}"
+                    db, newsletter_id, f"Max retries exceeded: {e!s}"
                 )
                 metrics.record_failure()
                 raise
@@ -357,6 +355,6 @@ def requeue_newsletter_for_today(db: Session, user_id: int) -> bool:
         return True
 
     except Exception as e:
-        logger.error(f"Failed to requeue newsletter for user {user_id}: {str(e)}")
+        logger.error(f"Failed to requeue newsletter for user {user_id}: {e!s}")
         # Don't raise - we don't want interest updates to fail if newsletter fails
         return False

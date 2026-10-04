@@ -1,7 +1,7 @@
 """Pydantic response schemas for the News Llama JSON API v1."""
 
+
 from pydantic import BaseModel, ConfigDict
-from typing import Optional
 
 
 class InterestBrief(BaseModel):
@@ -31,7 +31,7 @@ class UserBrief(BaseModel):
 
     id: int
     first_name: str
-    avatar_path: Optional[str]
+    avatar_path: str | None
     created_at: str
     interests: list[InterestBrief]
     newsletter_count: int
@@ -49,7 +49,7 @@ class UserDetailResponse(BaseModel):
 
     id: int
     first_name: str
-    avatar_path: Optional[str]
+    avatar_path: str | None
     created_at: str
     interests: list[InterestFull]
     newsletter_count: int
@@ -64,9 +64,9 @@ class NewsletterBrief(BaseModel):
     user_id: int
     date: str
     guid: str
-    file_path: Optional[str]
+    file_path: str | None
     status: str
-    generated_at: Optional[str]
+    generated_at: str | None
     retry_count: int
 
 
@@ -113,6 +113,6 @@ class NewsletterContentResponse(BaseModel):
     guid: str
     date: str
     status: str
-    generated_at: Optional[str]
+    generated_at: str | None
     retry_count: int
-    html_content: Optional[str]
+    html_content: str | None

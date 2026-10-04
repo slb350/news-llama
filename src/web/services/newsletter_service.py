@@ -5,13 +5,12 @@ Manages newsletter lifecycle:
 pending → generating → completed/failed
 """
 
-from typing import Optional
-from sqlalchemy.orm import Session, joinedload
-from datetime import date, datetime, timezone
 import uuid
+from datetime import UTC, date, datetime
+
+from sqlalchemy.orm import Session, joinedload
 
 from src.web.models import Newsletter
-
 
 # Constants
 MAX_RETRIES = 3
@@ -21,25 +20,21 @@ MAX_RETRIES = 3
 class NewsletterServiceError(Exception):
     """Base exception for newsletter service errors."""
 
-    pass
 
 
 class NewsletterNotFoundError(NewsletterServiceError):
     """Raised when newsletter is not found."""
 
-    pass
 
 
 class NewsletterValidationError(NewsletterServiceError):
     """Raised when newsletter data validation fails."""
 
-    pass
 
 
 class DuplicateNewsletterError(NewsletterServiceError):
     """Raised when attempting to create duplicate newsletter."""
 
-    pass
 
 
 def create_pending_newsletter(
@@ -208,7 +203,7 @@ def mark_newsletter_completed(
     newsletter.status = "completed"
     newsletter.file_path = file_path
     # Use UTC to match database's datetime('now') default
-    newsletter.generated_at = datetime.now(timezone.utc).isoformat()
+    newsletter.generated_at = datetime.now(UTC).isoformat()
 
     db.commit()
     db.refresh(newsletter)
@@ -247,7 +242,7 @@ def mark_newsletter_failed(db: Session, newsletter_id: int) -> Newsletter:
 
 
 def get_newsletter_count(
-    db: Session, user_id: int, status: Optional[str] = None
+    db: Session, user_id: int, status: str | None = None
 ) -> int:
     """
     Get count of newsletters for user.

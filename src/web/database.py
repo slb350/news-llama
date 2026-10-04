@@ -5,12 +5,12 @@ Provides SQLAlchemy engine, session factory, and FastAPI dependencies
 with SQLite-specific optimizations (WAL mode, foreign keys enforcement).
 """
 
-from typing import Generator
-from sqlalchemy import create_engine, event, Engine
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import StaticPool
+from collections.abc import Generator
 from pathlib import Path
 
+from sqlalchemy import Engine, create_engine, event
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 # Database configuration
 DATABASE_DIR = Path(__file__).parent.parent.parent / "data"

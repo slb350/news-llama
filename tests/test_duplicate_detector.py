@@ -1,12 +1,12 @@
 """
 Test suite for duplicate detection functionality
 """
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 
 from src.processors.duplicate_detector import DuplicateDetector
 from src.utils.models import ProcessedArticle, SourceType
-from src.utils.constants import ProcessingConstants
 
 
 class TestDuplicateDetector:

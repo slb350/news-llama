@@ -1,6 +1,6 @@
 """Unit tests for DynamicAggregator routing of LLM-discovered sources."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -29,7 +29,7 @@ def _article(title="Article title long enough", content="x" * 300, **metadata):
         source="Feed",
         source_type=SourceType.RSS,
         category="ai",
-        published_at=datetime.now(timezone.utc),
+        published_at=datetime.now(UTC),
         metadata=metadata,
     )
 

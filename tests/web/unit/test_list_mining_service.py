@@ -5,8 +5,9 @@ Tests mining curated lists for source discovery.
 Uses mocked HTTP requests to avoid external dependencies.
 """
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import patch, AsyncMock
 
 from src.web.database import get_test_db
 from src.web.services import list_mining_service

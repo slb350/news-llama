@@ -2,8 +2,9 @@
 Tests for NewsLlama accepting pre-discovered sources.
 """
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
 
 from main import NewsLlama
 from src.utils.config import DiscoveredSource

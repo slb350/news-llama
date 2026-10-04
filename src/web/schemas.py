@@ -4,9 +4,9 @@ Pydantic schemas for News Llama web API.
 Request/response models for FastAPI endpoints with validation.
 """
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-from typing import Optional
 from datetime import date
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # User Schemas
@@ -32,7 +32,7 @@ class UserResponse(BaseModel):
 
     id: int
     first_name: str
-    avatar_path: Optional[str]
+    avatar_path: str | None
     created_at: str
 
 
@@ -80,9 +80,9 @@ class NewsletterResponse(BaseModel):
     user_id: int
     date: str
     guid: str
-    file_path: Optional[str]
+    file_path: str | None
     status: str
-    generated_at: Optional[str]
+    generated_at: str | None
     retry_count: int
 
 
@@ -134,12 +134,12 @@ class ProfileResponse(BaseModel):
 class ProfileUpdateRequest(BaseModel):
     """Request schema for updating profile."""
 
-    first_name: Optional[str] = Field(None, min_length=1, max_length=100)
-    interests: Optional[list[str]] = Field(None)
+    first_name: str | None = Field(None, min_length=1, max_length=100)
+    interests: list[str] | None = Field(None)
 
     @field_validator("first_name")
     @classmethod
-    def validate_first_name(cls, v: Optional[str]) -> Optional[str]:
+    def validate_first_name(cls, v: str | None) -> str | None:
         """Ensure first name is not just whitespace if provided."""
         if v is not None and not v.strip():
             raise ValueError("First name cannot be empty or whitespace")
@@ -151,4 +151,4 @@ class ErrorResponse(BaseModel):
     """Standard error response."""
 
     detail: str
-    error_type: Optional[str] = None
+    error_type: str | None = None

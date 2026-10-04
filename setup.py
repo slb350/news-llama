@@ -1,7 +1,6 @@
 """
 Setup script to initialize environment and dependencies
 """
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -84,7 +83,7 @@ def main():
     
     print("\n" + "=" * 50)
     print("📋 Setup Summary:")
-    print(f"   ✅ Directories created")
+    print("   ✅ Directories created")
     print(f"   {'✅' if env_created else '📁'} .env file {'created' if env_created else 'exists'}")
     print(f"   {'✅' if deps_installed else '❌'} Dependencies {'installed' if deps_installed else 'failed'}")
     print(f"   {'✅' if git_setup else '📁'} Git repository {'initialized' if git_setup else 'exists/skipped'}")

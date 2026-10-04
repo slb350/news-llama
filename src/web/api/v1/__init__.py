@@ -2,9 +2,9 @@
 
 from fastapi import APIRouter
 
-from src.web.api.v1.users import router as users_router
 from src.web.api.v1.interests import router as interests_router
 from src.web.api.v1.newsletters import router as newsletters_router
+from src.web.api.v1.users import router as users_router
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(users_router, prefix="/users", tags=["users"])

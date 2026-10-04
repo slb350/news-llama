@@ -1,6 +1,6 @@
 """Unit tests for the scheduler job summaries shown on the /metrics page."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
@@ -45,7 +45,7 @@ class TestJobInfo:
 
     def test_next_run_uses_trigger_timezone(self):
         tz = ZoneInfo("America/Los_Angeles")
-        next_run = datetime.now(timezone.utc) + timedelta(hours=2)
+        next_run = datetime.now(UTC) + timedelta(hours=2)
         trigger = SimpleNamespace(hour=6, minute=0, timezone=tz)
 
         info = _job_info(_job("daily_generation", trigger, next_run))
@@ -55,7 +55,7 @@ class TestJobInfo:
         assert info["schedule"] == "Daily at 06:00 America/Los_Angeles"
 
     def test_next_run_without_trigger_timezone_is_utc(self):
-        next_run = datetime(2030, 1, 1, 12, 0, tzinfo=timezone.utc)
+        next_run = datetime(2030, 1, 1, 12, 0, tzinfo=UTC)
 
         info = _job_info(_job("other", SimpleNamespace(), next_run))
 

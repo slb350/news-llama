@@ -2,17 +2,16 @@
 Digest construction shared by the HTML, JSON and RSS generators
 """
 from datetime import datetime
-from typing import Dict, List
 
 from src.utils.models import NewsDigest, SummarizedArticle
 
 
-def build_digest(articles: List[SummarizedArticle], config) -> NewsDigest:
+def build_digest(articles: list[SummarizedArticle], config) -> NewsDigest:
     """Group articles by category, most important first, into today's digest.
 
     No per-category limit is applied here; main.py pre-filters before summarization.
     """
-    articles_by_category: Dict[str, List[SummarizedArticle]] = {}
+    articles_by_category: dict[str, list[SummarizedArticle]] = {}
     for article in articles:
         articles_by_category.setdefault(article.category, []).append(article)
     for category_articles in articles_by_category.values():

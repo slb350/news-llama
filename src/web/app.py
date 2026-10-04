@@ -3,9 +3,9 @@
 Phase 6: Background scheduler integration.
 """
 
+import logging
 import os
 import sys
-import logging
 from contextlib import asynccontextmanager
 
 # Configure logging to show INFO level messages
@@ -17,41 +17,49 @@ logging.basicConfig(
 if sys.platform == "darwin":  # macOS
     os.environ.setdefault("DYLD_LIBRARY_PATH", "/opt/homebrew/lib")
 
-import magic  # noqa: E402
-import io  # noqa: E402
-from typing import Optional  # noqa: E402
-from PIL import Image  # noqa: E402
-from fastapi import FastAPI, Request, Depends, Response, HTTPException, UploadFile, File  # noqa: E402
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse  # noqa: E402
-from fastapi.staticfiles import StaticFiles  # noqa: E402
-from fastapi.exceptions import RequestValidationError  # noqa: E402
-from sqlalchemy.orm import Session  # noqa: E402
-from pathlib import Path  # noqa: E402
-from datetime import date  # noqa: E402
+import io
+from datetime import date
+from pathlib import Path
 
-from src.web.database import get_db  # noqa: E402
-from src.web.dependencies import get_current_user, require_user  # noqa: E402
-from src.web.schemas import (  # noqa: E402
-    ProfileCreateRequest,
-    ProfileUpdateRequest,
+import magic
+from fastapi import (
+    Depends,
+    FastAPI,
+    File,
+    HTTPException,
+    Request,
+    Response,
+    UploadFile,
+)
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from PIL import Image
+from sqlalchemy.orm import Session
+
+from src.web import file_cache
+from src.web.database import get_db
+from src.web.dependencies import get_current_user, require_user
+from src.web.error_handlers import (
+    get_friendly_message,
+    global_exception_handler,
+    validation_exception_handler,
+)
+from src.web.models import User
+from src.web.schemas import (
     InterestAdd,
     NewsletterCreate,
     NewsletterResponse,
+    ProfileCreateRequest,
+    ProfileUpdateRequest,
 )
-from src.web.models import User  # noqa: E402
-from src.web.services import (  # noqa: E402
-    user_service,
+from src.web.services import (
+    generation_service,
     interest_service,
     newsletter_service,
-    generation_service,
     scheduler_service,
+    user_service,
 )
-from src.web.error_handlers import (  # noqa: E402
-    global_exception_handler,
-    validation_exception_handler,
-    get_friendly_message,
-)
-from src.web import file_cache  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -96,13 +104,13 @@ app.add_exception_handler(Exception, global_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
 # Register JSON API router for native client
-from src.web.api.v1 import api_router  # noqa: E402
+from src.web.api.v1 import api_router
 
 app.include_router(api_router)
 
-from src.web.routes.calendar import router as calendar_router  # noqa: E402
-from src.web.routes.status import router as status_router  # noqa: E402
-from src.web.templating import templates  # noqa: E402
+from src.web.routes.calendar import router as calendar_router
+from src.web.routes.status import router as status_router
+from src.web.templating import templates
 
 app.include_router(calendar_router)
 app.include_router(status_router)

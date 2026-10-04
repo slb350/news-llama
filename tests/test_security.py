@@ -1,10 +1,17 @@
 """
 Test suite for security utilities
 """
-import pytest
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock
-from src.utils.security import URLValidator, RateLimiter, SecureHTTPClient, APIKeyValidator
+from unittest.mock import Mock, patch
+
+import pytest
+
+from src.utils.security import (
+    APIKeyValidator,
+    RateLimiter,
+    SecureHTTPClient,
+    URLValidator,
+)
 
 
 class TestURLValidator:

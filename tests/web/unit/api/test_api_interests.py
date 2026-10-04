@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from src.web.app import app
-from src.web.database import get_test_db, get_db
+from src.web.database import get_db, get_test_db
 
 
 @pytest.fixture

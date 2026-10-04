@@ -14,25 +14,21 @@ from src.web.models import UserInterest
 class InterestServiceError(Exception):
     """Base exception for interest service errors."""
 
-    pass
 
 
 class InterestNotFoundError(InterestServiceError):
     """Raised when interest is not found."""
 
-    pass
 
 
 class InterestValidationError(InterestServiceError):
     """Raised when interest data validation fails."""
 
-    pass
 
 
 class DuplicateInterestError(InterestServiceError):
     """Raised when attempting to add duplicate interest."""
 
-    pass
 
 
 # Predefined interests organized into family-friendly groups

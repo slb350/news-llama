@@ -5,11 +5,11 @@ Manages dynamic Tier 1 sources: add, query, coverage stats, health updates.
 Tier 1 sources are auto-populated via weekly discovery job.
 """
 
-from sqlalchemy.orm import Session
-from datetime import datetime
 import json
 import logging
-from typing import List, Dict
+from datetime import datetime
+
+from sqlalchemy.orm import Session
 
 from src.web.models import Tier1Source
 
@@ -20,7 +20,7 @@ def add_tier1_source(
     db: Session,
     source_type: str,
     source_key: str,
-    interests: List[str],
+    interests: list[str],
     quality_score: float,
     discovered_via: str,
     source_url: str = None,
@@ -99,8 +99,8 @@ def add_tier1_source(
 
 
 def get_sources_for_interests(
-    db: Session, user_interests: List[str], only_healthy: bool = True
-) -> List[Tier1Source]:
+    db: Session, user_interests: list[str], only_healthy: bool = True
+) -> list[Tier1Source]:
     """
     Get Tier 1 sources matching user interests.
 
@@ -132,7 +132,7 @@ def get_sources_for_interests(
     return matching
 
 
-def get_coverage_stats(db: Session, user_interests: List[str]) -> Dict:
+def get_coverage_stats(db: Session, user_interests: list[str]) -> dict:
     """
     Calculate Tier 1 coverage for user interests.
 
@@ -189,7 +189,7 @@ def mark_source_healthy(db: Session, source_id: int):
         logger.info(f"Resurrected Tier 1 source {source.source_key}")
 
 
-def get_all_tier1_sources(db: Session, only_healthy: bool = False) -> List[Tier1Source]:
+def get_all_tier1_sources(db: Session, only_healthy: bool = False) -> list[Tier1Source]:
     """Get all Tier 1 sources."""
     query = db.query(Tier1Source)
     if only_healthy:
@@ -197,7 +197,7 @@ def get_all_tier1_sources(db: Session, only_healthy: bool = False) -> List[Tier1
     return query.all()
 
 
-def get_tier1_stats(db: Session) -> Dict:
+def get_tier1_stats(db: Session) -> dict:
     """Get Tier 1 statistics."""
     all_sources = get_all_tier1_sources(db)
     healthy = [s for s in all_sources if s.is_healthy]

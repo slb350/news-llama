@@ -7,7 +7,6 @@ This test suite verifies that prompts are structured for maximum prompt caching 
 - Prompts are deterministic and consistent
 """
 
-import pytest
 from src.utils.llm_prompts import LLMPrompts
 from src.utils.models import ProcessedArticle, SourceType
 

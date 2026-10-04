@@ -6,22 +6,23 @@ Tests newsletter generation and retrieval:
 - GET /newsletters/{guid}: Database-backed newsletter retrieval
 """
 
+import tempfile
+from datetime import date, timedelta
+from pathlib import Path
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from datetime import date, timedelta
-from pathlib import Path
-import tempfile
-from unittest.mock import patch
 
 from src.web.app import app
-from src.web.database import get_test_db, get_db
-from src.web.services.user_service import create_user
+from src.web.database import get_db, get_test_db
 from src.web.services.interest_service import add_user_interest
 from src.web.services.newsletter_service import (
     create_pending_newsletter,
     mark_newsletter_completed,
 )
+from src.web.services.user_service import create_user
 
 
 @pytest.fixture
@@ -466,39 +467,38 @@ class TestNewsletterIntegration:
             with patch(
                 "src.web.services.llama_wrapper.get_output_file_path",
                 return_value=str(output_file),
+            ), patch(
+                "src.web.services.llama_wrapper.Path.exists",
+                return_value=True,
             ):
+                # Step 1: Generate newsletter
+                response = client.post(
+                    "/newsletters/generate", json={"date": "2025-10-22"}
+                )
+
+                assert response.status_code == 200
+                guid = response.json()["guid"]
+
+                # Step 2: Process generation (manually trigger)
+                from src.web.services.generation_service import (
+                    process_newsletter_generation,
+                )
+                from src.web.services.newsletter_service import (
+                    get_newsletter_by_guid,
+                )
+
+                newsletter = get_newsletter_by_guid(db, guid)
+
+                # Mock the actual file creation
                 with patch(
                     "src.web.services.llama_wrapper.Path.exists",
                     return_value=True,
                 ):
-                    # Step 1: Generate newsletter
-                    response = client.post(
-                        "/newsletters/generate", json={"date": "2025-10-22"}
-                    )
+                    process_newsletter_generation(db, newsletter.id)
 
-                    assert response.status_code == 200
-                    guid = response.json()["guid"]
+                # Step 3: Retrieve newsletter
+                response = client.get(f"/newsletters/{guid}")
 
-                    # Step 2: Process generation (manually trigger)
-                    from src.web.services.generation_service import (
-                        process_newsletter_generation,
-                    )
-                    from src.web.services.newsletter_service import (
-                        get_newsletter_by_guid,
-                    )
-
-                    newsletter = get_newsletter_by_guid(db, guid)
-
-                    # Mock the actual file creation
-                    with patch(
-                        "src.web.services.llama_wrapper.Path.exists",
-                        return_value=True,
-                    ):
-                        process_newsletter_generation(db, newsletter.id)
-
-                    # Step 3: Retrieve newsletter
-                    response = client.get(f"/newsletters/{guid}")
-
-                    # Should return completed newsletter
-                    assert response.status_code == 200
+                # Should return completed newsletter
+                assert response.status_code == 200
                     # Could be JSON status or HTML file depending on implementation

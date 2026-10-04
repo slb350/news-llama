@@ -12,16 +12,16 @@ Tests CRUD operations for user management:
 import pytest
 from sqlalchemy.orm import Session
 
+from src.web.database import get_test_db
 from src.web.services.user_service import (
-    create_user,
-    get_user,
-    get_all_users,
-    update_user,
-    delete_user,
     UserNotFoundError,
     UserValidationError,
+    create_user,
+    delete_user,
+    get_all_users,
+    get_user,
+    update_user,
 )
-from src.web.database import get_test_db
 
 
 @pytest.fixture
@@ -235,11 +235,12 @@ class TestDeleteUser:
 
     def test_delete_user_cascades_to_newsletters(self, db: Session):
         """Should cascade delete to newsletters table."""
+        from datetime import date
+
         from src.web.services.newsletter_service import (
             create_pending_newsletter,
             get_newsletter_count,
         )
-        from datetime import date
 
         user = create_user(db, first_name="Bob")
         _newsletter = create_pending_newsletter(db, user.id, date.today())
@@ -314,8 +315,9 @@ class TestDeleteUser:
 
     def test_delete_user_removes_newsletter_files(self, db: Session, tmp_path):
         """Should delete newsletter HTML files from disk when user is deleted."""
-        from src.web.models import Newsletter
         from datetime import datetime
+
+        from src.web.models import Newsletter
 
         # Create output directory
         output_dir = tmp_path / "output"
@@ -364,8 +366,9 @@ class TestDeleteUser:
 
     def test_delete_user_handles_missing_newsletter_files(self, db: Session):
         """Should gracefully handle newsletter records with missing files."""
-        from src.web.models import Newsletter
         from datetime import datetime
+
+        from src.web.models import Newsletter
 
         # Create user and newsletter record WITHOUT creating the file
         user = create_user(db, first_name="MissingFile")

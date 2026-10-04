@@ -2,16 +2,12 @@
 Content processing and analysis
 """
 import re
-from datetime import datetime
-from typing import List
+
 from textblob import TextBlob
 
-from src.utils.models import Article, ProcessedArticle
+from src.utils.constants import ContentConstants, ProcessingConstants
 from src.utils.logger import logger
-from src.utils.constants import (
-    ProcessingConstants,
-    ContentConstants
-)
+from src.utils.models import Article, ProcessedArticle
 
 
 class ContentProcessor:
@@ -20,7 +16,7 @@ class ContentProcessor:
     def __init__(self, config):
         self.config = config
     
-    def process(self, articles: List[Article]) -> List[ProcessedArticle]:
+    def process(self, articles: list[Article]) -> list[ProcessedArticle]:
         """Process a list of articles"""
         processed = []
         
@@ -134,7 +130,7 @@ class ContentProcessor:
             logger.error(f"Error cleaning content: {e}")
             return content.strip()  # Return original content if cleaning fails
     
-    def _extract_keywords(self, text: str) -> List[str]:
+    def _extract_keywords(self, text: str) -> list[str]:
         """Extract keywords from text using improved filtering"""
         if not text:
             return []

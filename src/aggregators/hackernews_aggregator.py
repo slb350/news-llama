@@ -2,14 +2,14 @@
 Hacker News aggregator
 """
 import asyncio
-from datetime import datetime, timedelta, timezone
-from typing import List
+from datetime import UTC, datetime, timedelta
+
 import requests
 from newspaper import Article as NewspaperArticle
 
 from src.aggregators.base import BaseAggregator
-from src.utils.models import Article, SourceType
 from src.utils.logger import logger
+from src.utils.models import Article, SourceType
 
 
 class HackerNewsAggregator(BaseAggregator):
@@ -17,7 +17,7 @@ class HackerNewsAggregator(BaseAggregator):
     
     BASE_URL = "https://hacker-news.firebaseio.com/v0"
     
-    async def collect(self) -> List[Article]:
+    async def collect(self) -> list[Article]:
         """Collect stories from Hacker News"""
         if not self.config.sources.get('hackernews', {}).get('enabled', False):
             return []
@@ -40,7 +40,7 @@ class HackerNewsAggregator(BaseAggregator):
 
         return articles_with_content
     
-    async def _collect_stories(self, category: str, limit: int) -> List[Article]:
+    async def _collect_stories(self, category: str, limit: int) -> list[Article]:
         """Collect stories from a specific Hacker News category"""
         # Get story IDs for the category
         if category == 'top':
@@ -79,12 +79,12 @@ class HackerNewsAggregator(BaseAggregator):
             
             # Skip if too old
             if 'time' in story_data:
-                post_time = datetime.fromtimestamp(story_data['time'], tz=timezone.utc)
+                post_time = datetime.fromtimestamp(story_data['time'], tz=UTC)
                 max_age_hours = self.config.processing.max_article_age
-                if post_time < datetime.now(timezone.utc) - timedelta(hours=max_age_hours):
+                if post_time < datetime.now(UTC) - timedelta(hours=max_age_hours):
                     return None
             else:
-                post_time = datetime.now(timezone.utc)
+                post_time = datetime.now(UTC)
             
             # Determine category based on title content (simple heuristic)
             title = story_data.get('title', '')
@@ -146,7 +146,7 @@ class HackerNewsAggregator(BaseAggregator):
 
         return True
 
-    async def _fetch_content_for_top_articles(self, articles: List[Article], top_n: int = 5) -> List[Article]:
+    async def _fetch_content_for_top_articles(self, articles: list[Article], top_n: int = 5) -> list[Article]:
         """
         Fetch actual article content for top N highest-scored HN posts
 

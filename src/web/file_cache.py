@@ -6,13 +6,12 @@ LRU cache for newsletter HTML files to reduce disk I/O.
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional
 
 
 # LRU cache with max 100 newsletters cached
 # Average newsletter ~100KB, so max ~10MB memory
 @lru_cache(maxsize=100)
-def read_newsletter_file(file_path: str) -> Optional[bytes]:
+def read_newsletter_file(file_path: str) -> bytes | None:
     """
     Read newsletter file with LRU caching.
 
@@ -29,7 +28,7 @@ def read_newsletter_file(file_path: str) -> Optional[bytes]:
     try:
         with open(path, "rb") as f:
             return f.read()
-    except (IOError, OSError):
+    except OSError:
         return None
 
 

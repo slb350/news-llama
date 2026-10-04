@@ -2,7 +2,7 @@
 
 import json
 import xml.etree.ElementTree as ET
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -26,7 +26,7 @@ def _article(title, category, importance, source="Feed", key_points=("First poin
         source=source,
         source_type=SourceType.RSS,
         category=category,
-        published_at=datetime(2026, 10, 3, 12, 0, tzinfo=timezone.utc),
+        published_at=datetime(2026, 10, 3, 12, 0, tzinfo=UTC),
         word_count=100,
         reading_time_minutes=1,
         keywords=[],

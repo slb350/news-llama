@@ -4,15 +4,13 @@ LLM-based summarizer using open-agent-sdk with cache-optimized prompts
 
 import asyncio
 import json
-from typing import List
-from datetime import datetime
 
 from open_agent import TextBlock  # type: ignore
-from open_agent.types import AgentOptions  # type: ignore
 from open_agent import client as oa_client  # type: ignore
+from open_agent.types import AgentOptions  # type: ignore
 
-from src.utils.models import ProcessedArticle, SummarizedArticle
 from src.utils.logger import logger
+from src.utils.models import ProcessedArticle, SummarizedArticle
 
 
 class LLMSummarizer:
@@ -23,8 +21,8 @@ class LLMSummarizer:
         self.llm_config = config.llm
 
     async def summarize_batch(
-        self, articles: List[ProcessedArticle]
-    ) -> List[SummarizedArticle]:
+        self, articles: list[ProcessedArticle]
+    ) -> list[SummarizedArticle]:
         """Summarize a batch of articles"""
         if not articles:
             return []
@@ -91,7 +89,7 @@ class LLMSummarizer:
             # Return article with basic summary if LLM fails
             return SummarizedArticle(
                 **article.dict(),
-                ai_summary=f"Summary unavailable: {str(e)}",
+                ai_summary=f"Summary unavailable: {e!s}",
                 key_points=[],
                 importance_score=0.0,
             )
@@ -162,7 +160,7 @@ CRITICAL:
             timeout=self.llm_config.timeout,
         )
 
-        text_parts: List[str] = []
+        text_parts: list[str] = []
 
         # Wrap with asyncio timeout for additional safety
         try:
@@ -171,7 +169,7 @@ CRITICAL:
                     for block in msg.content:
                         if isinstance(block, TextBlock):
                             text_parts.append(block.text)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(
                 f"LLM summarization timed out after {self.llm_config.timeout}s"
             )

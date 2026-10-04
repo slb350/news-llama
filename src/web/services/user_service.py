@@ -5,11 +5,11 @@ Provides CRUD operations for user management with validation and error handling.
 Follows TDD approach with comprehensive test coverage.
 """
 
-from typing import Optional
 from pathlib import Path
+
 from sqlalchemy.orm import Session
 
-from src.web.models import User, Newsletter
+from src.web.models import Newsletter, User
 
 # Directory paths for file cleanup
 AVATARS_DIR = Path("src/web/static/avatars")
@@ -19,23 +19,20 @@ AVATARS_DIR = Path("src/web/static/avatars")
 class UserServiceError(Exception):
     """Base exception for user service errors."""
 
-    pass
 
 
 class UserNotFoundError(UserServiceError):
     """Raised when user is not found."""
 
-    pass
 
 
 class UserValidationError(UserServiceError):
     """Raised when user data validation fails."""
 
-    pass
 
 
 def create_user(
-    db: Session, first_name: Optional[str], avatar_path: Optional[str] = None
+    db: Session, first_name: str | None, avatar_path: str | None = None
 ) -> User:
     """
     Create a new user.
@@ -116,8 +113,8 @@ def get_all_users(db: Session) -> list[User]:
 def update_user(
     db: Session,
     user_id: int,
-    first_name: Optional[str] = None,
-    avatar_path: Optional[str] = None,
+    first_name: str | None = None,
+    avatar_path: str | None = None,
 ) -> User:
     """
     Update user details.

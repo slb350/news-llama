@@ -2,7 +2,6 @@
 
 import calendar
 from datetime import date
-from typing import Optional
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -39,7 +38,7 @@ def calendar_context(db: Session, user: User, year: int, month: int) -> dict:
 @router.get("/calendar", response_class=HTMLResponse)
 async def calendar_view(
     request: Request,
-    user_id: Optional[int] = None,  # Query parameter for profile selection
+    user_id: int | None = None,  # Query parameter for profile selection
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):

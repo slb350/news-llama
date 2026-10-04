@@ -4,14 +4,12 @@ Image caching utility for downloading and storing article images locally.
 
 import asyncio
 import hashlib
-import re
+import io
 from pathlib import Path
-from typing import Optional, Tuple
 from urllib.parse import urlparse
 
 import aiohttp
 from PIL import Image
-import io
 
 from src.utils.logger import logger
 
@@ -78,7 +76,7 @@ def get_cache_filename(url: str) -> str:
     return f"{url_hash}.jpg"
 
 
-def get_cached_path(url: str) -> Optional[Path]:
+def get_cached_path(url: str) -> Path | None:
     """Get the cached file path if it exists."""
     filename = get_cache_filename(url)
     cache_path = CACHE_DIR / filename
@@ -87,7 +85,7 @@ def get_cached_path(url: str) -> Optional[Path]:
     return None
 
 
-async def download_and_cache_image(url: str) -> Optional[str]:
+async def download_and_cache_image(url: str) -> str | None:
     """
     Download an image and cache it locally.
 
@@ -154,7 +152,7 @@ async def download_and_cache_image(url: str) -> Optional[str]:
         logger.debug(f"Cached image: {url} -> {cache_path}")
         return f"/static/article-images/{filename}"
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         logger.warning(f"Timeout downloading image: {url}")
         return None
     except Exception as e:
@@ -162,7 +160,7 @@ async def download_and_cache_image(url: str) -> Optional[str]:
         return None
 
 
-async def cache_images_batch(urls: list[str], max_concurrent: int = 5) -> dict[str, Optional[str]]:
+async def cache_images_batch(urls: list[str], max_concurrent: int = 5) -> dict[str, str | None]:
     """
     Cache multiple images concurrently.
 
@@ -170,7 +168,7 @@ async def cache_images_batch(urls: list[str], max_concurrent: int = 5) -> dict[s
     """
     semaphore = asyncio.Semaphore(max_concurrent)
 
-    async def download_with_limit(url: str) -> Tuple[str, Optional[str]]:
+    async def download_with_limit(url: str) -> tuple[str, str | None]:
         async with semaphore:
             cached_path = await download_and_cache_image(url)
             return (url, cached_path)

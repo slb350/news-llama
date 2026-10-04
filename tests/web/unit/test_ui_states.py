@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from src.web.app import app
 from src.web.database import get_test_db
-from src.web.services import user_service, interest_service
+from src.web.services import interest_service, user_service
 
 
 @pytest.fixture

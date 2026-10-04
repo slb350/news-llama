@@ -4,13 +4,14 @@ Unit tests for scheduler_service.py
 Tests for background newsletter generation scheduling using APScheduler.
 """
 
-import pytest
 from datetime import date
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from src.web.services import scheduler_service, user_service, generation_service
 from src.web.database import get_test_db
+from src.web.services import generation_service, scheduler_service, user_service
 
 
 @pytest.fixture
