@@ -3,13 +3,11 @@ Dynamic aggregator for LLM-discovered sources
 """
 
 from typing import List, Dict
-from datetime import datetime
 
 from src.aggregators.base import BaseAggregator
 from src.aggregators.rss_aggregator import RSSAggregator
-from src.aggregators.twitter_aggregator import TwitterAggregator
 from src.aggregators.reddit_aggregator import RedditAggregator
-from src.utils.models import Article, SourceType
+from src.utils.models import Article
 from src.utils.config import DiscoveredSource
 from src.utils.logger import logger
 
@@ -22,7 +20,6 @@ class DynamicAggregator(BaseAggregator):
         self.discovered_sources = discovered_sources
         self.delegate_aggregators = {
             "rss": RSSAggregator(config),
-            # 'twitter': TwitterAggregator(config),  # Disabled: placeholder returns fake tweets
             "reddit": RedditAggregator(config),
         }
 
@@ -78,7 +75,8 @@ class DynamicAggregator(BaseAggregator):
         elif source_type == "reddit_search":
             return await self._collect_from_reddit_search(sources)
         elif source_type == "web_search":
-            return await self._collect_from_web_search(sources)
+            logger.warning("Web search sources skipped: no search backend is implemented")
+            return []
         else:
             logger.warning(f"Unknown source type: {source_type}")
             return []
@@ -107,31 +105,6 @@ class DynamicAggregator(BaseAggregator):
                 articles.extend(feed_articles)
             except Exception as e:
                 logger.warning(f"Error collecting from RSS source {source.name}: {e}")
-
-        return articles
-
-    async def _collect_from_twitter_sources(
-        self, sources: List[DiscoveredSource]
-    ) -> List[Article]:
-        """Collect from Twitter sources"""
-        articles = []
-
-        for source in sources:
-            if not source.username:
-                continue
-
-            # Create temporary Twitter config
-            temp_config = {"username": source.username, "category": source.category}
-
-            try:
-                # Use Twitter aggregator to collect from this user
-                twitter_aggregator = TwitterAggregator(self.config)
-                tweets = await twitter_aggregator._collect_from_user(temp_config)
-                articles.extend(tweets)
-            except Exception as e:
-                logger.warning(
-                    f"Error collecting from Twitter source {source.name}: {e}"
-                )
 
         return articles
 
@@ -204,51 +177,6 @@ class DynamicAggregator(BaseAggregator):
                 logger.warning(f"Error searching Reddit for '{source.category}': {e}")
 
         return articles
-
-    async def _collect_from_web_search(
-        self, sources: List[DiscoveredSource]
-    ) -> List[Article]:
-        """Collect from web search sources"""
-        articles = []
-
-        for source in sources:
-            if source.source_type != "web_search":
-                continue
-
-            try:
-                search_articles = await self._perform_web_search(source)
-                articles.extend(search_articles)
-            except Exception as e:
-                logger.warning(f"Error performing web search for {source.name}: {e}")
-
-        return articles
-
-    async def _perform_web_search(self, source: DiscoveredSource) -> List[Article]:
-        """Perform web search for a specific topic"""
-        # TODO: Implement actual web search using API (Google, DuckDuckGo, etc.)
-        # For now, return placeholder articles
-
-        search_query = f"{source.category} news {source.name}"
-
-        # Placeholder implementation - replace with actual search API
-        placeholder_articles = [
-            Article(
-                title=f"Latest {source.category} News - {search_query}",
-                content=f"This is a placeholder article from web search for {search_query}. Replace with actual search results.",
-                url=f"https://example.com/search/{search_query.replace(' ', '-')}",
-                source=f"Web Search: {source.name}",
-                source_type=SourceType.WEB_SEARCH,
-                category=source.category,
-                published_at=datetime.now(),
-                metadata={
-                    "search_query": search_query,
-                    "discovery_reason": source.reason,
-                    "confidence_score": source.confidence_score,
-                },
-            )
-        ]
-
-        return placeholder_articles
 
     def _is_valid_article(self, article: Article) -> bool:
         """Validate article meets quality criteria"""

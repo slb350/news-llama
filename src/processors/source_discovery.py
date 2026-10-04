@@ -7,9 +7,8 @@ import json
 from typing import List, Dict, Any, Optional
 from urllib.parse import quote
 
-from open_agent import TextBlock, ToolUseBlock, ToolUseError, Client  # type: ignore
+from open_agent import TextBlock, Client  # type: ignore
 from open_agent.types import AgentOptions  # type: ignore
-from open_agent.tools import Tool  # type: ignore
 
 from src.utils.config import Config, DiscoveredSource
 from src.utils.logger import logger
@@ -512,7 +511,6 @@ CRITICAL REQUIREMENTS:
 - Only include high-quality, active sources
 - Prioritize authoritative and well-known sources
 - Aim for 5-8 sources total (balanced across types)
-- After any tool use, return ONLY the JSON (no explanations about what you found)
 
 Required JSON format:
 {{
@@ -539,34 +537,7 @@ Required JSON format:
             "reasoning": "Leading voice in the field with regular updates"
         }}
     ]
-}}
-
-IMPORTANT: Even if you use web search or other tools, return ONLY the final JSON object with no additional commentary."""
-
-            # Define a simple web_search tool to showcase tool-use
-            async def web_search_handler(params: Dict[str, Any]) -> Any:
-                query = params.get("query") or interest
-                max_results = int(params.get("max_results", 5))
-                try:
-                    from ddgs import DDGS  # type: ignore
-
-                    results = []
-                    with DDGS() as ddgs:
-                        for r in ddgs.text(query, max_results=max_results):
-                            results.append(
-                                {"title": r.get("title"), "url": r.get("href")}
-                            )
-                    return {"results": results}
-                except Exception as e:
-                    logger.warning(f"Web search failed: {e}")
-                    return {"results": []}
-
-            web_search_tool = Tool(
-                name="web_search",
-                description="Search the web for recent sources related to a topic",
-                input_schema={"query": str, "max_results": int},
-                handler=web_search_handler,
-            )
+}}"""
 
             options = AgentOptions(
                 system_prompt=system_prompt,
@@ -575,7 +546,7 @@ IMPORTANT: Even if you use web search or other tools, return ONLY the final JSON
                 temperature=self.llm_config.temperature,
                 max_tokens=self.llm_config.max_tokens,
                 api_key="not-needed",
-                tools=[],  # Disable web search - LLM gets confused after tool use
+                tools=[],
                 auto_execute_tools=False,
                 timeout=self.llm_config.timeout,
                 max_turns=1,  # Single turn for direct JSON response
@@ -592,19 +563,6 @@ IMPORTANT: Even if you use web search or other tools, return ONLY the final JSON
                     async for block in client.receive_messages():
                         if isinstance(block, TextBlock):
                             parts.append(block.text)
-                        elif isinstance(block, ToolUseBlock):
-                            # Execute tool and send result back
-                            try:
-                                result = await web_search_handler(block.input)
-                                await client.add_tool_result(
-                                    block.id, result, name=block.name
-                                )
-                            except Exception as e:
-                                await client.add_tool_result(
-                                    block.id, {"error": str(e)}, name=block.name
-                                )
-                        elif isinstance(block, ToolUseError):
-                            logger.warning(f"Tool error: {block.error}")
 
                     await client.close()
             except asyncio.TimeoutError:
@@ -627,11 +585,6 @@ IMPORTANT: Even if you use web search or other tools, return ONLY the final JSON
         except Exception as e:
             logger.error(f"Error in LLM discovery for '{interest}': {e}")
             return []
-
-    async def _placeholder_llm_call(self, prompt: str) -> str:
-        """Deprecated placeholder, retained for tests if needed."""
-        await asyncio.sleep(0.01)
-        return json.dumps({"sources": []})
 
     def _parse_llm_response(
         self, response: str, interest: str

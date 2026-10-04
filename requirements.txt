@@ -14,7 +14,6 @@ asyncpraw>=7.7.1
 
 # Web search
 googlesearch-python>=1.2.3
-ddgs>=1.0.0
 
 # Text processing
 nltk>=3.8.1
