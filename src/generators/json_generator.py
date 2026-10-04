@@ -2,10 +2,10 @@
 JSON output generator
 """
 import json
-from datetime import datetime
 from pathlib import Path
 from typing import List
 
+from src.generators.digest import build_digest
 from src.utils.models import SummarizedArticle, NewsDigest
 from src.utils.logger import logger
 
@@ -23,42 +23,12 @@ class JSONGenerator:
             logger.warning("No articles to generate JSON for")
             return
 
-        # Group articles by category
-        articles_by_category = self._group_by_category(articles)
-
-        # Sort articles within each category by importance
-        for category in articles_by_category:
-            articles_by_category[category].sort(
-                key=lambda x: x.importance_score,
-                reverse=True
-            )
-            # Note: No limit here - pre-filtering happens before summarization in main.py
-
-        # Create news digest
-        digest = NewsDigest(
-            date=datetime.now(),
-            articles_by_category=articles_by_category,
-            total_articles=len(articles),
-            processing_time_seconds=0.0,  # TODO: Add timing
-            sources_used=list(set(article.source for article in articles)),
-            discovered_sources_count=len(getattr(self.config, 'discovered_sources', [])),
-            user_interests=getattr(self.config, 'user_interests', [])
-        )
+        digest = build_digest(articles, self.config)
 
         # Generate JSON file
         self._generate_json_file(digest)
 
         logger.info(f"Generated JSON with {len(articles)} articles")
-
-    def _group_by_category(self, articles: List[SummarizedArticle]) -> dict:
-        """Group articles by category"""
-        grouped = {}
-        for article in articles:
-            category = article.category
-            if category not in grouped:
-                grouped[category] = []
-            grouped[category].append(article)
-        return grouped
 
     def _generate_json_file(self, digest: NewsDigest) -> None:
         """Generate the JSON output file"""

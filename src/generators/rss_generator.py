@@ -1,11 +1,11 @@
 """
 RSS feed generator
 """
-from datetime import datetime
 from pathlib import Path
 from typing import List
 from email.utils import formatdate
 
+from src.generators.digest import build_digest
 from src.utils.models import SummarizedArticle, NewsDigest
 from src.utils.logger import logger
 
@@ -23,42 +23,12 @@ class RSSGenerator:
             logger.warning("No articles to generate RSS for")
             return
 
-        # Group articles by category
-        articles_by_category = self._group_by_category(articles)
-
-        # Sort articles within each category by importance
-        for category in articles_by_category:
-            articles_by_category[category].sort(
-                key=lambda x: x.importance_score,
-                reverse=True
-            )
-            # Note: No limit here - pre-filtering happens before summarization in main.py
-
-        # Create news digest
-        digest = NewsDigest(
-            date=datetime.now(),
-            articles_by_category=articles_by_category,
-            total_articles=len(articles),
-            processing_time_seconds=0.0,  # TODO: Add timing
-            sources_used=list(set(article.source for article in articles)),
-            discovered_sources_count=len(getattr(self.config, 'discovered_sources', [])),
-            user_interests=getattr(self.config, 'user_interests', [])
-        )
+        digest = build_digest(articles, self.config)
 
         # Generate RSS file
         self._generate_rss_file(digest)
 
         logger.info(f"Generated RSS with {len(articles)} articles")
-
-    def _group_by_category(self, articles: List[SummarizedArticle]) -> dict:
-        """Group articles by category"""
-        grouped = {}
-        for article in articles:
-            category = article.category
-            if category not in grouped:
-                grouped[category] = []
-            grouped[category].append(article)
-        return grouped
 
     def _generate_rss_file(self, digest: NewsDigest) -> None:
         """Generate the RSS XML file"""
@@ -68,7 +38,7 @@ class RSSGenerator:
         # Generate items for each article
         for category, articles in digest.articles_by_category.items():
             for article in articles:
-                # Build description with summary and key points
+                # Description is HTML carried as CDATA; escaped text cannot contain "]]>"
                 description = f"<p><strong>AI Summary:</strong> {self._escape_xml(article.ai_summary)}</p>"
 
                 if article.key_points:
@@ -94,7 +64,7 @@ class RSSGenerator:
                 item = f"""    <item>
       <title>{self._escape_xml(article.title)}</title>
       <link>{self._escape_xml(str(article.url))}</link>
-      <description>{description}</description>
+      <description><![CDATA[{description}]]></description>
       <category>{self._escape_xml(category)}</category>
       <pubDate>{pub_date}</pubDate>
       <guid isPermaLink="true">{self._escape_xml(str(article.url))}</guid>

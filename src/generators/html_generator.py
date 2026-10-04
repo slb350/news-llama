@@ -3,9 +3,10 @@ HTML output generator
 """
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict
-from jinja2 import Template, Environment, FileSystemLoader
+from typing import List
+from jinja2 import Environment, FileSystemLoader
 
+from src.generators.digest import build_digest
 from src.utils.models import SummarizedArticle, NewsDigest
 from src.utils.logger import logger
 
@@ -37,44 +38,14 @@ class HTMLGenerator:
             logger.warning("No articles to generate HTML for")
             return
 
-        # Group articles by category
-        articles_by_category = self._group_by_category(articles)
-
-        # Sort articles within each category by importance
-        for category in articles_by_category:
-            articles_by_category[category].sort(
-                key=lambda x: x.importance_score,
-                reverse=True
-            )
-            # Note: No limit here - pre-filtering happens before summarization in main.py
-
-        # Create news digest
-        digest = NewsDigest(
-            date=datetime.now(),
-            articles_by_category=articles_by_category,
-            total_articles=len(articles),
-            processing_time_seconds=0.0,  # TODO: Add timing
-            sources_used=list(set(article.source for article in articles)),
-            discovered_sources_count=len(getattr(self.config, 'discovered_sources', [])),
-            user_interests=getattr(self.config, 'user_interests', [])
-        )
+        digest = build_digest(articles, self.config)
 
         # Generate HTML file
         self._generate_html_page(digest, output_filename=output_filename)
         
-        total_categories = len(articles_by_category)
-        total_articles = sum(len(articles) for articles in articles_by_category.values())
-        logger.info(f"Generated HTML with {total_categories} categories and {total_articles} articles")
-    
-    def _group_by_category(self, articles: List[SummarizedArticle]) -> Dict[str, List[SummarizedArticle]]:
-        """Group articles by category"""
-        grouped = {}
-        for article in articles:
-            category = article.category
-            if category not in grouped:
-                grouped[category] = []
-            grouped[category].append(article)
-        return grouped
+        logger.info(
+            f"Generated HTML with {len(digest.articles_by_category)} categories and {digest.total_articles} articles"
+        )
     
     def _generate_html_page(self, digest: NewsDigest, output_filename: str = None) -> None:
         """
