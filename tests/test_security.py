@@ -141,7 +141,7 @@ class TestAPIKeyValidator:
             "abcdefghijklmnopqrstuvwxyz123456",
             "1234567890abcdefghijklmnopqrstuvwxyz",
             "my-api-key-1234567890-abcdef-ghij",
-            "valid_test_key_1234567890abcdefghijklmnopqrstuvwxyz"  # Fake test key
+            "service_key_1234567890abcdefghijklmnopqrstuvwxyz",
         ]
 
         for key in valid_keys:

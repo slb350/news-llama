@@ -303,7 +303,7 @@ class APIKeyValidator:
 
         # Check for placeholder values
         placeholder_indicators = [
-            'your_api_key', 'example_key', 'test_key', 'demo_key', 'fake_key', 'mock_key',
+            'your_', 'example_key', 'test_key', 'demo_key', 'fake_key', 'mock_key',
             'xxx', 'yyy', 'zzz'
         ]
 
