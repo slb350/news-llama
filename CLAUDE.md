@@ -186,7 +186,7 @@ Key `.env` variables (see `.env.example` for the full list):
 LLM_API_URL=http://localhost:8000/v1
 LLM_MODEL=llama-3.1-8b-instruct
 LLM_TEMPERATURE=0.7
-LLM_MAX_TOKENS=500
+LLM_MAX_TOKENS=4000
 LLM_TIMEOUT=300
 
 # Twitter/X
@@ -205,7 +205,7 @@ REDDIT_USER_AGENT=news-llama/1.0
 # Output
 OUTPUT_FORMATS=html,rss,json
 OUTPUT_DIRECTORY=output
-MAX_ARTICLES_PER_CATEGORY=10
+MAX_ARTICLES_PER_CATEGORY=5
 DUPLICATE_THRESHOLD=0.8
 MIN_ARTICLE_LENGTH=200
 MAX_ARTICLE_AGE_HOURS=24
@@ -213,6 +213,10 @@ MAX_ARTICLE_AGE_HOURS=24
 # Processing
 ENABLE_SENTIMENT_ANALYSIS=true
 ENABLE_LLM_SOURCE_DISCOVERY=true
+
+# CLI Scheduler (--schedule mode)
+SCHEDULER_FREQUENCY=daily    # daily or hourly
+SCHEDULER_TIME=09:00         # time to run (HH:MM, 24-hour)
 
 # Web/Scheduler
 DATABASE_URL=sqlite:///data/news_llama.db
