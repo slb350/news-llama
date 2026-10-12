@@ -237,7 +237,7 @@ LOG_FILE=logs/news-llama.log
 ### CLI Mode
 `main.py` → aggregators (RSS, Reddit, dynamic) → content processor (dedup, filter, score) → LLM summarizer → output generators (HTML/JSON/RSS) — Twitter aggregator is present but unimplemented (placeholder only)
 
-**Performance flow**: Articles are scored by recency + content quality + Reddit score, then pre-filtered to top N per category *before* LLM processing. This saves ~90% of LLM processing time (example: 661 raw articles → 100 pre-filtered → 78 valid LLM-summarized).
+**Performance flow**: Articles are scored by recency + content quality + Reddit score, then pre-filtered to top N per category *before* LLM processing. This saves ~90% of LLM processing time (example: 661 raw articles → 50 pre-filtered → 40 valid LLM-summarized).
 
 ### Web Mode
 FastAPI app with 15 service modules. Service layer drives all business logic; routes are thin controllers. APScheduler runs 4 scheduled jobs: daily newsletter generation (6 AM Pacific), weekly autonomous source discovery (Sunday 3 AM), weekly database VACUUM (Thursday 11 PM), and hourly rate-limiter cleanup. SQLite WAL mode allows concurrent reads. LRU file cache (100 newsletters, ~10MB) avoids re-rendering generated content.
