@@ -206,10 +206,10 @@ News Llama is optimized for speed with **intelligent pre-filtering**:
 ```
 Collection:    678 total articles
 Deduplication: 661 unique articles
-Pre-filtering: 100 articles (10 per category)
-Summarized:    100 articles
-Valid output:  78 articles
-LLM time:     ~21 minutes
+Pre-filtering: 50 articles (5 per category)
+Summarized:    50 articles
+Valid output:  40 articles
+LLM time:     ~10 minutes
 ```
 
 **Without pre-filtering**: Would have taken ~2 hours to summarize all 661 articles!
@@ -217,7 +217,7 @@ LLM time:     ~21 minutes
 ### How It Works
 
 1. **Smart Scoring**: Ranks articles by recency + content quality + Reddit score
-2. **Category Limits**: Keeps top N articles per category (default: 10)
+2. **Category Limits**: Keeps top N articles per category (default: 5)
 3. **LLM Efficiency**: Only summarizes articles that will be displayed
 4. **Result**: ~90% reduction in LLM processing time
 
@@ -230,7 +230,7 @@ LLM time:     ~21 minutes
 LLM_API_URL=http://localhost:8000/v1
 LLM_MODEL=llama-3.1-8b-instruct
 LLM_TEMPERATURE=0.7
-LLM_MAX_TOKENS=500
+LLM_MAX_TOKENS=4000
 
 # Reddit API (required for Reddit sources)
 REDDIT_CLIENT_ID=your_reddit_client_id
@@ -239,8 +239,12 @@ REDDIT_USERNAME=your_reddit_username
 REDDIT_PASSWORD=your_reddit_password
 
 # Output Settings
-MAX_ARTICLES_PER_CATEGORY=10  # Articles to show per category
+MAX_ARTICLES_PER_CATEGORY=5  # Articles to show per category
 OUTPUT_FORMATS=html,rss,json
+
+# CLI Scheduler (--schedule mode)
+SCHEDULER_FREQUENCY=daily    # daily or hourly
+SCHEDULER_TIME=09:00         # time to run (HH:MM, 24-hour)
 ```
 
 See `.env.example` for all available options:
@@ -601,7 +605,7 @@ Minimal configuration (env):
 LLM_API_URL=http://localhost:8000/v1
 LLM_MODEL=llama-3.1-8b-instruct
 LLM_TEMPERATURE=0.7
-LLM_MAX_TOKENS=500
+LLM_MAX_TOKENS=4000
 ```
 
 #### Code excerpts
